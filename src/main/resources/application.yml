@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: SpringBootREST3
+
+logging:
+  level:
+    org:
+      springframework:
+        security: DEBUG
+
+server:
+  port: 9100
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
