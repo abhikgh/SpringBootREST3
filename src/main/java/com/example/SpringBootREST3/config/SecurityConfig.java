@@ -14,7 +14,7 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     private static final String[] AUTH_WHITELIST = {
-            "/v3/rest/hello"
+            "/v3/rest/hello", "/actuator"
     };
 
     @Bean
