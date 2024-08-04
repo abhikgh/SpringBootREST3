@@ -1,0 +1,70 @@
+<version>3.2.7</version>
+<java.version>21</java.version>
+
+ApplicationConfig
+========================
+@Configuration
+public class ApplicationConfig {
+
+    //Tomcat Protocol Handler is responsible for handling incoming requests in a Spring Boot application
+    //TomcatProtocolHandlerCustomizer configures the Executor
+    //Executor is responsible for executing tasks, like handling incoming requests.
+    @Bean
+    TomcatProtocolHandlerCustomizer<?> tomcatProtocolHandlerCustomizer() {
+        return protocolHandler -> {
+            protocolHandler.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
+        };
+    }
+}
+
+SecurityConfig
+=======================
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    private static final String[] AUTH_WHITELIST = {
+            "/v3/rest/hello", "/v3/rest/helloPost", "/v3/rest/home"
+    };
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
+        return httpSecurity
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(auth -> auth.requestMatchers(AUTH_WHITELIST).permitAll()
+                        .anyRequest().authenticated())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .build();
+    }
+}
+
+Gatling
+======================
+
+Gatling : Load testing tool that can be used to simulate user behavior and test the performance of Spring Boot applications under different loads
+Compared to JMeter : Gatling is faster, lightweight, and provides more detailed and colorful reports
+
+simulation service :: E:\Softwares\gatling-charts-highcharts-bundle-3.9.5\user-files\simulations\GatlingSimulation.java
+
+Run gatling :: E:\Softwares\gatling-charts-highcharts-bundle-3.9.5\bin\gatling.bat
+
+Results :: E:\Softwares\gatling-charts-highcharts-bundle-3.9.5\results
+
+<dependency>
+    <groupId>io.gatling</groupId>
+    <artifactId>gatling-core</artifactId>
+    <version>3.9.3</version>
+</dependency>
+<!-- https://mvnrepository.com/artifact/io.gatling.highcharts/gatling-charts-highcharts -->
+<dependency>
+    <groupId>io.gatling.highcharts</groupId>
+    <artifactId>gatling-charts-highcharts</artifactId>
+    <version>3.9.3</version>
+</dependency>
+<!-- https://mvnrepository.com/artifact/io.gatling/gatling-maven-plugin -->
+<dependency>
+    <groupId>io.gatling</groupId>
+    <artifactId>gatling-maven-plugin</artifactId>
+    <version>4.3.1</version>
+</dependency>
