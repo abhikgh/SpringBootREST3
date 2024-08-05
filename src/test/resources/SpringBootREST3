@@ -263,6 +263,10 @@ public ResponseEntity<List<Movie>> getMoviesByDirectorAndGenre(
 
 ----------------------------------------------------------------------------------------------------------------------
 
+Observability
+============================
+How well you can understand the internals of the system by examining the results
+
 Prometheus
 =====================================
 
@@ -359,8 +363,6 @@ How does Prometheus that is running on Docker connect to SpringBoot app that is 
 - targets: ['host.docker.internal:9050']
   host.docker.internal is a host-gateway which is a daemon process routing requests to localhost
 
-
-----------------------------------------------------------------------------------------------------------------------
 
 Grafana
 ======================
