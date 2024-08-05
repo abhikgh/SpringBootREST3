@@ -40,8 +40,10 @@ public class SecurityConfig {
 }
 
 6. Observability -> 
-	 	<artifactId>opentracing-jeager-integration</artifactId>  is replaced with
-                <artifactId>util-observability</artifactId>
+	Micrometer replaces Spring Cloud Sleuth 
+
+	<artifactId>opentracing-jeager-integration</artifactId>  is replaced with
+	<artifactId>util-observability</artifactId>
 
 7. jaxb-api -> 
 
@@ -149,3 +151,254 @@ GraalVM native image
 ========================
 Compiles the Java code into a standalone executable, eliminating the need for a JVM at runtime.
 
+
+Micrometer
+======================
+Tracing + metrics collector and shipment
+Micrometer replaces Spring Cloud Sleuth in SpringBoot3
+
+<!-- Micrometer-core -->
+<dependency>
+    <groupId>io.micrometer</groupId>
+    <artifactId>micrometer-core</artifactId>
+    <scope>runtime</scope>
+</dependency>
+<!-- Micrometer-prometheus -->
+<dependency>
+    <groupId>io.micrometer</groupId>
+    <artifactId>micrometer-registry-prometheus</artifactId>
+    <scope>runtime</scope>
+</dependency>
+	This module enables Prometheus to scrape Micrometer logs
+	define our own metrics using Micrometer
+	gather them using Prometheus
+	display them on a Grafana dashboard
+
+		      (exposes Metrics)  (Tracing + metrics collector and shipment)  (scrape the Metrics)     (query Prometheus)
+SpringBoot ------> Actuator  ---->   Micrometer   --------------->             Prometheus     ------>    Grafana (observability backend)
+									(monitoring backend : monitoring and alerting toolkit)
+                                                                                                      - OpenTelemetry, Jaeger, Zipkin
+application.yaml
+------------------------------
+management:
+  server:
+    port: 9101
+  endpoints:
+    web:
+      exposure:
+        include: health, prometheus
+      base-path: "/"
+      path-mapping:
+        prometheus: "metrics"
+  metrics:
+    tags:
+      application: transfer-service
+
+promotheus.yaml
+--------------------------
+global:
+  scrape_interval: 15s # By default, scrape targets every 15 seconds.
+# A scrape configuration containing exactly one endpoint to scrape:
+# Here it's Prometheus itself.
+scrape_configs:
+  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+  - job_name: 'prometheus'
+    # Override the global default and scrape targets from this job every 5 seconds.
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ 'localhost:9090' ]
+  - job_name: 'transfer-service'
+    # Override the global default and scrape targets from this job every 5 seconds.
+    scrape_interval: 2s
+    metrics_path: /metrics
+    static_configs:
+      - targets: [ 'host.docker.internal:9101' ]
+
+Metric type                             Description
+------------------                  ----------------------------------------
+default
+--------
+Thread utilization
+CPU Usage
+Cache utilization
+Connection pool
+
+Micrometer
+-------------
+Timer                                 measuring short-duration latencies, and the frequency of such events.
+Counter				                  count
+Gauge	                              current value
+DistributionSummary	                  total amount of all recorded events
+
+Metric whose names start with "jvm", "process", "tomcat", "system", "logback" are automatically excluded from monitoring.
+
+@Autowired
+private MeterRegistry meterRegistry;
+
+// http://localhost:9050/orders/v1/getMoviesByDirectorAndGenre/Satyajit Ray/Family
+@GetMapping(value = "/getMoviesByDirectorAndGenre/{director}/{genre}", produces = MediaType.APPLICATION_JSON_VALUE)
+public ResponseEntity<List<Movie>> getMoviesByDirectorAndGenre(
+        @PathVariable("director") String director,
+        @PathVariable("genre") String genre) {
+
+    //Counter metric
+    Counter counter = Counter.builder("getMoviesByDirectorAndGenre")
+            .description("a number of requests to /getMoviesByDirectorAndGenre endpoint")
+            .register(meterRegistry);
+    counter.increment();
+
+    //Gauge metric
+    Gauge.builder("users_count", userService::countUsers)
+            .description("A current number of users in the system")
+            .register(meterRegistry);
+
+    //Timer metric
+    Timer.Sample timer = Timer.start(meterRegistry);
+
+    List<Movie> movies = movieService.getMoviesByDirectorAndGenre(director, genre);
+
+    timer.stop(Timer.builder("getMoviesByDirectorAndGenre_Timer").register(meterRegistry));
+    return ResponseEntity.ok(movies);
+}
+
+----------------------------------------------------------------------------------------------------------------------
+
+Prometheus
+=====================================
+
+Monitoring and Alerting service
+
+Prometheus needs an endpoint from which it can scrape the metrics data at a configured interval.
+
+<!-- Web -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-web</artifactId>
+</dependency>
+<!-- Actuator -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-actuator</artifactId>
+</dependency>
+<!-- Micrometer-prometheus -->
+<dependency>
+    <groupId>io.micrometer</groupId>
+    <artifactId>micrometer-registry-prometheus</artifactId>
+    <scope>runtime</scope>
+</dependency>
+<!-- AOP, for custom timer -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-aop</artifactId>
+</dependency>
+(we need AOP because Micrometer timer is based on AspectJ)
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: ["health","prometheus","metrics","info"]
+
+//Counter metric
+Counter counter = Counter.builder("getMoviesByDirectorAndGenre")
+        .description("a number of requests to /getMoviesByDirectorAndGenre endpoint")
+        .register(meterRegistry);
+counter.increment();
+
+
+@Bean
+public TimedAspect timedAspect(MeterRegistry meterRegistry){
+    return new TimedAspect(meterRegistry);
+}
+
+@Timed(value = "getMoviesOfDirector.time")
+@GetMapping(value = "/getMoviesOfDirector/{director}", produces = MediaType.APPLICATION_JSON_VALUE)
+
+Hit the request
+Check http://localhost:9050/actuator/prometheus for getMoviesOfDirector
+
+
+prometheus.yml
+----------------------
+    scrape_configs:
+      - job_name: 'SpringBootREST2'
+        metrics_path: '/actuator/prometheus'
+        scrape_interval: 5s
+        static_configs:
+          - targets: ['host.docker.internal:9050']
+            labels:
+              application: 'SpringBootREST2'
+
+
+docker-compose.yml
+----------------------
+version: '3.7'
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.44.0
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    restart: always
+``
+D:\workspace2\SpringBootREST2\src\main\resources > docker-compose up
+
+http://localhost:9090/
+- Check Status -> Targets
+
+#TYPE http_server_requests_seconds_count
+#TYPE getMoviesOfDirector_time_seconds_max gauge
+#TYPE getMoviesOfDirector_time_seconds_count :: gives count of calls
+
+
+How does Prometheus that is running on Docker connect to SpringBoot app that is running on localhost?
+---------------------------------------------------------------------------------------------------------------
+- targets: ['host.docker.internal:9050']
+  host.docker.internal is a host-gateway which is a daemon process routing requests to localhost
+
+
+----------------------------------------------------------------------------------------------------------------------
+
+Grafana
+======================
+
+Data Visualization service
+Ensure to add Prometheus as a Data Source in Grafana.
+query Prometheus(datasources)
+     depends_on:
+          - prometheus
+
+datasources.yml
+----------------------
+apiVersion: 1
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+
+docker-compose-yml
+--------------------------
+grafana:
+    image: grafana/grafana:9.5.2
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    volumes:
+      - ./grafana/datasources.yml:/etc/grafana/datasources.yml
+    depends_on:
+      - prometheus
+
+http://localhost:3000/ (admin/welcome@1a)
+
+Connect to Prometheus from Grafana
+-----------------------------------------
+Get Prometheus container id
+docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' daca98a3c836
+- 172.22.0.2
+Prometheus IP in Grafana :: http://172.22.0.2:9090
