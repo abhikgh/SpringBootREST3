@@ -1,5 +1,68 @@
-<version>3.2.7</version>
-<java.version>21</java.version>
+
+SpringBoot3 changes
+===========================================================
+
+1. 	<version>3.2.7</version>
+	<java.version>21</java.version>
+	<spring-cloud.version>2022.0.4</spring-cloud.version>
+	<openapi.version>2.2.0</openapi.version>
+
+2. <!--Lombok-->
+<dependency>
+    <groupId>org.projectlombok</groupId>
+    <artifactId>lombok</artifactId>
+    <version>1.18.30</version>
+    <scope>provided</scope>
+</dependency>
+
+3. javax.persistence -> jakarta.persistence
+
+4. JSONB ->  @Type(JsonBinaryType.class)
+
+5. Security ->
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    private static final String[] AUTH_WHITELIST = {
+            "/v3/rest/hello", "/v3/rest/helloPost"
+    };
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
+      return   httpSecurity
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(auth -> auth.requestMatchers(AUTH_WHITELIST).permitAll()
+                                                    .anyRequest().authenticated())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .build();
+    }
+}
+
+6. Observability -> 
+	 	<artifactId>opentracing-jeager-integration</artifactId>  is replaced with
+                <artifactId>util-observability</artifactId>
+
+7. jaxb-api -> 
+
+	    <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>			is replaced with
+            
+	    <groupId>jakarta.xml.bind</groupId>
+            <artifactId>jakarta.xml.bind-api</artifactId>
+
+8. Swagger -> 
+
+	<dependency>
+            <groupId>org.springdoc</groupId>
+            	<artifactId>springdoc-openapi-webmvc-core</artifactId>
+            <artifactId>springdoc-openapi-starter-webmvc-api</artifactId>
+            <version>${openapi.version}</version>
+        </dependency>
+
+9. Tests -> 	@MockBean 		is replaced with 
+
+		        @Mock
 
 ApplicationConfig
 ========================
@@ -68,3 +131,21 @@ Results :: E:\Softwares\gatling-charts-highcharts-bundle-3.9.5\results
     <artifactId>gatling-maven-plugin</artifactId>
     <version>4.3.1</version>
 </dependency>
+
+
+Class Data Sharing (CDS)
+==============================
+JVM optimization technique
+
+Creates a snapshot of the application classes and then storing them in a shared archived file
+During startup, JVM can reference this archive, dramatically speeding up the class loading process.
+
+spring.context.exit-on-refresh=true
+-XX:ArchiveClassesAtExit=app-cds.jsa
+# On the JVM you plan to deploy to:
+java -Xshare:on -XX:SharedArchiveFile=app-cds.jsa -jar myapp.jar
+
+GraalVM native image 
+========================
+Compiles the Java code into a standalone executable, eliminating the need for a JVM at runtime.
+
