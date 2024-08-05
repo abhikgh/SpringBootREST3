@@ -265,11 +265,10 @@ public ResponseEntity<List<Movie>> getMoviesByDirectorAndGenre(
 
 Observability
 ============================
-How well you can understand the internals of the system by examining the results
+Observability is the ability to measure the internal state of a system only by checking its outputs (logs, traces, metrics)
 
 Prometheus
 =====================================
-
 Monitoring and Alerting service
 
 Prometheus needs an endpoint from which it can scrape the metrics data at a configured interval.
