@@ -412,6 +412,7 @@ management:
     sampling:
       probability: 1.0
 
+Behind the scenes, an observation has been created for the HTTP request, which in turn gets bridged to OpenTelemetry, which reports a new trace to Zipkin.
 D:\workspace2\SpringBootREST2\src\main\resources > docker-compose up
 
 http://localhost:9090/
