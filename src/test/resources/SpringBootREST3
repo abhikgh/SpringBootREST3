@@ -479,3 +479,6 @@ Get Prometheus container id
 docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' daca98a3c836
 - 172.22.0.2
 Prometheus IP in Grafana :: http://172.22.0.2:9090
+
+https://medium.com/@minadev/monitoring-and-observability-with-spring-boot-3-2cb9cdb74a85
+https://spring.io/blog/2022/10/12/observability-with-spring-boot-3
