@@ -255,7 +255,55 @@ public ResponseEntity<List<Movie>> getMoviesByDirectorAndGenre(
 Spring Observability (builds on Micrometer, formerly Spring Cloud Sleuth)
 ===============================================================================
 Observability is the ability to measure the internal state of a system only by checking its outputs (logs, traces, metrics)
-It’s more for efficiently recording application metrics with Micrometer and implementing tracing through providers like OpenTelemetry
+OpenTelemetry :: vendor-neutral Observability framework which provides a standard way to collect observability data (Logs,Traces and Metrics) and export them
+		OpenTelemetry replaces OpenTracing
+
+		(exposes Metrics)  (Mterics + Traces collector and shipment)  (scrape the Metrics)     (query Prometheus)
+SpringBoot ------> Actuator  ---->   Micrometer   --------------->             Prometheus     ------>    Grafana (observability backend)
+									(monitoring backend : monitoring and alerting toolkit)
+                                                                                                      - OpenTelemetry, Jaeger, Zipkin
+
+
+Otel collector :: collects Logs, Traces and Metrics -> processes and ships to observability backends like Jaeger, Prometheus, and others.
+
+		      (exposes Metrics)  (Metrics collector + Tracing + Logs)
+SpringBoot ------> Actuator  ---->   Micrometer    ----------------------->       OpenTelemetry Collector  -------> Jaeger (Observability Backend)
+                                                   micrometer-tracing-bridge-otel                    opentelemetry-exporter-otlp
+
+
+
+Actuator
+===========================
+
+Actuator exposes management endpoints 
+These endpoints can be used to collect data on a variety of metrics, such as CPU usage, memory usage, request rate, error rate
+
+/health
+/info
+/env
+/loggers
+/httptrace
+/sessions
+/startup
+/shutdown
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: ["health","prometheus","metrics","info"]
+  endpoint:
+    health:
+      show-details: always
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true // Exposes metrics in a format that can be scraped by a Prometheus server.
+    info:
+      java:
+        enabled: true
+      env:
+        enabled: true
 
 Micrometer
 ====================
@@ -264,70 +312,7 @@ Timer                                 measuring short-duration latencies, and th
 Counter				      count
 Gauge	                              current value
 DistributionSummary	              total amount of all recorded events
-Observation API
-	ObservationRegistry observationRegistry = ObservationRegistry.create();
-	Observation observation = Observation.createNotStarted("sample", observationRegistry);
-	observation.observe(() -> {
-	    // ... the observed action
-	});
-        
-	//data-collecting code is implemented as an ObservationHandler. 
-	//This handler gets notified about the Observation‘s lifecycle events, and therefore provides callback methods.
-	 public class SimpleLoggingHandler implements ObservationHandler<Observation.Context> {
-
-	    private static final Logger log = LoggerFactory.getLogger(SimpleLoggingHandler.class);
-	
-	    @Override
-	    public boolean supportsContext(Observation.Context context) {
-	        return true;
-	    }
-	
-	    @Override
-	    public void onStart(Observation.Context context) {
-	        log.info("Starting");
-	    }
-	
-	    @Override
-	    public void onScopeOpened(Observation.Context context) {
-	        log.info("Scope opened");
-	    }
-	
-	    @Override
-	    public void onScopeClosed(Observation.Context context) {
-	        log.info("Scope closed");
-	    }
-	
-	    @Override
-	    public void onStop(Observation.Context context) {
-	        log.info("Stopping");
-	    }
-	
-	    @Override
-	    public void onError(Observation.Context context) {
-	        log.info("Error");
-	    }
-	}
-
-	observationRegistry
-	  .observationConfig()
-	  .observationHandler(new SimpleLoggingHandler());
-
-	observationRegistry
-	  .observationConfig()
-	  .observationHandler(new ObservationTextPublisher(System.out::println));
-
-	MeterRegistry meterRegistry = new SimpleMeterRegistry();
-	observationRegistry
-	  .observationConfig()
-	  .observationHandler(new DefaultMeterObservationHandler(meterRegistry));
-
-
-
-Prometheus
-=====================================
-Monitoring and Alerting service
-
-Prometheus needs an endpoint from which it can scrape the metrics data at a configured interval.
+Micrometer Observation API :: lightweight library for application metrics
 
 <!-- Web -->
 <dependency>
@@ -350,7 +335,41 @@ Prometheus needs an endpoint from which it can scrape the metrics data at a conf
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-aop</artifactId>
 </dependency>
-(we need AOP because Micrometer timer is based on AspectJ)
+
+<!--OpenTelemetry Tracer: Bridges the Micrometer Observation API to OpenTelemetry-->
+<dependency>
+  <groupId>io.micrometer</groupId>
+  <artifactId>micrometer-tracing-bridge-otel</artifactId>
+</dependency>
+
+<!--Reporter/Zipkin with OpenTelemetry: Reports traces to Zipkin-->
+<dependency>
+  <groupId>io.opentelemetry</groupId>
+  <artifactId>opentelemetry-exporter-zipkin</artifactId>
+</dependency>
+</dependency>
+
+@Configuration
+public class ApplicationConfig {
+
+	  // Monitoring beans
+	  @Bean
+	  ObservationRegistry observationRegistry() {
+	    return ObservationRegistry.create();
+	  }
+	
+	  // To have the @Observed support we need to register this aspect
+	  @Bean
+	  ObservedAspect observedAspect(ObservationRegistry observationRegistry) {
+	    return new ObservedAspect(observationRegistry);
+	  }
+}
+
+
+Prometheus
+=====================================
+Monitoring and Alerting toolkit
+Prometheus needs an endpoint from which it can scrape the metrics data at a configured interval.
 
 management:
   endpoints:
@@ -388,21 +407,11 @@ prometheus.yml
             labels:
               application: 'SpringBootREST2'
 
+management:
+  tracing:
+    sampling:
+      probability: 1.0
 
-docker-compose.yml
-----------------------
-version: '3.7'
-
-services:
-  prometheus:
-    image: prom/prometheus:v2.44.0
-    container_name: prometheus
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-    restart: always
-``
 D:\workspace2\SpringBootREST2\src\main\resources > docker-compose up
 
 http://localhost:9090/
@@ -422,7 +431,7 @@ How does Prometheus that is running on Docker connect to SpringBoot app that is 
 Grafana
 ======================
 
-Data Visualization service
+Data Visualization service -  create dashboards to visualize and analyze data
 Ensure to add Prometheus as a Data Source in Grafana.
 query Prometheus(datasources)
      depends_on:
@@ -440,7 +449,18 @@ datasources:
 
 docker-compose-yml
 --------------------------
-grafana:
+version: '3.7'
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.44.0
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+
+  grafana:
     image: grafana/grafana:9.5.2
     container_name: grafana
     ports:
