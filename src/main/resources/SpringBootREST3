@@ -335,19 +335,17 @@ Micrometer Observation API :: lightweight library for application metrics
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-aop</artifactId>
 </dependency>
-
 <!--OpenTelemetry Tracer: Bridges the Micrometer Observation API to OpenTelemetry-->
 <dependency>
   <groupId>io.micrometer</groupId>
   <artifactId>micrometer-tracing-bridge-otel</artifactId>
 </dependency>
-
-<!--Reporter/Zipkin with OpenTelemetry: Reports traces to Zipkin-->
+<!--Zipkin with OpenTelemetry: Reports traces to Zipkin-->
 <dependency>
   <groupId>io.opentelemetry</groupId>
   <artifactId>opentelemetry-exporter-zipkin</artifactId>
 </dependency>
-</dependency>
+
 
 @Configuration
 public class ApplicationConfig {
