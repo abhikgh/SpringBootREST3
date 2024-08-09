@@ -16,3 +16,8 @@ management:
     web:
       exposure:
         include: health, prometheus, metrics, info
+
+application:
+  spring:
+    endpoints:
+      exclude: /v3/rest/hello, /v3/rest/helloPost, /v3/rest/home, /actuator/**
