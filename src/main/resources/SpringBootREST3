@@ -272,48 +272,6 @@ SpringBoot ------> Actuator  ---->   Micrometer    ----------------------->     
 
 
 
-Actuator
-===========================
-
-Actuator exposes management endpoints 
-These endpoints can be used to collect data on a variety of metrics, such as CPU usage, memory usage, request rate, error rate
-
-/health
-/info
-/env
-/loggers
-/httptrace
-/sessions
-/startup
-/shutdown
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: ["health","prometheus","metrics","info"]
-  endpoint:
-    health:
-      show-details: always
-    metrics:
-      enabled: true
-    prometheus:
-      enabled: true // Exposes metrics in a format that can be scraped by a Prometheus server.
-    info:
-      java:
-        enabled: true
-      env:
-        enabled: true
-
-Micrometer
-====================
-vendor-neutral application metrics facade which replaces Spring Cloud Sleuth
-Timer                                 measuring short-duration latencies, and the frequency of such events.
-Counter				      count
-Gauge	                              current value
-DistributionSummary	              total amount of all recorded events
-Micrometer Observation API :: lightweight library for application metrics
-
 <!-- Web -->
 <dependency>
     <groupId>org.springframework.boot</groupId>
@@ -325,11 +283,13 @@ Micrometer Observation API :: lightweight library for application metrics
     <artifactId>spring-boot-starter-actuator</artifactId>
 </dependency>
 <!-- Micrometer-prometheus -->
+<!-- This module enables Prometheus to scrape Micrometer logs and Micrometer metrics at a configured interval and display them in a Grafana dashboard-->
 <dependency>
     <groupId>io.micrometer</groupId>
     <artifactId>micrometer-registry-prometheus</artifactId>
     <scope>runtime</scope>
 </dependency>
+
 <!-- AOP, for custom timer -->
 <dependency>
     <groupId>org.springframework.boot</groupId>
@@ -346,6 +306,49 @@ Micrometer Observation API :: lightweight library for application metrics
   <artifactId>opentelemetry-exporter-zipkin</artifactId>
 </dependency>
 
+Actuator
+===========================
+Actuator exposes management endpoints
+These endpoints can be used to collect data on a variety of metrics, such as CPU usage, memory usage, request rate, error rate
+
+/health
+/info
+/env
+/loggers
+/httptrace
+/sessions
+/startup
+/shutdown
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, prometheus, metrics, info
+  endpoint:
+    health:
+      show-details: always
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true // Exposes metrics in a format that can be scraped by a Prometheus server.
+    info:
+      java:
+        enabled: true
+      env:
+        enabled: true
+
+Micrometer
+====================
+vendor-neutral application Metrics facade which replaces Spring Cloud Sleuth
+
+Micrometer metrics::
+-----------------------
+Timer                                 measuring short-duration latencies, and the frequency of such events.
+Counter				                  count
+Gauge	                              current value
+DistributionSummary	                  total amount of all recorded events
+Micrometer Observation API            lightweight library for application metrics
 
 @Configuration
 public class ApplicationConfig {
@@ -363,52 +366,43 @@ public class ApplicationConfig {
 	  }
 }
 
-
-Prometheus
-=====================================
-Monitoring and Alerting toolkit
-Prometheus needs an endpoint from which it can scrape the metrics data at a configured interval.
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: ["health","prometheus","metrics","info"]
-
 //Counter metric
-Counter counter = Counter.builder("getMoviesByDirectorAndGenre")
-        .description("a number of requests to /getMoviesByDirectorAndGenre endpoint")
+Counter counter = Counter.builder("hello")
+        .description("gets number of requests to /hello endpoint")
         .register(meterRegistry);
 counter.increment();
 
 
-@Bean
-public TimedAspect timedAspect(MeterRegistry meterRegistry){
-    return new TimedAspect(meterRegistry);
-}
 
-@Timed(value = "getMoviesOfDirector.time")
-@GetMapping(value = "/getMoviesOfDirector/{director}", produces = MediaType.APPLICATION_JSON_VALUE)
+Prometheus
+=====================================
+Monitoring and Alerting toolkit
+Prometheus needs an endpoint(metrics_path) to scrape Micrometer logs and Micrometer metrics at a configured interval display them in a Grafana dashboard
+
+prometheus.yml
+------------------
+scrape_configs:
+  - job_name: 'SpringBootREST3'
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['host.docker.internal:9050']
+        labels:
+          application: 'SpringBootREST3'
+
 
 Hit the request
 Check http://localhost:9050/actuator/prometheus for getMoviesOfDirector
-
-
-prometheus.yml
-----------------------
-    scrape_configs:
-      - job_name: 'SpringBootREST2'
-        metrics_path: '/actuator/prometheus'
-        scrape_interval: 5s
-        static_configs:
-          - targets: ['host.docker.internal:9050']
-            labels:
-              application: 'SpringBootREST2'
 
 management:
   tracing:
     sampling:
       probability: 1.0
+
+How does Prometheus that is running on Docker connect to SpringBoot app that is running on localhost?
+---------------------------------------------------------------------------------------------------------------
+- targets: ['host.docker.internal:9050']
+  host.docker.internal is a host-gateway which is a daemon process routing requests to localhost
 
 Behind the scenes, an observation has been created for the HTTP request, which in turn gets bridged to OpenTelemetry, which reports a new trace to Zipkin.
 D:\workspace2\SpringBootREST2\src\main\resources > docker-compose up
@@ -420,16 +414,8 @@ http://localhost:9090/
 #TYPE getMoviesOfDirector_time_seconds_max gauge
 #TYPE getMoviesOfDirector_time_seconds_count :: gives count of calls
 
-
-How does Prometheus that is running on Docker connect to SpringBoot app that is running on localhost?
----------------------------------------------------------------------------------------------------------------
-- targets: ['host.docker.internal:9050']
-  host.docker.internal is a host-gateway which is a daemon process routing requests to localhost
-
-
 Grafana
 ======================
-
 Data Visualization service -  create dashboards to visualize and analyze data
 Ensure to add Prometheus as a Data Source in Grafana.
 query Prometheus(datasources)
@@ -457,7 +443,7 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus.yml:/etc/prometheus.yml
 
   grafana:
     image: grafana/grafana:9.5.2
@@ -466,7 +452,7 @@ services:
       - "3000:3000"
     restart: unless-stopped
     volumes:
-      - ./grafana/datasources.yml:/etc/grafana/datasources.yml
+      - ./datasources.yml:/etc/datasources.yml
     depends_on:
       - prometheus
 
