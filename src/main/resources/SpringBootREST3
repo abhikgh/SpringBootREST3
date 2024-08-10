@@ -258,22 +258,13 @@ Observability is the ability to measure the internal state of a system only by c
 OpenTelemetry :: vendor-neutral Observability framework which provides a standard way to collect observability data (Logs,Traces and Metrics) and export them
 		OpenTelemetry replaces OpenTracing
 
-		      (exposes Metrics)     (custom Metrics + Traces)           (scrape(gather) the Metrics)     (query Prometheus)
-SpringBoot ------> Actuator  ---->   Micrometer   --------------->             Prometheus     ------>    Grafana (observability backend)
-									(monitoring backend : monitoring and alerting toolkit)
-                                                                                                      - OpenTelemetry, Jaeger, Zipkin
+		      (exposes Metrics)     (custom Metrics + Traces)           (scrape(gather) the Metrics, monitoring and alerting toolkit)     (query Prometheus)
+SpringBoot ------> Actuator  ---->   Micrometer   --------------->             Prometheus     -------------->                          Grafana (observability backend)
+									            micrometer-registry-prometheus
+
 define our own metrics using Micrometer
 gather them using Prometheus
 display them on a Grafana dashboard
-
-
-Otel collector :: collects Logs, Traces and Metrics -> processes and ships to observability backends like Jaeger, Prometheus, and others.
-
-		      (exposes Metrics)  (Metrics collector + Tracing + Logs)
-SpringBoot ------> Actuator  ---->   Micrometer    ----------------------->       OpenTelemetry Collector  -------> Jaeger (Observability Backend)
-                                                   micrometer-tracing-bridge-otel                    opentelemetry-exporter-otlp
-
-
 
 <!-- Web -->
 <dependency>
@@ -499,3 +490,250 @@ Check in Grafana ::
 
 
 ----------------------------------------------------------------------------------------------------------------------
+
+Opentelemetry
+================================================
+vendor-agnostic standard for observability by collecting Logs, Traces and Metrics
+Opentelemetry replaces OpenTracing
+
+		      (exposes Metrics)  (Metrics  + Tracing + Logs)                    (LTM  :: collection and shipment)
+SpringBoot ------> Actuator  ---->   Micrometer    ----------------------->           OpenTelemetry Collector       ------->           Jaeger (Observability Backend)
+                                                   micrometer-tracing-bridge-otel                             opentelemetry-exporter-otlp
+
+
+<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>3.1.5</version>
+		<relativePath/> <!-- lookup parent from repository -->
+	</parent>
+	<groupId>com.example</groupId>
+	<artifactId>SpringBootRESTOtel2</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>SpringBootRESTOtel2</name>
+	<description>Demo project for Spring Boot</description>
+	<properties>
+		<java.version>17</java.version>
+	</properties>
+	<dependencies>
+	    <!-- Web -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+
+		<!-- Actuator -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>io.micrometer</groupId>
+			<artifactId>micrometer-core</artifactId>
+			<version>1.11.6</version>
+		</dependency>
+		<dependency>
+			<groupId>io.micrometer</groupId>
+			<artifactId>micrometer-tracing-bridge-otel</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.opentelemetry</groupId>
+			<artifactId>opentelemetry-exporter-otlp</artifactId>
+			<version>1.23.1</version>
+		</dependency>
+		<dependency>
+			<groupId>io.opentracing.contrib</groupId>
+			<artifactId>opentracing-spring-jaeger-web-starter</artifactId>
+			<version>3.3.1</version>
+		</dependency>
+
+		<dependency>
+			<groupId>io.opentelemetry</groupId>
+			<artifactId>opentelemetry-sdk-extension-jaeger-remote-sampler</artifactId>
+		</dependency>
+
+	</dependencies>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-dependencies</artifactId>
+				<version>2021.0.8</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+otel-config.yml
+------------------
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+
+processors:
+  batch:
+
+exporters:
+  logging:
+    loglevel: debug
+  jaeger:
+    endpoint: jaeger-service:14250
+    tls:
+      insecure: true
+
+service:
+  pipelines:
+    traces:
+      receivers:  [ otlp ]
+      processors: [ batch ]
+      exporters:  [ logging, jaeger ]
+
+docker-compose.yaml
+--------------------------
+version: '3.7'
+
+services:
+  collector:
+    image: otel/opentelemetry-collector:0.72.0
+    command: [ "--config=/etc/otel-collector-config.yml" ]
+    volumes:
+      - ./otel-config.yml:/etc/otel-collector-config.yml
+    ports:
+      - "4317:4317"
+    depends_on:
+      - jaeger-service
+
+  jaeger-service:
+    image: jaegertracing/all-in-one:latest
+    ports:
+        - "16686:16686"
+        - "14250:14250"
+        - "5775:5775/udp"
+        - "6831:6831/udp"
+        - "6832:6832/udp"
+
+application.yaml
+----------------------------
+spring:
+    sleuth:
+      otel:
+        config:
+          trace-id-ratio-based: 1.0
+      exporter:
+        otlp:
+          endpoint: http://collector:4317
+
+Jaeger
+--------------------------
+<dependency>
+    <groupId>io.opentracing.contrib</groupId>
+    <artifactId>opentracing-spring-jaeger-web-starter</artifactId>
+    <version>3.3.1</version>
+</dependency>
+
+//properties
+opentracing:
+  jaeger:
+    enabled: true
+
+@Configuration
+@ConditionalOnProperty(value = "opentracing.jaeger.enabled", havingValue = "true")
+public class JaegerConfig {
+
+    @Bean
+    public JaegerTracer jaegerTracer() {
+
+        return new io.jaegertracing.Configuration("SpringBootRest2")
+                .withSampler(new io.jaegertracing.Configuration.SamplerConfiguration().withType(ConstSampler.TYPE).withParam(1))
+                .withReporter(new io.jaegertracing.Configuration.ReporterConfiguration().withLogSpans(true))
+                .getTracer();
+    }
+
+}
+
+
+@RestController
+@RequestMapping("/orders/v1")
+@Slf4j
+public class NavigationController {
+
+    private Logger logger = Logger.getLogger(NavigationController.class.getName());
+
+    @Autowired
+    private MovieService movieService;
+
+    @Autowired
+    private JaegerTracer jaegerTracer;
+
+    @Autowired
+    private MeterRegistry meterRegistry;
+
+    // http://localhost:9151/orders/v1/getMoviesOfDirector/Satyajit Ray
+    @GetMapping(value = "/getMoviesOfDirector/{director}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<Movie>> getMoviesOfDirector(
+            @PathVariable("director") String director) {
+        Span span = jaegerTracer.buildSpan("getMoviesOfDirector").start();
+        log.info("Inside getMoviesOfDirector controller... ");
+
+        //Counter metric
+        Counter counter = Counter.builder("getMoviesOfDirector")
+                .description("a number of requests to /getMoviesOfDirector endpoint")
+                .register(meterRegistry);
+        counter.increment();
+
+        //Timer metric
+        Timer.Sample timer = Timer.start(meterRegistry);
+        Span getHeroDetailsSpan = jaegerTracer.buildSpan("getMoviesOfDirector-Service").asChildOf(span).start();
+        List<Movie> movies = movieService.getMoviesOfDirector(director);
+        getHeroDetailsSpan.finish();
+        span.finish();
+        timer.stop(Timer.builder("getMoviesOfDirector_Timer").register(meterRegistry));
+        return ResponseEntity.ok(movies);
+    }
+}
+
+@Autowired
+private MeterRegistry meterRegistry;
+
+// http://localhost:9050/orders/v1/getMoviesByDirectorAndGenre/Satyajit Ray/Family
+@GetMapping(value = "/getMoviesByDirectorAndGenre/{director}/{genre}", produces = MediaType.APPLICATION_JSON_VALUE)
+public ResponseEntity<List<Movie>> getMoviesByDirectorAndGenre(
+        @PathVariable("director") String director,
+        @PathVariable("genre") String genre) {
+
+    //Counter metric
+    Counter counter = Counter.builder("getMoviesByDirectorAndGenre")
+            .description("a number of requests to /getMoviesByDirectorAndGenre endpoint")
+            .register(meterRegistry);
+    counter.increment();
+
+    //Gauge metric
+    Gauge.builder("users_count", userService::countUsers)
+            .description("A current number of users in the system")
+            .register(meterRegistry);
+
+    //Timer metric
+    Timer.Sample timer = Timer.start(meterRegistry);
+
+    List<Movie> movies = movieService.getMoviesByDirectorAndGenre(director, genre);
+
+    timer.stop(Timer.builder("getMoviesByDirectorAndGenre_Timer").register(meterRegistry));
+    return ResponseEntity.ok(movies);
+}
+
+-------------------------------------------------------------------------------------------------
+
+Opentelemetry                            vs                                     Prometheus
+===============================================================================================
+Logs, Traces and Metrics                                                        Metrics
+More scalable
+calculates delta                                                               calculates cumulative measurements as a total
+Consolidated API for LTM and transform them into a single language
+
+-------------------------------------------------------------------------------------------------
