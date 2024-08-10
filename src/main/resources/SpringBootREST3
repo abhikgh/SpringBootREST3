@@ -258,10 +258,13 @@ Observability is the ability to measure the internal state of a system only by c
 OpenTelemetry :: vendor-neutral Observability framework which provides a standard way to collect observability data (Logs,Traces and Metrics) and export them
 		OpenTelemetry replaces OpenTracing
 
-		(exposes Metrics)  (Mterics + Traces collector and shipment)  (scrape the Metrics)     (query Prometheus)
+		      (exposes Metrics)     (custom Metrics + Traces)           (scrape(gather) the Metrics)     (query Prometheus)
 SpringBoot ------> Actuator  ---->   Micrometer   --------------->             Prometheus     ------>    Grafana (observability backend)
 									(monitoring backend : monitoring and alerting toolkit)
                                                                                                       - OpenTelemetry, Jaeger, Zipkin
+define our own metrics using Micrometer
+gather them using Prometheus
+display them on a Grafana dashboard
 
 
 Otel collector :: collects Logs, Traces and Metrics -> processes and ships to observability backends like Jaeger, Prometheus, and others.
@@ -366,18 +369,23 @@ public class ApplicationConfig {
 	  }
 }
 
-//Counter metric
-Counter counter = Counter.builder("hello")
-        .description("gets number of requests to /hello endpoint")
-        .register(meterRegistry);
-counter.increment();
+@GetMapping(value = "/hello", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+public ResponseEntity<String> hello() {
 
+    //Counter metric
+    Counter counter = Counter.builder("hello")
+            .description("gets number of requests to /hello endpoint")
+            .register(meterRegistry);
+    counter.increment();
 
+    return ResponseEntity.status(HttpStatus.OK)
+            .body("Hello World");
+}
 
 Prometheus
 =====================================
 Monitoring and Alerting toolkit
-Prometheus needs an endpoint(metrics_path) to scrape Micrometer logs and Micrometer metrics at a configured interval display them in a Grafana dashboard
+Prometheus needs an endpoint(metrics_path) to scrape Micrometer logs and Micrometer metrics at a configured interval and display them in a Grafana dashboard
 
 prometheus.yml
 ------------------
@@ -392,7 +400,14 @@ scrape_configs:
 
 
 Hit the request
-Check http://localhost:9050/actuator/prometheus for getMoviesOfDirector
+    http://localhost:9100/v3/rest/hello
+    and then check
+
+Check in Prometheus ::
+            http://localhost:9090/
+                - prometheus_http_requests_total
+                - process_uptime_seconds gauge
+
 
 management:
   tracing:
@@ -405,7 +420,6 @@ How does Prometheus that is running on Docker connect to SpringBoot app that is 
   host.docker.internal is a host-gateway which is a daemon process routing requests to localhost
 
 Behind the scenes, an observation has been created for the HTTP request, which in turn gets bridged to OpenTelemetry, which reports a new trace to Zipkin.
-D:\workspace2\SpringBootREST2\src\main\resources > docker-compose up
 
 http://localhost:9090/
 - Check Status -> Targets
@@ -465,5 +479,23 @@ docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' daca
 - 172.22.0.2
 Prometheus IP in Grafana :: http://172.22.0.2:9090
 
-https://medium.com/@minadev/monitoring-and-observability-with-spring-boot-3-2cb9cdb74a85
-https://spring.io/blog/2022/10/12/observability-with-spring-boot-3
+
+Running all on Docker
+-------------------------
+Start the application
+Start Docker Desktop
+Run docker-compose.yml :: D:\workspace2\SpringBootREST3\src\main\resources>docker-compose up --build
+Once done, check in Docker Desktop that prometheus and grafana images are present
+Open Gitbash ::
+            docker images (prometheus and grafana images)
+            docker ps (All running containers, containers with prometheus and grafana images)
+Hit http://localhost:9100/v3/rest/hello a few times
+Check in Prometheus ::
+            http://localhost:9090/
+                - prometheus_http_requests_total
+                - process_uptime_seconds gauge
+Check in Grafana ::
+            http://localhost:3000/ (admin/welcome@1a)
+
+
+----------------------------------------------------------------------------------------------------------------------
