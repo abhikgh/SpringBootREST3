@@ -1,18 +1,30 @@
 package com.example.SpringBootREST3.controller;
 
+import com.example.SpringBootREST3.entity.Movie;
 import com.example.SpringBootREST3.model.Person;
 import com.example.SpringBootREST3.service.HomeService;
+import com.example.SpringBootREST3.service.MovieService;
+import io.jaegertracing.internal.JaegerTracer;
 import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
+import io.opentracing.Span;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+
 
 @RestController
 @RequestMapping("/v3/rest")
@@ -22,16 +34,79 @@ public class NavController {
     private HomeService homeService;
 
     @Autowired
+    private MovieService movieService;
+
+    @Autowired
     private MeterRegistry meterRegistry;
 
+    @Autowired
+    private JaegerTracer jaegerTracer;
+
+    Logger log = LoggerFactory.getLogger(NavController.class);
+
+    // http://localhost:9100/v3/rest/getMoviesOfDirector/Satyajit Ray
+    @GetMapping(value = "/getMoviesOfDirector/{director}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<Movie>> getMoviesOfDirector(
+            @PathVariable("director") String director) {
+        Span span = jaegerTracer.buildSpan("getMoviesOfDirector").start();
+        log.info("Inside getMoviesOfDirector controller... ");
+
+        //Counter metric
+        Counter counter = Counter.builder("getMoviesOfDirector")
+                .description("a number of requests to /getMoviesOfDirector endpoint")
+                .register(meterRegistry);
+        counter.increment();
+
+        //Timer metric
+        Timer.Sample timer = Timer.start(meterRegistry);
+        Span getHeroDetailsSpan = jaegerTracer.buildSpan("getMoviesOfDirector-Service").asChildOf(span).start();
+        List<Movie> movies = movieService.getMoviesOfDirector(director);
+        getHeroDetailsSpan.finish();
+        span.finish();
+        timer.stop(Timer.builder("getMoviesOfDirector_Timer").register(meterRegistry));
+        return ResponseEntity.ok(movies);
+    }
+
+    // http://localhost:9100/v3/rest/getMoviesByDirectorAndGenre/Satyajit Ray/Comedy
+    @GetMapping(value = "/getMoviesByDirectorAndGenre/{director}/{genre}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<Movie>> getMoviesByDirectorAndGenre(
+            @PathVariable("director") String director,
+            @PathVariable("genre") String genre) {
+
+        //Counter metric
+        Counter counter = Counter.builder("getMoviesByDirectorAndGenre")
+                .description("a number of requests to /getMoviesByDirectorAndGenre endpoint")
+                .register(meterRegistry);
+        counter.increment();
+
+        //Gauge metric
+        Gauge.builder("users_count", movieService::countUsers)
+                .description("A current number of users in the system")
+                .register(meterRegistry);
+
+        //Timer metric
+        Timer.Sample timer = Timer.start(meterRegistry);
+
+        List<Movie> movies = movieService.findByDirectorAndGenre(director, genre);
+
+        timer.stop(Timer.builder("getMoviesByDirectorAndGenre_Timer").register(meterRegistry));
+        return ResponseEntity.ok(movies);
+    }
+
+    //http://localhost:9100/v3/rest/hello
     @GetMapping(value = "/hello", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> hello() {
 
+        Span span = jaegerTracer.buildSpan("helloSpan").start();
+        log.info("Inside hello controller... ");
+
         //Counter metric
-        Counter counter = Counter.builder("hello")
-                .description("gets number of requests to /hello endpoint")
+        Counter counter = Counter.builder("getMoviesOfDirector")
+                .description("a number of requests to /getMoviesOfDirector endpoint")
                 .register(meterRegistry);
         counter.increment();
+
+        span.finish();
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body("Hello World");

@@ -27,10 +27,6 @@ public class SecurityConfig {
                 .toArray(String[]::new);
     }
 
-    private static final String[] AUTH_WHITELIST = {
-            "/v3/rest/hello", "/v3/rest/helloPost", "/v3/rest/home", "/actuator/**", "/actuator/health"
-    };
-
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity

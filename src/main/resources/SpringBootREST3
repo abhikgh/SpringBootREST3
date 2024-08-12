@@ -20,30 +20,37 @@ SpringBoot3 changes
 4. JSONB ->  @Type(JsonBinaryType.class)
 
 5. Security ->
+
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private static final String[] AUTH_WHITELIST = {
-            "/v3/rest/hello", "/v3/rest/helloPost"
-    };
+   @Value("${application.spring.endpoints.exclude}")
+   private String[] applicationApisToBeExcluded;
+
+    @Value("${service.endpoints.exclude:}")
+    private String[] serviceApisToBeExcluded;
+
+    private String[] allApisToBeExcluded(){
+        return Stream.of(applicationApisToBeExcluded, serviceApisToBeExcluded)
+                .flatMap(Stream::of)
+                .toArray(String[]::new);
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
-      return   httpSecurity
+        return httpSecurity
                 .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth -> auth.requestMatchers(AUTH_WHITELIST).permitAll()
-                                                    .anyRequest().authenticated())
+                .authorizeHttpRequests(requests -> requests.requestMatchers(allApisToBeExcluded()).permitAll()
+                        .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .build();
     }
 }
 
 6. Observability -> 
-	Micrometer replaces Spring Cloud Sleuth 
-
-	<artifactId>opentracing-jeager-integration</artifactId>  is replaced with
-	<artifactId>util-observability</artifactId>
+	See details below
 
 7. jaxb-api -> 
 
@@ -491,10 +498,10 @@ Check in Grafana ::
 
 ----------------------------------------------------------------------------------------------------------------------
 
-Opentelemetry
+OpenTelemetry
 ================================================
 vendor-agnostic tools, APIs, and SDKs for observability by collecting Logs, Traces and Metrics
-Opentelemetry replaces OpenTracing
+OpenTelemetry replaces OpenTracing
 OpenTelemetry provides a collector known as an Otel collector that processes and exports the telemetry data to any observability backends like Jaeger, 
 
 micrometer collector in the actuator dependency to collect the traces and then use the OpenTelemetry dependency to export the traces.
@@ -503,6 +510,8 @@ micrometer collector in the actuator dependency to collect the traces and then u
 SpringBoot ------> Actuator  ---->   Micrometer    ----------------------->           Otel Collector       ------->           Jaeger (Observability Backend)
                                                    micrometer-tracing-bridge-otel                             opentelemetry-exporter-otlp
 
+pom.xml
+-----------
 
 	<parent>
 		<groupId>org.springframework.boot</groupId>
@@ -520,41 +529,48 @@ SpringBoot ------> Actuator  ---->   Micrometer    ----------------------->     
 	</properties>
 	<dependencies>
 	    <!-- Web -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-web</artifactId>
-		</dependency>
-
-		<!-- Actuator -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-actuator</artifactId>
-		</dependency>
-
-		<dependency>
-			<groupId>io.micrometer</groupId>
-			<artifactId>micrometer-core</artifactId>
-			<version>1.11.6</version>
-		</dependency>
-		<dependency>
-			<groupId>io.micrometer</groupId>
-			<artifactId>micrometer-tracing-bridge-otel</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>io.opentelemetry</groupId>
-			<artifactId>opentelemetry-exporter-otlp</artifactId>
-			<version>1.23.1</version>
-		</dependency>
-		<dependency>
-			<groupId>io.opentracing.contrib</groupId>
-			<artifactId>opentracing-spring-jaeger-web-starter</artifactId>
-			<version>3.3.1</version>
-		</dependency>
-
-		<dependency>
-			<groupId>io.opentelemetry</groupId>
-			<artifactId>opentelemetry-sdk-extension-jaeger-remote-sampler</artifactId>
-		</dependency>
+                <dependency>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-web</artifactId>
+                </dependency>
+                <!-- Actuator -->
+                <dependency>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-actuator</artifactId>
+                </dependency>
+                <!-- Micrometer-core -->
+                <dependency>
+                    <groupId>io.micrometer</groupId>
+                    <artifactId>micrometer-core</artifactId>
+                    <version>1.11.6</version>
+                </dependency>
+                <!-- Micrometer-prometheus -->
+                <dependency>
+                    <groupId>io.micrometer</groupId>
+                    <artifactId>micrometer-registry-prometheus</artifactId>
+                    <scope>runtime</scope>
+                </dependency>
+                <!--Bridges the Micrometer Observation API to OpenTelemetry-->
+                <dependency>
+                    <groupId>io.micrometer</groupId>
+                    <artifactId>micrometer-tracing-bridge-otel</artifactId>
+                </dependency>
+                <!--OpenTelemetry exporter-->
+                <dependency>
+                    <groupId>io.opentelemetry</groupId>
+                    <artifactId>opentelemetry-exporter-otlp</artifactId>
+                </dependency>
+                <!--Jaeger-->
+                <dependency>
+                    <groupId>io.opentracing.contrib</groupId>
+                    <artifactId>opentracing-spring-jaeger-web-starter</artifactId>
+                    <version>3.3.1</version>
+                </dependency>
+                <!--Jaeger-remote-sampler-->
+                <dependency>
+                    <groupId>io.opentelemetry</groupId>
+                    <artifactId>opentelemetry-sdk-extension-jaeger-remote-sampler</artifactId>
+                </dependency>
 
 	</dependencies>
 
@@ -615,25 +631,83 @@ services:
   jaeger-service:
     image: jaegertracing/all-in-one:latest
     ports:
-        - "16686:16686"
-        - "14250:14250"
-        - "5775:5775/udp"
-        - "6831:6831/udp"
-        - "6832:6832/udp"
-    environment:
-      - COLLECTOR_OTLP_ENABLED=true 	
+      - "16686:16686"
+      - "14250:14250"
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
 
 application.yaml
 ----------------------------
 
-management:
-  tracing:
-    sampling:
-      probability: 1.0
-tracing.url=http://localhost:4318/v1/traces
+spring:
+  application:
+    name: SpringBootREST3
+  datasource:
+    url: jdbc:postgresql://localhost:5432/springbootdb
+    username: postgres
+    password: tiger
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-timeout: 5000
+      maximum-pool-size: 5
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format-sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  zipkin:
+    base-url: http://localhost:9411/
+    sender:
+      type: web
+  main:
+    allow-bean-definition-overriding: true
+  spring:
+    sleuth:
+      otel:
+        config:
+          trace-id-ratio-based: 1.0
+      exporter:
+        otlp:
+          endpoint: http://collector:4317
+
+
 logging:
+  level:
+    org:
+      springframework:
+        security: DEBUG
   pattern:
     level: '%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]'
+
+server:
+  port: 9100
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: ["health","prometheus","metrics","info"]
+  endpoint:
+    health:
+      show-details: always
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+  info:
+    java:
+      enabled: true
+    env:
+      enabled: true
+
+application:
+  spring:
+    endpoints:
+      exclude: /v3/rest/hello, /v3/rest/helloPost, /v3/rest/home, /actuator/**, /v3/rest/getMoviesOfDirector/**
+
+
 opentracing:
   jaeger:
     enabled: true
@@ -641,17 +715,6 @@ opentracing:
 
 Jaeger
 --------------------------
-<dependency>
-    <groupId>io.opentracing.contrib</groupId>
-    <artifactId>opentracing-spring-jaeger-web-starter</artifactId>
-    <version>3.3.1</version>
-</dependency>
-
-//properties
-opentracing:
-  jaeger:
-    enabled: true
-
 @Configuration
 @ConditionalOnProperty(value = "opentracing.jaeger.enabled", havingValue = "true")
 public class JaegerConfig {
@@ -665,34 +728,28 @@ public class JaegerConfig {
                 .getTracer();
     }
 
-   //to send spans to Jaeger
-	@Bean
-	OtlpHttpSpanExporter otlpHttpSpanExporter(@Value("${tracing.url}") String url) {
-	    return OtlpHttpSpanExporter.builder()
-		    .setEndpoint(url)
-		    .build();
-	}
-
 }
 
 
 @RestController
-@RequestMapping("/orders/v1")
-@Slf4j
-public class NavigationController {
+@RequestMapping("/v3/rest")
+public class NavController {
 
-    private Logger logger = Logger.getLogger(NavigationController.class.getName());
+    @Autowired
+    private HomeService homeService;
 
     @Autowired
     private MovieService movieService;
 
     @Autowired
-    private JaegerTracer jaegerTracer;
-
-    @Autowired
     private MeterRegistry meterRegistry;
 
-    // http://localhost:9151/orders/v1/getMoviesOfDirector/Satyajit Ray
+    @Autowired
+    private JaegerTracer jaegerTracer;
+
+    Logger log = LoggerFactory.getLogger(NavController.class);
+
+    // http://localhost:9100/v3/rest/getMoviesOfDirector/Satyajit Ray
     @GetMapping(value = "/getMoviesOfDirector/{director}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<Movie>> getMoviesOfDirector(
             @PathVariable("director") String director) {
@@ -714,36 +771,48 @@ public class NavigationController {
         timer.stop(Timer.builder("getMoviesOfDirector_Timer").register(meterRegistry));
         return ResponseEntity.ok(movies);
     }
+
+    // http://localhost:9100/v3/rest/getMoviesByDirectorAndGenre/Satyajit Ray/Comedy
+    @GetMapping(value = "/getMoviesByDirectorAndGenre/{director}/{genre}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<Movie>> getMoviesByDirectorAndGenre(
+            @PathVariable("director") String director,
+            @PathVariable("genre") String genre) {
+
+        //Counter metric
+        Counter counter = Counter.builder("getMoviesByDirectorAndGenre")
+                .description("a number of requests to /getMoviesByDirectorAndGenre endpoint")
+                .register(meterRegistry);
+        counter.increment();
+
+        //Gauge metric
+        Gauge.builder("users_count", movieService::countUsers)
+                .description("A current number of users in the system")
+                .register(meterRegistry);
+
+        //Timer metric
+        Timer.Sample timer = Timer.start(meterRegistry);
+
+        List<Movie> movies = movieService.findByDirectorAndGenre(director, genre);
+
+        timer.stop(Timer.builder("getMoviesByDirectorAndGenre_Timer").register(meterRegistry));
+        return ResponseEntity.ok(movies);
+    }
 }
 
-@Autowired
-private MeterRegistry meterRegistry;
 
-// http://localhost:9050/orders/v1/getMoviesByDirectorAndGenre/Satyajit Ray/Family
-@GetMapping(value = "/getMoviesByDirectorAndGenre/{director}/{genre}", produces = MediaType.APPLICATION_JSON_VALUE)
-public ResponseEntity<List<Movie>> getMoviesByDirectorAndGenre(
-        @PathVariable("director") String director,
-        @PathVariable("genre") String genre) {
+Running all on Docker
+-------------------------
+Start the application
+Start Docker Desktop
+Run docker-compose.yml :: D:\workspace2\SpringBootREST3\src\main\resources>docker-compose up --build
+Once done, check in Docker Desktop that Otel Collector and Jaeger images are present
+Open Gitbash ::
+            docker images (Otel Collector and Jaeger images)
+            docker ps (All running containers, containers with Otel Collector and Jaeger image)
+Hit http://localhost:9100/v3/rest/getMoviesOfDirector/Satyajit Ray a few times
+Check in Jaeger ::
+           http://localhost:16686/search
 
-    //Counter metric
-    Counter counter = Counter.builder("getMoviesByDirectorAndGenre")
-            .description("a number of requests to /getMoviesByDirectorAndGenre endpoint")
-            .register(meterRegistry);
-    counter.increment();
-
-    //Gauge metric
-    Gauge.builder("users_count", userService::countUsers)
-            .description("A current number of users in the system")
-            .register(meterRegistry);
-
-    //Timer metric
-    Timer.Sample timer = Timer.start(meterRegistry);
-
-    List<Movie> movies = movieService.getMoviesByDirectorAndGenre(director, genre);
-
-    timer.stop(Timer.builder("getMoviesByDirectorAndGenre_Timer").register(meterRegistry));
-    return ResponseEntity.ok(movies);
-}
 
 -------------------------------------------------------------------------------------------------
 
