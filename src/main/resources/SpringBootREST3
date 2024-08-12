@@ -493,9 +493,11 @@ Check in Grafana ::
 
 Opentelemetry
 ================================================
-vendor-agnostic standard for observability by collecting Logs, Traces and Metrics
+vendor-agnostic tools, APIs, and SDKs for observability by collecting Logs, Traces and Metrics
 Opentelemetry replaces OpenTracing
 OpenTelemetry provides a collector known as an Otel collector that processes and exports the telemetry data to any observability backends like Jaeger, 
+
+micrometer collector in the actuator dependency to collect the traces and then use the OpenTelemetry dependency to export the traces.
 
 		      (exposes Metrics)  (Metrics  + Tracing + Logs)                    (LTM  :: collection and shipment)
 SpringBoot ------> Actuator  ---->   Micrometer    ----------------------->           Otel Collector       ------->           Jaeger (Observability Backend)
@@ -626,8 +628,13 @@ management:
   tracing:
     sampling:
       probability: 1.0
-tracing.url=http://localhost:<4317>
-
+tracing.url=http://localhost:4318/v1/traces
+logging:
+  pattern:
+    level: '%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]'
+opentracing:
+  jaeger:
+    enabled: true
 
 Jaeger
 --------------------------
@@ -654,6 +661,14 @@ public class JaegerConfig {
                 .withReporter(new io.jaegertracing.Configuration.ReporterConfiguration().withLogSpans(true))
                 .getTracer();
     }
+
+   //to send spans to Jaeger
+	@Bean
+	OtlpHttpSpanExporter otlpHttpSpanExporter(@Value("${tracing.url}") String url) {
+	    return OtlpHttpSpanExporter.builder()
+		    .setEndpoint(url)
+		    .build();
+	}
 
 }
 
