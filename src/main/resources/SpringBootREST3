@@ -701,11 +701,14 @@ management:
       enabled: true
     env:
       enabled: true
+  tracing:
+    sampling:
+      probability: 1.0
 
 application:
   spring:
     endpoints:
-      exclude: /v3/rest/hello, /v3/rest/helloPost, /v3/rest/home, /actuator/**, /v3/rest/getMoviesOfDirector/**
+      exclude: /v3/rest/hello, /v3/rest/helloPost, /v3/rest/home, /actuator/**, /v3/rest/getMoviesOfDirector/**, /v3/rest/getMoviesByDirectorAndGenre/**
 
 
 opentracing:
