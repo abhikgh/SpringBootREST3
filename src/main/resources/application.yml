@@ -15,10 +15,6 @@ spring:
       hibernate:
         format-sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
-  zipkin:
-    base-url: http://localhost:9411/
-    sender:
-      type: web
   main:
     allow-bean-definition-overriding: true
   spring:
@@ -29,7 +25,6 @@ spring:
       exporter:
         otlp:
           endpoint: http://collector:4317
-
 
 logging:
   level:
