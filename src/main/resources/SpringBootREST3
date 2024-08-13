@@ -714,21 +714,22 @@ opentracing:
 
 Jaeger
 --------------------------
+
 @Configuration
 @ConditionalOnProperty(value = "opentracing.jaeger.enabled", havingValue = "true")
 public class JaegerConfig {
 
     @Bean
     public JaegerTracer jaegerTracer() {
-
-        return new io.jaegertracing.Configuration("SpringBootRest2")
+        return new io.jaegertracing.Configuration("SpringBootREST3")
                 .withSampler(new io.jaegertracing.Configuration.SamplerConfiguration().withType(ConstSampler.TYPE).withParam(1))
                 .withReporter(new io.jaegertracing.Configuration.ReporterConfiguration().withLogSpans(true))
                 .getTracer();
     }
 
-}
 
+
+}
 
 @RestController
 @RequestMapping("/v3/rest")
