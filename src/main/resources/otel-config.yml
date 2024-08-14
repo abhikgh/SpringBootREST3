@@ -11,7 +11,7 @@ exporters:
   logging:
     loglevel: debug
   jaeger:
-    endpoint: jaeger-service:14250
+    endpoint: jaeger-service:14250 # 14250 : HTTP collector , model : proto
     tls:
       insecure: true
 
