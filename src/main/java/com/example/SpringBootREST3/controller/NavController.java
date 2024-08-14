@@ -9,6 +9,8 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationRegistry;
 import io.opentracing.Span;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Random;
 
 
 @RestController
@@ -41,6 +44,9 @@ public class NavController {
 
     @Autowired
     private JaegerTracer jaegerTracer;
+
+    @Autowired
+    private ObservationRegistry observationRegistry;
 
     Logger log = LoggerFactory.getLogger(NavController.class);
 
@@ -64,6 +70,15 @@ public class NavController {
         getHeroDetailsSpan.finish();
         span.finish();
         timer.stop(Timer.builder("getMoviesOfDirector_Timer").register(meterRegistry));
+
+        //Observation API
+        Observation.createNotStarted("getMoviesOfDirector_Count", observationRegistry)
+                .lowCardinalityKeyValue("request-uid", String.valueOf(new Random().nextInt(100)))
+                .observe(() -> {
+                    List<Movie> movies2 = movieService.getMoviesOfDirector(director);
+                    log.debug("Counting getMoviesOfDirector");
+                });
+
         return ResponseEntity.ok(movies);
     }
 

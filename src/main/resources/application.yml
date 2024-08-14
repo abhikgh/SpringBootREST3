@@ -17,14 +17,7 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
   main:
     allow-bean-definition-overriding: true
-  spring:
-    sleuth:
-      otel:
-        config:
-          trace-id-ratio-based: 1.0
-      exporter:
-        otlp:
-          endpoint: http://collector:4317
+
 
 logging:
   level:
@@ -57,6 +50,10 @@ management:
   tracing:
     sampling:
       probability: 1.0
+  otlp:
+    tracing:
+      endpoint: http://localhost:4318/v1/traces
+
 
 application:
   spring:

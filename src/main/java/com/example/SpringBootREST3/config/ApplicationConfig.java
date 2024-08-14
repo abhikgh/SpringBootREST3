@@ -24,8 +24,7 @@ public class ApplicationConfig {
 
     // Monitoring beans
     @Bean
-    ObservationRegistry
-    observationRegistry() {
+    ObservationRegistry observationRegistry() {
         return ObservationRegistry.create();
     }
 
