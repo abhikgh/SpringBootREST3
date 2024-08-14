@@ -140,10 +140,11 @@ Class Data Sharing (CDS)
 ==============================
 JVM optimization technique
 
-Creates a snapshot of the application classes and then storing them in a shared archived file
-During startup, JVM can reference this archive, dramatically speeding up the class loading process.
+Creates a snapshot of the application classes and then storing them in a archived file
+During startup, JVM can refer this archive and get the class file, improving the class-loading time
 
 spring.context.exit-on-refresh=true
+
 -XX:ArchiveClassesAtExit=app-cds.jsa
 # On the JVM you plan to deploy to:
 java -Xshare:on -XX:SharedArchiveFile=app-cds.jsa -jar myapp.jar
