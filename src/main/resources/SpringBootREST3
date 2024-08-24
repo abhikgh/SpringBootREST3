@@ -589,7 +589,7 @@ pom.xml
 			<dependency>
 				<groupId>org.springframework.cloud</groupId>
 				<artifactId>spring-cloud-dependencies</artifactId>
-				<version>2021.0.8</version>
+				<version>2023.0.0</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
