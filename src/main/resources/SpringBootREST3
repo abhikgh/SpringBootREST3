@@ -49,14 +49,14 @@ ApplicationConfig
 @Configuration
 public class ApplicationConfig {
 
-    //Tomcat Protocol Handler is responsible for handling incoming requests in a Spring Boot application
+    //TomcatProtocolHandler is responsible for handling incoming requests in a Spring Boot application
     //TomcatProtocolHandlerCustomizer configures the Executor
     //Executor is responsible for executing tasks, like handling incoming requests
     //Virtual Threads
     @Bean
     TomcatProtocolHandlerCustomizer<?> tomcatProtocolHandlerCustomizer() {
-        return protocolHandler -> {
-            protocolHandler.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
+        return tomcatProtocolHandlerCustomizer -> {
+            tomcatProtocolHandlerCustomizer.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
         };
     }
 
