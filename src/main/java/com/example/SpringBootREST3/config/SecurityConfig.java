@@ -31,8 +31,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
                 .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(requests -> requests.requestMatchers(allApisToBeExcluded()).permitAll()
-                        .anyRequest().authenticated())
+                .authorizeHttpRequests(requests -> requests.requestMatchers(allApisToBeExcluded()).permitAll().anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .build();
     }
