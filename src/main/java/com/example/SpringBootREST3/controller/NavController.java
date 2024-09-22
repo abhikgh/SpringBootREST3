@@ -1,9 +1,12 @@
 package com.example.SpringBootREST3.controller;
 
 import com.example.SpringBootREST3.entity.Movie;
+import com.example.SpringBootREST3.model.AuthenticationResponse;
 import com.example.SpringBootREST3.model.Person;
 import com.example.SpringBootREST3.service.HomeService;
 import com.example.SpringBootREST3.service.MovieService;
+import com.example.SpringBootREST3.service.UserService;
+import com.example.SpringBootREST3.util.JWTTokenUtil;
 import io.jaegertracing.internal.JaegerTracer;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Gauge;
@@ -18,6 +21,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,7 +32,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 
 @RestController
@@ -48,9 +56,23 @@ public class NavController {
     @Autowired
     private ObservationRegistry observationRegistry;
 
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private JWTTokenUtil jwtTokenUtil;
+
     Logger log = LoggerFactory.getLogger(NavController.class);
 
+    //Secured
     // http://localhost:9100/v3/rest/getMoviesOfDirector/Satyajit Ray
+    // Authorization
+    // Type     -> Bearer Token
+    // Token    -> eyJhbGciOiJIUzUxMiJ9...
+    // JWT Token is in the form of Bearer Token
     @GetMapping(value = "/getMoviesOfDirector/{director}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<Movie>> getMoviesOfDirector(
             @PathVariable("director") String director) {
@@ -81,6 +103,37 @@ public class NavController {
 
         return ResponseEntity.ok(movies);
     }
+
+    //http://localhost:9100/v3/rest/authenticate
+    /*
+        {
+        "userId":"eyabhikg",
+        "password":"12345"
+        }
+     */
+    //var jsonData = JSON.parse(responseBody);
+    //pm.environment.set("SB3_BEARER_TOKEN", jsonData['jwt']);
+    @PostMapping("/authenticate")
+    public AuthenticationResponse authenticate(@RequestBody Map<String, Object> claims){
+
+        try {
+            log.info("In authenticate method...");
+            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(claims.get("userId"), claims.get("password")));
+        } catch (Exception e) {
+            log.error("Authentication Error.......");
+            throw e;
+        }
+
+        UserDetails userDetails = userService.loadUserByUsername(String.valueOf(claims.get("userId")));
+        String jwt = jwtTokenUtil.generateToken(userDetails);
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(new AuthenticationResponse(userDetails.getUsername(), userDetails.getAuthorities().stream().map(String::valueOf).toList().getFirst(), jwt))
+                .getBody();
+
+    }
+
+
 
     // http://localhost:9100/v3/rest/getMoviesByDirectorAndGenre/Satyajit Ray/Comedy
     @GetMapping(value = "/getMoviesByDirectorAndGenre/{director}/{genre}", produces = MediaType.APPLICATION_JSON_VALUE)
