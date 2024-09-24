@@ -395,37 +395,6 @@ Servlet Stack                                                Reactive Stack     
 
 --------------------------------------------------------------------------------------------------------
 
-Gatling
-======================
-
-Gatling : Load testing tool that can be used to simulate user behavior and test the performance of Spring Boot applications under different loads
-Compared to JMeter : Gatling is faster, lightweight, and provides more detailed and colorful reports
-
-simulation service :: E:\Softwares\gatling-charts-highcharts-bundle-3.9.5\user-files\simulations\GatlingSimulation.java
-
-Run gatling :: E:\Softwares\gatling-charts-highcharts-bundle-3.9.5\bin\gatling.bat
-
-Results :: E:\Softwares\gatling-charts-highcharts-bundle-3.9.5\results
-
-<dependency>
-    <groupId>io.gatling</groupId>
-    <artifactId>gatling-core</artifactId>
-    <version>3.9.3</version>
-</dependency>
-<!-- https://mvnrepository.com/artifact/io.gatling.highcharts/gatling-charts-highcharts -->
-<dependency>
-    <groupId>io.gatling.highcharts</groupId>
-    <artifactId>gatling-charts-highcharts</artifactId>
-    <version>3.9.3</version>
-</dependency>
-<!-- https://mvnrepository.com/artifact/io.gatling/gatling-maven-plugin -->
-<dependency>
-    <groupId>io.gatling</groupId>
-    <artifactId>gatling-maven-plugin</artifactId>
-    <version>4.3.1</version>
-</dependency>
-
-
 Class Data Sharing (CDS)
 ==============================
 JVM optimization technique
