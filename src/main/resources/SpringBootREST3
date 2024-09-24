@@ -73,7 +73,7 @@ public class ApplicationConfig {
     }
 }
 ---------------------------------------------------------------------------------------------------------
-Spring Boot 3 Security
+Spring Boot 3 Secured Endpoint
 ---------------------------------
 1. pom
 <!-- Web -->
@@ -330,6 +330,70 @@ public class UserService implements UserDetailsService {
 }
 
 ----------------------------------------------------------------------------------------------------------------------
+Spring Boot 3 Secured Endpoint client
+-------------------------------------------
+
+@Configuration
+public class RestClientConfig {
+
+    @Bean(name = "restClient1")
+    public RestClient restClient() {
+        return RestClient
+                .builder()
+                .baseUrl("http://localhost:9100/v3/rest")
+                .build();
+    }
+
+}
+
+@Autowired
+@Qualifier("restClient1")
+private RestClient restClient;
+
+public List<Movie> getMoviesOfDirectorClient(String director) {
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.set("Authorization","Bearer " + getJWTToken());
+    return
+            restClient
+                    .get()
+                    .uri("/getMoviesOfDirector/" + director)
+                    //.header("Authorization", "Bearer "+getJWTToken())
+                    .headers(headers -> headers.addAll(httpHeaders))
+                    .accept(MediaType.APPLICATION_JSON)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<>() {});
+}
+
+private String getJWTToken() {
+    Map<String, Object> claims = new HashMap<>();
+    claims.put("userId","eyabhikg");
+    claims.put("password", "12345");
+
+    String jwt =
+            Objects.requireNonNull(restClient
+                                    .post()
+                                    .uri("/authenticate")
+                                    .accept(MediaType.APPLICATION_JSON)
+                                    .body(claims)
+                                    .retrieve()
+                                    .body(AuthenticationResponse.class))
+                    .getJwt();
+
+    System.out.println("jwt - " + jwt);
+    return
+            jwt;
+}
+
+--------------------------------------------------------------------------------------------------------
+
+
+RestTemplate                            vs                      WebClient                           vs                          RestClient              vs                   FeignClient
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Synchronous HTTP call                                        ASynchronous HTTP call                                           Synchronous HTTP call                         Synchronous HTTP call
+                                                             Fluid API                                                        Fluid API                                     Interface with @FeignClient
+Servlet Stack                                                Reactive Stack                                                   Reactive Stack
+
+--------------------------------------------------------------------------------------------------------
 
 Gatling
 ======================
