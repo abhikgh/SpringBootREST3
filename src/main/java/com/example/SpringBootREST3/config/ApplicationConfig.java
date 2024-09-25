@@ -13,7 +13,8 @@ public class ApplicationConfig {
 
     //Tomcat Protocol Handler is responsible for handling incoming requests in a Spring Boot application
     //TomcatProtocolHandlerCustomizer configures the Executor
-    //Executor is responsible for executing tasks, like handling incoming requests
+    //Executors.newVirtualThreadPerTaskExecutor() -
+        // - executor service that creates a new Virtual Thread for each task submitted to it
     //Virtual Threads
     @Bean
     TomcatProtocolHandlerCustomizer<?> tomcatProtocolHandlerCustomizer() {

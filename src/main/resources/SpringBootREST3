@@ -56,7 +56,7 @@ public class ApplicationConfig {
     @Bean
     TomcatProtocolHandlerCustomizer<?> tomcatProtocolHandlerCustomizer() {
         return tomcatProtocolHandlerCustomizer -> {
-            tomcatProtocolHandlerCustomizer.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
+            tomcatProtocolHandlerCustomizer.setExecutor(Executors.newVirtualThreadPerTaskExecutor()); //executor service that creates a new Virtual Thread for each task submitted to it
         };
     }
 
