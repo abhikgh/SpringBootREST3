@@ -391,7 +391,7 @@ RestTemplate                            vs                      WebClient       
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 Synchronous HTTP call                                        ASynchronous HTTP call                                           Synchronous HTTP call                         Synchronous HTTP call
                                                              Fluid API                                                        Fluid API                                     Interface with @FeignClient
-Servlet Stack                                                Reactive Stack                                                   Reactive Stack
+Servlet Stack                                                Reactive Stack                                                   Servlet Stack
 
 --------------------------------------------------------------------------------------------------------
 
