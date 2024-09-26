@@ -388,6 +388,54 @@ private String getJWTToken() {
 
 --------------------------------------------------------------------------------------------------------
 
+ASync client
+-------------------------------------------
+
+@EnableAsync
+@Configuration
+public class ASyncConfig {
+
+    @Bean
+    public ThreadPoolTaskExecutor threadPoolTaskExecutor(){
+        ThreadPoolTaskExecutor threadPoolTaskExecutor = new ThreadPoolTaskExecutor();
+        threadPoolTaskExecutor.setMaxPoolSize(100);
+        threadPoolTaskExecutor.setThreadNamePrefix("ASync-1");
+        threadPoolTaskExecutor.initialize();
+        return threadPoolTaskExecutor;
+    }
+}
+
+@SneakyThrows
+public HeroDetailsResponse getHeroDetailsASync(HeroDetailsRequest heroDetailsRequest) {
+    HeroDetailsResponse heroDetailsResponse = new HeroDetailsResponse();
+    List<Hero> heroList = new ArrayList<>();
+    List<CompletableFuture<Hero>> cfs = heroDetailsRequest.getHeroNames().stream().map(this::getHeroDetails).toList();
+    //join all the CFs
+    CompletableFuture.allOf(cfs.toArray(new CompletableFuture[0])).join();
+    //get the results from each of the CF
+    for(CompletableFuture<Hero> completableFuture : cfs){
+        if(completableFuture.isDone()){
+            heroList.add(completableFuture.get());
+        }
+    }
+    heroDetailsResponse.setHeroList(heroList);
+    return heroDetailsResponse;
+}
+
+@Async(value = "threadPoolTaskExecutor")
+private CompletableFuture<Hero> getHeroDetails(String heroName) {
+    System.out.println("ASync Thread :: " + Thread.currentThread().getName());
+    Hero hero = restClient2
+                .get()
+                .uri("/getHeroDetails/"+heroName)
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .body(Hero.class);
+    return CompletableFuture.completedFuture(hero);
+}
+
+
+--------------------------------------------------------------------------------------------------------
 
 RestTemplate                            vs                      WebClient                           vs                          RestClient              vs                   FeignClient
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
