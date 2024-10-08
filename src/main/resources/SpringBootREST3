@@ -617,6 +617,8 @@ public HeroDetailsResponse getHeroDetailsASync(HeroDetailsRequest heroDetailsReq
 }
 
 //429 Too Many Requests response
+//Throttling allows to prioritize certain requests or users, ensuring a smoother experience for critical operations. 
+   Rate limiting enforces uniform limits across all requests
 
 --------------------------------------------------------------------------------------------------------
 
