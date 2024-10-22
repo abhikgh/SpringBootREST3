@@ -680,10 +680,33 @@ GraalVM native image
 ========================
 Compiles the Java code into a standalone executable, eliminating the need for a JVM at runtime.
 
+----------------------------------------------------------------------------------------------------------------------
 
-Micrometer
-======================
+Spring Observability
+===============================================================================
+Observability is the ability to measure the internal state of a system only by checking its outputs (logs, traces, metrics)
+define our own metrics using Micrometer
+gather them using Prometheus
+display them on a Grafana dashboard
 
+
+		    (exposes Metrics)    (collects + ships Metrics)  	    (scrape Metrics)              (query Prometheus)
+SpringBoot ------> Actuator  ---->   Micrometer   --------------->             Prometheus     ------>    Grafana
+									  (Monitoring tool)         (Observability backend)
+
+                                 (Prometheus to scrape Micrometer logs and Micrometer metrics at a configured interval from and endpoint and display them in a Grafana dashboard)
+
+
+<!-- Web -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-web</artifactId>
+</dependency>
+<!-- Actuator -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-actuator</artifactId>
+</dependency>
 <!-- Micrometer-core -->
 <dependency>
     <groupId>io.micrometer</groupId>
@@ -696,136 +719,10 @@ Micrometer
     <artifactId>micrometer-registry-prometheus</artifactId>
     <scope>runtime</scope>
 </dependency>
-	This module enables Prometheus to scrape Micrometer logs
-	define our own metrics using Micrometer
-	gather them using Prometheus
-	display them on a Grafana dashboard
-
-		      (exposes Metrics)  (Tracing + metrics collector and shipment)  (scrape the Metrics)     (query Prometheus)
-SpringBoot ------> Actuator  ---->   Micrometer   --------------->             Prometheus     ------>    Grafana (observability backend)
-									(monitoring backend : monitoring and alerting toolkit)
-                                                                                                      - OpenTelemetry, Jaeger, Zipkin
-application.yaml
-------------------------------
-management:
-  server:
-    port: 9101
-  endpoints:
-    web:
-      exposure:
-        include: health, prometheus
-      base-path: "/"
-      path-mapping:
-        prometheus: "metrics"
-  metrics:
-    tags:
-      application: transfer-service
-
-promotheus.yaml
---------------------------
-global:
-  scrape_interval: 15s # By default, scrape targets every 15 seconds.
-# A scrape configuration containing exactly one endpoint to scrape:
-# Here it's Prometheus itself.
-scrape_configs:
-  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
-  - job_name: 'prometheus'
-    # Override the global default and scrape targets from this job every 5 seconds.
-    scrape_interval: 5s
-    static_configs:
-      - targets: [ 'localhost:9090' ]
-  - job_name: 'transfer-service'
-    # Override the global default and scrape targets from this job every 5 seconds.
-    scrape_interval: 2s
-    metrics_path: /metrics
-    static_configs:
-      - targets: [ 'host.docker.internal:9101' ]
-
-Metric type                             Description
-------------------                  ----------------------------------------
-default
---------
-Thread utilization
-CPU Usage
-Cache utilization
-Connection pool
-
-@Autowired
-private MeterRegistry meterRegistry;
-
-// http://localhost:9050/orders/v1/getMoviesByDirectorAndGenre/Satyajit Ray/Family
-@GetMapping(value = "/getMoviesByDirectorAndGenre/{director}/{genre}", produces = MediaType.APPLICATION_JSON_VALUE)
-public ResponseEntity<List<Movie>> getMoviesByDirectorAndGenre(
-        @PathVariable("director") String director,
-        @PathVariable("genre") String genre) {
-
-    //Counter metric
-    Counter counter = Counter.builder("getMoviesByDirectorAndGenre")
-            .description("a number of requests to /getMoviesByDirectorAndGenre endpoint")
-            .register(meterRegistry);
-    counter.increment();
-
-    //Gauge metric
-    Gauge.builder("users_count", userService::countUsers)
-            .description("A current number of users in the system")
-            .register(meterRegistry);
-
-    //Timer metric
-    Timer.Sample timer = Timer.start(meterRegistry);
-
-    List<Movie> movies = movieService.getMoviesByDirectorAndGenre(director, genre);
-
-    timer.stop(Timer.builder("getMoviesByDirectorAndGenre_Timer").register(meterRegistry));
-    return ResponseEntity.ok(movies);
-}
-
-----------------------------------------------------------------------------------------------------------------------
-
-Spring Observability
-===============================================================================
-Observability is the ability to measure the internal state of a system only by checking its outputs (logs, traces, metrics)
-define our own metrics using Micrometer
-gather them using Prometheus
-display them on a Grafana dashboard
-
-
-		    (exposes Metrics)           (collects Metrics + own Metrics)  			   (scrape Metrics)              (query Prometheus)
-SpringBoot ------> Actuator  ---->   Micrometer   --------------->             Prometheus     ------>    Grafana
-									  (Monitoring tool)		                                        (Observability backend)
-
-                                 (Prometheus to scrape Micrometer logs and Micrometer metrics at a configured interval and display them in a Grafana dashboard)
-
-<!-- Web -->
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-web</artifactId>
-</dependency>
-<!-- Actuator -->
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-actuator</artifactId>
-</dependency>
-<!-- Micrometer-prometheus -->
-<!-- This module enables Prometheus to scrape Micrometer logs and Micrometer metrics at a configured interval and display them in a Grafana dashboard-->
-<dependency>
-    <groupId>io.micrometer</groupId>
-    <artifactId>micrometer-registry-prometheus</artifactId>
-    <scope>runtime</scope>
-</dependency>
 <!-- AOP, for custom timer -->
 <dependency>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-aop</artifactId>
-</dependency>
-<!--OpenTelemetry Tracer: Bridges the Micrometer Observation API to OpenTelemetry-->
-<dependency>
-  <groupId>io.micrometer</groupId>
-  <artifactId>micrometer-tracing-bridge-otel</artifactId>
-</dependency>
-<!--Zipkin with OpenTelemetry: Reports traces to Zipkin-->
-<dependency>
-  <groupId>io.opentelemetry</groupId>
-  <artifactId>opentelemetry-exporter-zipkin</artifactId>
 </dependency>
 
 Actuator
@@ -875,18 +772,18 @@ management:
       env:
         enabled: true
 
-Micrometer
-====================
-Metrics facade (replaces Spring Cloud Sleuth)
-collects Metrics from Actuator + own Metrics
-supports Tracers like OpenTelemetry
+
+Micrometer (replaces Spring Cloud Sleuth)
+=============================
+collects metrics + own metrics + exports Metrics 
+configures Spring Boot applications to expose metrics in a format that Prometheus can scrape and store.
 
 Micrometer metrics::
 -----------------------
 Timer                                 measuring short-duration latencies, and the frequency of such events.
-Counter				                  count
+Counter				      count
 Gauge	                              current value
-DistributionSummary	                  total amount of all recorded events
+DistributionSummary	              total amount of all recorded events
 Micrometer Observation API            lightweight library for application metrics
 
 @Configuration
