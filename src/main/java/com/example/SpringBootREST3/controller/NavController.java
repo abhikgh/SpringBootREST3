@@ -8,6 +8,7 @@ import com.example.SpringBootREST3.service.MovieService;
 import com.example.SpringBootREST3.service.UserService;
 import com.example.SpringBootREST3.util.JWTTokenUtil;
 import io.jaegertracing.internal.JaegerTracer;
+import io.micrometer.core.annotation.Counted;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;

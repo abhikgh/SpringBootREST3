@@ -690,8 +690,8 @@ gather them using Prometheus
 display them on a Grafana dashboard
 
 
-		    (exposes Metrics)    (collects + ships Metrics)  	    (scrape Metrics)              (query Prometheus)
-SpringBoot ------> Actuator  ---->   Micrometer   --------------->             Prometheus     ------>    Grafana
+		    (exposes Metrics)    (collects + makes + ships Metrics)   (scrape Metrics)         (query Prometheus)
+SpringBoot ------> Actuator  ---->   Micrometer   --------------->     Prometheus     ------>    Grafana
 									  (Monitoring tool)         (Observability backend)
 
                                  (Prometheus to scrape Micrometer logs and Micrometer metrics at a configured interval from and endpoint and display them in a Grafana dashboard)
@@ -729,6 +729,9 @@ Actuator
 ===========================
 Exposes metrics by exposing management endpoints - CPU usage, memory usage, request rate, error rate
 
+http://localhost:9100/actuator
+//health and info are auto-enabled
+
 /health
 /info
 /env
@@ -737,22 +740,6 @@ Exposes metrics by exposing management endpoints - CPU usage, memory usage, requ
 /sessions
 /startup
 /shutdown
-
-<!-- Actuator -->
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-actuator</artifactId>
-</dependency>
-
-<!-- Micrometer-prometheus -->
-<dependency>
-    <groupId>io.micrometer</groupId>
-    <artifactId>micrometer-registry-prometheus</artifactId>
-    <scope>runtime</scope>
-</dependency>
-
-http://localhost:9050/actuator
-//health and info are auto-enabled
 
 management:
   endpoints:
@@ -771,49 +758,30 @@ management:
         enabled: true
       env:
         enabled: true
+  tracing:
+      sampling:
+        probability: 1.0
 
 
 Micrometer (replaces Spring Cloud Sleuth)
-=============================
+========================================================
 collects metrics + own metrics + exports Metrics 
 configures Spring Boot applications to expose metrics in a format that Prometheus can scrape and store.
 
 Micrometer metrics::
 -----------------------
 Timer                                 measuring short-duration latencies, and the frequency of such events.
-Counter				      count
+Counter				                  count
 Gauge	                              current value
-DistributionSummary	              total amount of all recorded events
+DistributionSummary	                  total amount of all recorded events
 Micrometer Observation API            lightweight library for application metrics
 
-@Configuration
-public class ApplicationConfig {
+//Counter metric
+Counter counter = Counter.builder("getMoviesOfDirector")
+                        .description("a number of requests to /getMoviesOfDirector endpoint")
+                        .register(meterRegistry);
+counter.increment();
 
-	  // Monitoring beans
-	  @Bean
-	  ObservationRegistry observationRegistry() {
-	    return ObservationRegistry.create();
-	  }
-	
-	  // To have the @Observed support we need to register this aspect
-	  @Bean
-	  ObservedAspect observedAspect(ObservationRegistry observationRegistry) {
-	    return new ObservedAspect(observationRegistry);
-	  }
-}
-
-@GetMapping(value = "/hello", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-public ResponseEntity<String> hello() {
-
-    //Counter metric
-    Counter counter = Counter.builder("hello")
-            .description("gets number of requests to /hello endpoint")
-            .register(meterRegistry);
-    counter.increment();
-
-    return ResponseEntity.status(HttpStatus.OK)
-            .body("Hello World");
-}
 
 Prometheus
 =====================================
@@ -831,21 +799,16 @@ scrape_configs:
         labels:
           application: 'SpringBootREST3'
 
-
-Hit the request
-    http://localhost:9100/v3/rest/hello
-    and then check
+Hit http://localhost:9100/v3/rest/getMoviesOfDirector/Satyajit Ray a few times
 
 Check in Prometheus ::
-            http://localhost:9090/
-                - prometheus_http_requests_total
-                - process_uptime_seconds gauge
+            http://localhost:9100/actuator/prometheus
 
+            # TYPE getMoviesOfDirector_total counter
+            getMoviesOfDirector_total 7.0
 
-management:
-  tracing:
-    sampling:
-      probability: 1.0
+General check in Prometheus UI:
+    http://localhost:9090/ -> prometheus_http_requests_total
 
 How does Prometheus that is running on Docker connect to SpringBoot app that is running on localhost?
 ---------------------------------------------------------------------------------------------------------------
@@ -857,18 +820,26 @@ Behind the scenes, an observation has been created for the HTTP request, which i
 http://localhost:9090/
 - Check Status -> Targets
 
-#TYPE http_server_requests_seconds_count
-#TYPE getMoviesOfDirector_time_seconds_max gauge
-#TYPE getMoviesOfDirector_time_seconds_count :: gives count of calls
 
 Grafana
 ======================
 Observability backend
 Data Visualization service -  create dashboards to visualize and analyze data
-Ensure to add Prometheus as a Data Source in Grafana.
-query Prometheus(datasources)
-     depends_on:
-          - prometheus
+
+http://localhost:3000/ (admin/Kolkata@123a)
+
+Add your first datasource
+Select Prometheus
+Connect to Prometheus from Grafana :
+    Get Prometheus container id
+    Get Prometheus IP :
+        docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' 3c1d444e1ae7
+    - 172.22.0.2
+    Prometheus IP in Grafana :: http://172.22.0.2:9090
+    - Save and test
+Add new Dashboard
+    Datasource - Prometheus-1
+    prometheus_http_requests_total
 
 datasources.yml
 ----------------------
@@ -904,37 +875,33 @@ services:
     depends_on:
       - prometheus
 
-http://localhost:3000/ (admin/welcome@1a OR admin/admin)
-
-Connect to Prometheus from Grafana
------------------------------------------
-Get Prometheus container id
-docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' daca98a3c836
-- 172.22.0.2
-Prometheus IP in Grafana :: http://172.22.0.2:9090
-
 
 Running all on Docker
 -------------------------
 Start the application
-Start Docker Desktop
-Run docker-compose.yml :: D:\workspace2\SpringBootREST3\src\main\resources>docker-compose up --build
-Once done, check in Docker Desktop that prometheus and grafana images are present
-Open Gitbash ::
-            docker images (prometheus and grafana images)
-            docker ps (All running containers, containers with prometheus and grafana images)
-Hit http://localhost:9100/v3/rest/hello a few times
+Start Docker Desktop (starts the Docker daemon)
+Update docker-compose.yml with PR-GR
+Run docker-compose.yml in Git bash :: cd  D:/workspace2/SpringBootREST3/src/main/resources
+                                      docker-compose up --build
+Open Gitbash another window::
+            docker images //prometheus and grafana images
+            docker ps     // All running containers
+
+            docker stop $(docker ps -a -q) //Stop all running containers
+            docker rm -f $(docker ps -a -q) //Docker remove all containers
+            docker rmi -f $(docker images -q) //Docker remove all images
+
+Hit http://localhost:9100/v3/rest/getMoviesOfDirector/Satyajit Ray a few times
+
 Check in Prometheus ::
-            http://localhost:9090/
-                - prometheus_http_requests_total
-                - process_uptime_seconds gauge
+            - see above
 Check in Grafana ::
-            http://localhost:3000/ (admin/welcome@1a)
+            - see above
 
 
 ----------------------------------------------------------------------------------------------------------------------
 
-OpenTelemetry
+Spring OpenTelemetry
 ================================================
 Observability framework for application monitoring by collecting Logs, Traces and Metrics (replaces OpenTracing)
 vendor-agnostic
@@ -1193,8 +1160,8 @@ public class NavController {
 
         //Counter metric
         Counter counter = Counter.builder("getMoviesOfDirector")
-                .description("a number of requests to /getMoviesOfDirector endpoint")
-                .register(meterRegistry);
+                                .description("a number of requests to /getMoviesOfDirector endpoint")
+                                .register(meterRegistry);
         counter.increment();
 
         //Timer metric

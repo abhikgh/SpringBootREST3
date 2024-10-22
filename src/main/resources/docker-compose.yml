@@ -1,19 +1,21 @@
 version: '3.7'
 
 services:
-  collector:
-    image: otel/opentelemetry-collector:0.72.0
-    command: [ "--config=/etc/otel-collector-config.yml" ]
+  prometheus:
+    image: prom/prometheus:v2.44.0
+    container_name: prometheus
+    ports:
+      - "9090:9090"
     volumes:
-      - ./otel-config.yml:/etc/otel-collector-config.yml
-    ports:
-      - "4318:4318"
-    depends_on:
-      - jaeger-service
+      - ./prometheus.yml:/etc/prometheus.yml
 
-  jaeger-service:
-    image: jaegertracing/all-in-one:latest
+  grafana:
+    image: grafana/grafana:9.5.2
+    container_name: grafana
     ports:
-      - "16686:16686"
-      - "4318:4318"
-      - "4317:4317"
+      - "3000:3000"
+    restart: unless-stopped
+    volumes:
+      - ./datasources.yml:/etc/datasources.yml
+    depends_on:
+      - prometheus

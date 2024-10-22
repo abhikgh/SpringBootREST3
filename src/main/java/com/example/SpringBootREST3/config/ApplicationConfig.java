@@ -23,7 +23,7 @@ public class ApplicationConfig {
         };
     }
 
-    // Monitoring beans
+    /*// Monitoring beans
     @Bean
     ObservationRegistry observationRegistry() {
         return ObservationRegistry.create();
@@ -33,5 +33,5 @@ public class ApplicationConfig {
     @Bean
     ObservedAspect observedAspect(ObservationRegistry observationRegistry) {
         return new ObservedAspect(observationRegistry);
-    }
+    }*/
 }
