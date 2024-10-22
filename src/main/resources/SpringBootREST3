@@ -904,7 +904,7 @@ services:
     depends_on:
       - prometheus
 
-http://localhost:3000/ (admin/welcome@1a)
+http://localhost:3000/ (admin/welcome@1a OR admin/admin)
 
 Connect to Prometheus from Grafana
 -----------------------------------------
