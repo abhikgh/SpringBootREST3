@@ -833,9 +833,9 @@ Select Prometheus
 Connect to Prometheus from Grafana :
     Get Prometheus container id
     Get Prometheus IP :
-        docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' 3c1d444e1ae7
+        docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' cd7c5f0de3ac
     - 172.22.0.2
-    Prometheus IP in Grafana :: http://172.22.0.2:9090
+    Prometheus URL in Grafana :: http://172.22.0.2:9090
     - Save and test
 Add new Dashboard
     Datasource - Prometheus-1
@@ -894,10 +894,13 @@ Open Gitbash another window::
 Hit http://localhost:9100/v3/rest/getMoviesOfDirector/Satyajit Ray a few times
 
 Check in Prometheus ::
-            - see above
+            http://localhost:9100/actuator/prometheus
+
+            # TYPE getMoviesOfDirector_total counter
+            getMoviesOfDirector_total 7.0
+
 Check in Grafana ::
             - see above
-
 
 ----------------------------------------------------------------------------------------------------------------------
 
