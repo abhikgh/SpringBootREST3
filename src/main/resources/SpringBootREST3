@@ -901,9 +901,9 @@ Check in Grafana ::
 
 ----------------------------------------------------------------------------------------------------------------------
 
-Spring OpenTelemetry
+Spring OpenTelemetry (replaces OpenTracing)
 ================================================
-Observability framework for application monitoring by collecting Logs, Traces and Metrics (replaces OpenTracing)
+Observability framework for application monitoring by collecting Logs, Traces and Metrics 
 vendor-agnostic
 
 OTLP
@@ -915,84 +915,72 @@ SpringBoot ------> Actuator  ---->   Micrometer    ----------------------->     
                                                    micrometer-tracing-bridge-otel                  opentelemetry-exporter-otlp
 pom.xml
 -----------
+<artifactId>spring-boot-starter-parent</artifactId>
+<version>3.2.7</version>
 
-	<parent>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.2.7</version>
-		<relativePath/>
-	</parent>
-	<groupId>com.example</groupId>
-	<artifactId>SpringBootREST3</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
-	<name>SpringBootREST3</name>
-	<description>Demo project for Spring Boot</description>
-	<properties>
-		<java.version>21</java.version>
-	</properties>
+<java.version>21</java.version>
+		
+<dependencies>
+	    <!-- Web -->
+	<dependency>
+	    <groupId>org.springframework.boot</groupId>
+	    <artifactId>spring-boot-starter-web</artifactId>
+	</dependency>
+	<!-- Actuator -->
+	<dependency>
+	    <groupId>org.springframework.boot</groupId>
+	    <artifactId>spring-boot-starter-actuator</artifactId>
+	</dependency>
+	<!-- AOP, for custom timer -->
+	<dependency>
+	    <groupId>org.springframework.boot</groupId>
+	    <artifactId>spring-boot-starter-aop</artifactId>
+	</dependency>
+	<!-- Micrometer-core -->
+	<dependency>
+	    <groupId>io.micrometer</groupId>
+	    <artifactId>micrometer-core</artifactId>
+	    <version>1.11.6</version>
+	</dependency>
+	<!-- Micrometer-prometheus -->
+	<dependency>
+	    <groupId>io.micrometer</groupId>
+	    <artifactId>micrometer-registry-prometheus</artifactId>
+	    <scope>runtime</scope>
+	</dependency>
+	<!--Bridges the Micrometer Observation API to OpenTelemetry-->
+	<dependency>
+	    <groupId>io.micrometer</groupId>
+	    <artifactId>micrometer-tracing-bridge-otel</artifactId>
+	</dependency>
+	<!--OpenTelemetry exporter-->
+	<dependency>
+	    <groupId>io.opentelemetry</groupId>
+	    <artifactId>opentelemetry-exporter-otlp</artifactId>
+	</dependency>
+	<!--Jaeger-->
+	<dependency>
+	    <groupId>io.opentracing.contrib</groupId>
+	    <artifactId>opentracing-spring-jaeger-web-starter</artifactId>
+	    <version>3.3.1</version>
+	</dependency>
+	<!--Jaeger-remote-sampler-->
+	<dependency>
+	    <groupId>io.opentelemetry</groupId>
+	    <artifactId>opentelemetry-sdk-extension-jaeger-remote-sampler</artifactId>
+	</dependency>
+</dependencies>
+<dependencyManagement>
 	<dependencies>
-	            <!-- Web -->
-                <dependency>
-                    <groupId>org.springframework.boot</groupId>
-                    <artifactId>spring-boot-starter-web</artifactId>
-                </dependency>
-                <!-- Actuator -->
-                <dependency>
-                    <groupId>org.springframework.boot</groupId>
-                    <artifactId>spring-boot-starter-actuator</artifactId>
-                </dependency>
-                <!-- AOP, for custom timer -->
-                <dependency>
-                    <groupId>org.springframework.boot</groupId>
-                    <artifactId>spring-boot-starter-aop</artifactId>
-                </dependency>
-                <!-- Micrometer-core -->
-                <dependency>
-                    <groupId>io.micrometer</groupId>
-                    <artifactId>micrometer-core</artifactId>
-                    <version>1.11.6</version>
-                </dependency>
-                <!-- Micrometer-prometheus -->
-                <dependency>
-                    <groupId>io.micrometer</groupId>
-                    <artifactId>micrometer-registry-prometheus</artifactId>
-                    <scope>runtime</scope>
-                </dependency>
-                <!--Bridges the Micrometer Observation API to OpenTelemetry-->
-                <dependency>
-                    <groupId>io.micrometer</groupId>
-                    <artifactId>micrometer-tracing-bridge-otel</artifactId>
-                </dependency>
-                <!--OpenTelemetry exporter-->
-                <dependency>
-                    <groupId>io.opentelemetry</groupId>
-                    <artifactId>opentelemetry-exporter-otlp</artifactId>
-                </dependency>
-                <!--Jaeger-->
-                <dependency>
-                    <groupId>io.opentracing.contrib</groupId>
-                    <artifactId>opentracing-spring-jaeger-web-starter</artifactId>
-                    <version>3.3.1</version>
-                </dependency>
-                <!--Jaeger-remote-sampler-->
-                <dependency>
-                    <groupId>io.opentelemetry</groupId>
-                    <artifactId>opentelemetry-sdk-extension-jaeger-remote-sampler</artifactId>
-                </dependency>
-
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-dependencies</artifactId>
+			<version>2023.0.0</version>
+			<type>pom</type>
+			<scope>import</scope>
+		</dependency>
 	</dependencies>
-
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>org.springframework.cloud</groupId>
-				<artifactId>spring-cloud-dependencies</artifactId>
-				<version>2023.0.0</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
+</dependencyManagement>
 
 otel-config.yml
 ------------------
@@ -1102,7 +1090,6 @@ management:
   otlp:
     tracing:
       endpoint: http://localhost:4318/v1/traces
-
 
 application:
   spring:
