@@ -913,9 +913,9 @@ OTLP
 -------
 OpenTelemetry Protocol is a telemetry data transfer protocol that we can leverage to export the telemetry data to an observability backend.
 
-        		  (exposes Metrics)  (collects Metrics + own Metrics)                           (LTM  :: collection and shipment)
-SpringBoot ------> Actuator  ---->   Micrometer    ----------------------->           OTel Collector       ------->           Jaeger (Observability Backend)
-                                                   micrometer-tracing-bridge-otel                  opentelemetry-exporter-otlp
+        		  (exposes Metrics)  (collects + makes + ships Metrics)  (LTM  :: collection and shipment)
+SpringBoot ------> Actuator  ---->   Micrometer    ----------------------->   OTel Collector       ------->           Jaeger (Observability Backend)
+                                    (Monitoring tool)               micrometer-tracing-bridge-otel                  opentelemetry-exporter-otlp
 pom.xml
 -----------
 <artifactId>spring-boot-starter-parent</artifactId>
@@ -1017,24 +1017,14 @@ docker-compose.yaml
 version: '3.7'
 
 services:
-  collector:
-    image: otel/opentelemetry-collector:0.72.0
-    command: [ "--config=/etc/otel-collector-config.yml" ]
-    volumes:
-      - ./otel-config.yml:/etc/otel-collector-config.yml
-    ports:
-      - "4317:4317"
-    depends_on:
-      - jaeger-service
-
-  jaeger-service:
+  jaeger:
     image: jaegertracing/all-in-one:latest
     ports:
-      - "16686:16686"
-      - "14250:14250"
-      - "5775:5775/udp"
-      - "6831:6831/udp"
-      - "6832:6832/udp"
+      - "16686:16686" # the jaeger UI
+      - "4318:4318" # the OpenTelemetry collector http
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+
 
 application.yaml
 ----------------------------
@@ -1172,31 +1162,6 @@ public class NavController {
         return ResponseEntity.ok(movies);
     }
 
-    // http://localhost:9100/v3/rest/getMoviesByDirectorAndGenre/Satyajit Ray/Comedy
-    @GetMapping(value = "/getMoviesByDirectorAndGenre/{director}/{genre}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<Movie>> getMoviesByDirectorAndGenre(
-            @PathVariable("director") String director,
-            @PathVariable("genre") String genre) {
-
-        //Counter metric
-        Counter counter = Counter.builder("getMoviesByDirectorAndGenre")
-                .description("a number of requests to /getMoviesByDirectorAndGenre endpoint")
-                .register(meterRegistry);
-        counter.increment();
-
-        //Gauge metric
-        Gauge.builder("users_count", movieService::countUsers)
-                .description("A current number of users in the system")
-                .register(meterRegistry);
-
-        //Timer metric
-        Timer.Sample timer = Timer.start(meterRegistry);
-
-        List<Movie> movies = movieService.findByDirectorAndGenre(director, genre);
-
-        timer.stop(Timer.builder("getMoviesByDirectorAndGenre_Timer").register(meterRegistry));
-        return ResponseEntity.ok(movies);
-    }
 }
 
 
@@ -1204,12 +1169,19 @@ Running all on Docker
 -------------------------
 Start the application
 Start Docker Desktop
-Run docker-compose.yml :: D:\workspace2\SpringBootREST3\src\main\resources>docker-compose up --build
-Once done, check in Docker Desktop that Otel Collector and Jaeger images are present
-Open Gitbash ::
-            docker images (Otel Collector and Jaeger images)
-            docker ps (All running containers, containers with Otel Collector and Jaeger image)
+Update docker-compose.yml with OT-JG
+Run docker-compose.yml in Git bash :: cd  D:/workspace2/SpringBootREST3/src/main/resources
+                                      docker-compose up --build
+Open Gitbash another window::
+            docker images //otel and jaeger images
+            docker ps     // All running containers
+
+            docker stop $(docker ps -a -q) //Stop all running containers
+            docker rm -f $(docker ps -a -q) //Docker remove all containers
+            docker rmi -f $(docker images -q) //Docker remove all images
+
 Hit http://localhost:9100/v3/rest/getMoviesOfDirector/Satyajit Ray a few times
+
 Check in Jaeger ::
            http://localhost:16686/search
 
