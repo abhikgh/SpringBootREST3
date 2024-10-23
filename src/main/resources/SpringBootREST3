@@ -945,13 +945,7 @@ pom.xml
 	    <artifactId>micrometer-core</artifactId>
 	    <version>1.11.6</version>
 	</dependency>
-	<!-- Micrometer-prometheus -->
-	<dependency>
-	    <groupId>io.micrometer</groupId>
-	    <artifactId>micrometer-registry-prometheus</artifactId>
-	    <scope>runtime</scope>
-	</dependency>
-	<!--Bridges the Micrometer Observation API to OpenTelemetry-->
+	<!--Micrometer-OpenTelemetry bridge-->
 	<dependency>
 	    <groupId>io.micrometer</groupId>
 	    <artifactId>micrometer-tracing-bridge-otel</artifactId>
@@ -1164,6 +1158,30 @@ public class NavController {
 
 }
 
+logback.xml
+---------------------
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <property name="APP_LOG" value="logs/app.log"/>
+    <property name="logging.file.name" value="info-log" />
+    <property name="logging.file.path" value="./"/>
+    <property name="logging.error.file.name" value="error-log" />
+    <property name="logging.error.file.path" value="./"/>
+
+    <!-- console log appender -->
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="console"/>
+    </root>
+
+</configuration>
+
 
 Running all on Docker
 -------------------------
@@ -1196,3 +1214,28 @@ calculates delta                                                               c
 Observation API for LTM and transform them into a single language
 
 -------------------------------------------------------------------------------------------------
+
+Jaeger
+========================================
+Observability backend
+Components:
+            Collector—collects trace data, validates and passes to storage service  (port :16686)
+            Storage —Cassandra, ElasticSearch
+            Web UI— view the trace data
+            Search — on trace data
+
+           [TraceId:SpanId:ParentSpanId:Flags]
+
+Span reported: 4c5f29d379ea625e:3d177b55c210dffb:4c5f29d379ea625e:1 - PARENT
+
+Span reported: 4c5f29d379ea625e:c1b1e7351ce66ca9:1d134091d2c206e7:1 - getHeroDetails            - CHILD
+Span reported: 4c5f29d379ea625e:1d134091d2c206e7:7c1877ceb2c65cfa:1 - getMoviesOfHero
+Span reported: 4c5f29d379ea625e:7c1877ceb2c65cfa:3d177b55c210dffb:1 - getMoviesOfHero   (PARENT SPAN ID = SPAN ID OF CALLER SERVICE)
+
+
+Jaeger              vs                                Grafana                       vs              Zipkin
+-------------------------------------------------------------------------------------------------------------------
+Performance, Scalability, Reliability
+part of the CNCF(Cloud Native Computing Foundation), so deployed in Kubernetes.
+can be deployed in parts
+Storage - ElasticSearch, Cassandra,Kafka            Local storage

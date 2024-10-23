@@ -10,7 +10,7 @@ spring:
       connection-timeout: 5000
       maximum-pool-size: 5
   jpa:
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         format-sql: true
@@ -59,7 +59,6 @@ application:
   spring:
     endpoints:
       exclude: /v3/rest/hello, /v3/rest/helloPost, /v3/restClient/helloPostClient, /v3/rest/home, /actuator/**, /v3/rest/getMoviesByDirectorAndGenre/**, /v3/rest/authenticate
-#/v3/rest/getMoviesOfDirector/**,
 
 opentracing:
   jaeger:
