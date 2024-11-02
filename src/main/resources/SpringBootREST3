@@ -665,10 +665,10 @@ Servlet Stack                                                Reactive Stack     
 
 Class Data Sharing (CDS)
 ==============================
-JVM optimization technique
+Reduce startup time and memory consumption
 
-Creates a snapshot of the application classes and then storing them in a archived file
-During startup, JVM can refer this archive and get the class file, improving the class-loading time
+1.Stores snapshot of the application classes in a archived file
+2.Startup, JVM can refer this archive and get the class file, improving the class-loading time
 
 spring.context.exit-on-refresh=true
 
