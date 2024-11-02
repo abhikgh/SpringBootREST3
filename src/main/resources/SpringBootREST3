@@ -160,7 +160,7 @@ public AuthenticationResponse authenticate(@RequestBody Map<String, Object> clai
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(claims.get("userId"), claims.get("password")));
     } catch (Exception e) {
         log.error("Authentication Error.......");
-        throw e;
+        throw new OrderException("101", "Invalid username or password", HttpStatus.BAD_REQUEST);
     }
 
     UserDetails userDetails = userService.loadUserByUsername(String.valueOf(claims.get("userId")));
@@ -582,6 +582,22 @@ management:
       enabled: true
 
 http://localhost:9101/actuator/health
+
+--------------------------------------------------------------------------------------------------------
+Exception Handler
+---------------------
+
+@RestControllerAdvice
+public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+
+    @ExceptionHandler(OrderException.class)
+    public ResponseEntity<ErrorResponse> handleOrderException(OrderException oe){
+        ErrorResponse errorResponse = new ErrorResponse(oe.getErrorCode(), oe.getErrorMessage(), oe.getHttpStatus());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(errorResponse);
+    }
+}
 
 --------------------------------------------------------------------------------------------------------
 

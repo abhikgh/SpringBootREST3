@@ -1,6 +1,7 @@
 package com.example.SpringBootREST3.controller;
 
 import com.example.SpringBootREST3.entity.Movie;
+import com.example.SpringBootREST3.exception.OrderException;
 import com.example.SpringBootREST3.model.AuthenticationResponse;
 import com.example.SpringBootREST3.model.Person;
 import com.example.SpringBootREST3.service.HomeService;
@@ -122,7 +123,7 @@ public class NavController {
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(claims.get("userId"), claims.get("password")));
         } catch (Exception e) {
             log.error("Authentication Error.......");
-            throw e;
+            throw new OrderException("101", "Invalid username or password", HttpStatus.BAD_REQUEST);
         }
 
         UserDetails userDetails = userService.loadUserByUsername(String.valueOf(claims.get("userId")));
