@@ -1255,3 +1255,95 @@ Performance, Scalability, Reliability
 part of the CNCF(Cloud Native Computing Foundation), so deployed in Kubernetes.
 can be deployed in parts
 Storage - ElasticSearch, Cassandra,Kafka            Local storage
+
+------------------------------------------------------------------------------------------------------------------------------
+
+OpenAPI Specification (OAS) { previously Swagger specification)
+===========================================================================
+REST API documentation specification for SpringBoot projects
+
+<!--spring-boot-starter-validation -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-validation</artifactId>
+</dependency>
+<!--Open API -->
+<dependency>
+    <groupId>org.springdoc</groupId>
+    <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+    <version>2.2.0</version>
+</dependency>
+(Remove springfox-swagger2 and springfox-swagger-ui dependencies)
+
+@AllArgsConstructor
+@Getter
+@Setter
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class Person {
+
+    @JsonProperty
+    @NotBlank
+    @Size(min = 5, message = "First name must have at-least 5 chars")
+    @Schema(description = "First name", example = "John")
+    private String firstName;
+
+    @JsonProperty
+    @Schema(description = "Last name", example = "Doe")
+    private String lastName;
+}
+
+@PostMapping(value = "/helloPost", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+@ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Ok", content = @Content(mediaType = "application/json", schema = @Schema(implementation = Person.class))),
+        @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+})
+public ResponseEntity<String> helloPost(@Valid @RequestBody Person person) {
+    return ResponseEntity.status(HttpStatus.OK)
+            .body(person.getFirstName().concat("----").concat(person.getLastName()));
+}
+
+http://localhost:9100/v3/api-docs (JSON)
+http://localhost:9100/v3/api-docs.yaml (YAML)
+Paste the yaml in Swagger Editor
+
+@RestControllerAdvice
+public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+
+    @ExceptionHandler(OrderException.class)
+    public ResponseEntity<ErrorResponse> handleOrderException(OrderException oe){
+        ErrorResponse errorResponse = new ErrorResponse(oe.getErrorCode(), oe.getErrorMessage(), oe.getHttpStatus());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(errorResponse);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(
+            MethodArgumentNotValidException exception, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+
+        String errorMessage = "Error in object '%s', error in field '%s', error is '%s'";
+        FieldError fieldError = exception.getBindingResult().getFieldError();
+        errorMessage = String.format(errorMessage, fieldError.getObjectName(), fieldError.getField(), fieldError.getDefaultMessage());
+        ErrorResponse errorResponse = new ErrorResponse("101", errorMessage, HttpStatus.BAD_REQUEST);
+        return ResponseEntity
+                .badRequest()
+                .body(errorResponse);
+    }
+}
+
+@Getter
+@Setter
+@AllArgsConstructor
+public class ErrorResponse {
+
+	@Schema(example = "101")
+	private String errorCode;
+	@Schema(example = "Error in object 'person', error in field 'firstName', error is 'First name must have at-least 5 chars'")
+	private String errorMessage;
+	@Schema(example = "BAD_REQUEST")
+	private HttpStatus httpStatus;
+
+}
+
+------------------------------------------------------------------------------------------------------------------------------

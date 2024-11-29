@@ -1,6 +1,7 @@
 package com.example.SpringBootREST3.controller;
 
 import com.example.SpringBootREST3.entity.Movie;
+import com.example.SpringBootREST3.exception.ErrorResponse;
 import com.example.SpringBootREST3.exception.OrderException;
 import com.example.SpringBootREST3.model.AuthenticationResponse;
 import com.example.SpringBootREST3.model.Person;
@@ -17,6 +18,11 @@ import io.micrometer.core.instrument.Timer;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import io.opentracing.Span;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -189,7 +195,11 @@ public class NavController {
     }
 
     @PostMapping(value = "/helloPost", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> helloPost(@RequestBody Person person) {
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Ok", content = @Content(mediaType = "application/json", schema = @Schema(implementation = Person.class))),
+            @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<String> helloPost(@Valid @RequestBody Person person) {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(person.getFirstName().concat("----").concat(person.getLastName()));
     }
