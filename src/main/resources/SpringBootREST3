@@ -1358,13 +1358,13 @@ Inserting data with ModelMapper
 </dependency>
 
 CREATE TABLE MOVIE_NEW (
-    movie_Id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    movie_Name VARCHAR(250) NOT NULL,
+    movie_id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    movie_name VARCHAR(250) NOT NULL unique,
     director VARCHAR(250) NOT NULL,
     genre VARCHAR(250) NOT NULL,
 	hero VARCHAR(250) NOT NULL,
 	year VARCHAR(250) NOT NULL,
-	national_Award boolean NOT NULL
+	national_award boolean NOT NULL
 );
 
 

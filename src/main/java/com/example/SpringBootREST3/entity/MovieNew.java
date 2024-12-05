@@ -23,10 +23,10 @@ public class MovieNew {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     //GenerationType.IDENTITY :: automatically assign an id to the object when its row is inserted
     //                           movie.setMovieId(100) doesn't take 100, takes the next value in sequence
-    @Column(name = "movie_Id")
+    @Column(name = "movie_id")
     private Integer movieId;
 
-    @Column(name = "movie_Name")
+    @Column(name = "movie_name")
     private String movieName;
 
     @Column(name = "director")
@@ -41,6 +41,6 @@ public class MovieNew {
     @Column(name = "year")
     private String year;
 
-    @Column(name = "national_Award")
+    @Column(name = "national_award")
     private Boolean nationalAward;
 }
