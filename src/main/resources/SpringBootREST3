@@ -1481,7 +1481,18 @@ Accept : Client tells server the type of content client expects
 Content-type : Client tell Server the request content type
 Accept-Language : language settings for a user
 Accept-Encoding : encoding algorithm
-Cookie
+Cookie :: The main purpose of Session and Cookie is to make up for the stateless nature of HTTP.
+          The server can use Session to store some operation records of the client during the same session.
+          Session is stored on the server side, and sessionId will be stored in the Cookie of the client.
+          How to determine whether it is the same session? Server sends Set-Cookie: JSESSIONID=XXX
+                                                           Client further calls the Server with the same Cookie and session-id
+          Disadvantage of Session : Server Load balancing will invalidate the session
+          Session                                           vs                                  Token
+          ------------------------------------------------------------------------------------------------------
+          Connected to the machine(browser)                                         Connected to the user
+                                                                                    Less space - no need to save session information
+                                                                                    3rd party integration to send only Tokens
+
 Referer : referring pages / where resources are kept
 Authorization :
     // Bearer
