@@ -588,15 +588,36 @@ Exception Handler
 ---------------------
 
 @RestControllerAdvice
-public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+public class GlobalExceptionHandler {
 
     @ExceptionHandler(OrderException.class)
-    public ResponseEntity<ErrorResponse> handleOrderException(OrderException oe){
+    public ResponseEntity<ErrorResponse> handleOrderException(OrderException oe) {
         ErrorResponse errorResponse = new ErrorResponse(oe.getErrorCode(), oe.getErrorMessage(), oe.getHttpStatus());
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(errorResponse);
     }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException me) {
+        String errorMessage = "Error in object '%s', error in field '%s', error is '%s'";
+        FieldError fieldError = me.getBindingResult().getFieldError();
+        errorMessage = String.format(errorMessage, fieldError.getObjectName(), fieldError.getField(), fieldError.getDefaultMessage());
+        ErrorResponse errorResponse = new ErrorResponse("101", errorMessage, HttpStatus.BAD_REQUEST);
+        return ResponseEntity
+                .badRequest()
+                .body(errorResponse);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrityViolationException(DataIntegrityViolationException de){
+        String errorMessage  = de.getMostSpecificCause().getMessage();
+        ErrorResponse errorResponse = new ErrorResponse("401", errorMessage, HttpStatus.BAD_REQUEST);
+        return ResponseEntity
+                .badRequest()
+                .body(errorResponse);
+    }
+
 }
 
 --------------------------------------------------------------------------------------------------------
@@ -1401,6 +1422,50 @@ public MovieNew addMovie(@RequestBody MovieModel movieModel){
     MovieNew movieNew = modelMapper.map(movieModel, MovieNew.class);
     return movieService.addMovie(movieNew);
 
+}
+
+
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(OrderException.class)
+    public ResponseEntity<ErrorResponse> handleOrderException(OrderException oe) {
+        ErrorResponse errorResponse = new ErrorResponse(oe.getErrorCode(), oe.getErrorMessage(), oe.getHttpStatus());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(errorResponse);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException me) {
+        String errorMessage = "Error in object '%s', error in field '%s', error is '%s'";
+        FieldError fieldError = me.getBindingResult().getFieldError();
+        errorMessage = String.format(errorMessage, fieldError.getObjectName(), fieldError.getField(), fieldError.getDefaultMessage());
+        ErrorResponse errorResponse = new ErrorResponse("101", errorMessage, HttpStatus.BAD_REQUEST);
+        return ResponseEntity
+                .badRequest()
+                .body(errorResponse);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrityViolationException(DataIntegrityViolationException de){
+        String errorMessage  = de.getMostSpecificCause().getMessage();
+        ErrorResponse errorResponse = new ErrorResponse("401", errorMessage, HttpStatus.BAD_REQUEST);
+        return ResponseEntity
+                .badRequest()
+                .body(errorResponse);
+    }
+
+}
+
+//http://localhost:9100/v3/rest/addMovie
+{
+    "movieName": "Choto Boro boro 2",
+    "director": "HAtim Tai",
+    "genre": "HeheHaha",
+    "hero": "Faltu",
+    "year": "1999",
+    "nationalAward": false
 }
 
 ------------------------------------------------------------------------------------------------------------------------------
