@@ -1,6 +1,7 @@
 package com.example.SpringBootREST3.controller;
 
 import com.example.SpringBootREST3.entity.Movie;
+import com.example.SpringBootREST3.entity.MovieNew;
 import com.example.SpringBootREST3.exception.ErrorResponse;
 import com.example.SpringBootREST3.exception.OrderException;
 import com.example.SpringBootREST3.model.AuthenticationResponse;
@@ -218,14 +219,14 @@ public class NavController {
 
     // http://localhost:9100/v3/rest/addMovie
     @PostMapping(value = "/addMovie", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public Movie addMovie(@RequestBody MovieModel movieModel){
+    public MovieNew addMovie(@Valid @RequestBody MovieModel movieModel){
         ModelMapper modelMapper = new ModelMapper();
         modelMapper.getConfiguration().setDeepCopyEnabled(Boolean.TRUE);
         modelMapper.getConfiguration().setAmbiguityIgnored(Boolean.TRUE);
         modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
 
-        Movie movie = modelMapper.map(movieModel, Movie.class);
-        return movieService.addMovie(movie);
+        MovieNew movieNew = modelMapper.map(movieModel, MovieNew.class);
+        return movieService.addMovie(movieNew);
 
     }
 }

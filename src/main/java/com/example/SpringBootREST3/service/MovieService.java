@@ -1,6 +1,8 @@
 package com.example.SpringBootREST3.service;
 
 import com.example.SpringBootREST3.entity.Movie;
+import com.example.SpringBootREST3.entity.MovieNew;
+import com.example.SpringBootREST3.repository.MovieNewRepository;
 import com.example.SpringBootREST3.repository.MovieRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +16,9 @@ public class MovieService {
 
     @Autowired
     private MovieRepository movieRepository;
+
+    @Autowired
+    private MovieNewRepository movieNewRepository;
 
     public List<Movie> getMoviesOfDirector(String director) {
         log.info("Inside getMoviesOfDirector service... ");
@@ -31,7 +36,7 @@ public class MovieService {
         return movieRepository.findAll().stream().count();
     }
 
-    public Movie addMovie(Movie movie) {
-        return movieRepository.saveAndFlush(movie);
+    public MovieNew addMovie(MovieNew movieNew) {
+        return movieNewRepository.saveAndFlush(movieNew);
     }
 }

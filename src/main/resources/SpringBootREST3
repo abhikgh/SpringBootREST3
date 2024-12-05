@@ -1347,3 +1347,60 @@ public class ErrorResponse {
 }
 
 ------------------------------------------------------------------------------------------------------------------------------
+
+Inserting data with ModelMapper
+--------------------------------
+
+<dependency>
+    <groupId>org.modelmapper.extensions</groupId>
+    <artifactId>modelmapper-spring</artifactId>
+    <version>3.0.0</version>
+</dependency>
+
+CREATE TABLE MOVIE_NEW (
+    movie_Id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    movie_Name VARCHAR(250) NOT NULL,
+    director VARCHAR(250) NOT NULL,
+    genre VARCHAR(250) NOT NULL,
+	hero VARCHAR(250) NOT NULL,
+	year VARCHAR(250) NOT NULL,
+	national_Award boolean NOT NULL
+);
+
+
+@Entity
+@Table(name = "MOVIE_NEW")
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+public class MovieNew {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "movie_Id")
+    private Integer movieId;
+
+    @Column(name = "movie_Name")
+    private String movieName;
+
+}
+
+@Repository
+public interface MovieNewRepository extends JpaRepository<MovieNew, Integer> {
+}
+
+// http://localhost:9100/v3/rest/addMovie
+@PostMapping(value = "/addMovie", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+public MovieNew addMovie(@RequestBody MovieModel movieModel){
+    ModelMapper modelMapper = new ModelMapper();
+    modelMapper.getConfiguration().setDeepCopyEnabled(Boolean.TRUE);
+    modelMapper.getConfiguration().setAmbiguityIgnored(Boolean.TRUE);
+    modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
+
+    MovieNew movieNew = modelMapper.map(movieModel, MovieNew.class);
+    return movieService.addMovie(movieNew);
+
+}
+
+------------------------------------------------------------------------------------------------------------------------------
