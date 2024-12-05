@@ -1469,3 +1469,37 @@ public class GlobalExceptionHandler {
 }
 
 ------------------------------------------------------------------------------------------------------------------------------
+
+HTTP Headers
+===============
+
+Headers in HTTP Requests
+------------------------------
+Host : Server host and port to which the request is sent (80-http, 443-https)
+User-Agent :  string that lets servers identify the application, operating system, vendor, and/or version of the requesting client
+Accept : Client tells server the type of content client expects
+Content-type : Client tell Server the request content type
+Accept-Language : language settings for a user
+Accept-Encoding : encoding algorithm
+Cookie
+Referer : referring pages / where resources are kept
+Authorization :
+    // Bearer
+    Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+    // Basic
+    Authorization: Basic base64(username:password)
+
+    // API Key
+    Authorization: ApiKey your-api-key
+
+Headers in HTTP Response
+---------------------------
+Cache Control : (Cache-Control: max-age=3600, public)
+Content-type : Server tell Client the response content type
+Content Disposition : attachment , inline / download
+Content-Length
+Location : redirection
+Set-Cookie : cookie gets set in Browser (Set-Cookie: sessionId=38afes7a8)
+
+------------------------------------------------------------------------------------------------------------------------------
