@@ -4,6 +4,7 @@ import com.example.SpringBootREST3.entity.Movie;
 import com.example.SpringBootREST3.exception.ErrorResponse;
 import com.example.SpringBootREST3.exception.OrderException;
 import com.example.SpringBootREST3.model.AuthenticationResponse;
+import com.example.SpringBootREST3.model.MovieModel;
 import com.example.SpringBootREST3.model.Person;
 import com.example.SpringBootREST3.service.HomeService;
 import com.example.SpringBootREST3.service.MovieService;
@@ -18,11 +19,15 @@ import io.micrometer.core.instrument.Timer;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import io.opentracing.Span;
+import io.swagger.v3.oas.annotations.ExternalDocumentation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.modelmapper.ModelMapper;
+import org.modelmapper.convention.MatchingStrategies;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +44,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.print.attribute.standard.Media;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -47,6 +53,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/v3/rest")
+@Tag(name = "someTag", description = "someDescription", externalDocs = @ExternalDocumentation(description = "Google", url = "https://www.google.com/"))
 public class NavController {
 
     @Autowired
@@ -207,5 +214,18 @@ public class NavController {
     @GetMapping("/home")
     public String getResponse(){
         return homeService.getResponse();
+    }
+
+    // http://localhost:9100/v3/rest/addMovie
+    @PostMapping(value = "/addMovie", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    public Movie addMovie(@RequestBody MovieModel movieModel){
+        ModelMapper modelMapper = new ModelMapper();
+        modelMapper.getConfiguration().setDeepCopyEnabled(Boolean.TRUE);
+        modelMapper.getConfiguration().setAmbiguityIgnored(Boolean.TRUE);
+        modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
+
+        Movie movie = modelMapper.map(movieModel, Movie.class);
+        return movieService.addMovie(movie);
+
     }
 }

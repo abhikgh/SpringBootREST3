@@ -31,4 +31,7 @@ public class MovieService {
         return movieRepository.findAll().stream().count();
     }
 
+    public Movie addMovie(Movie movie) {
+        return movieRepository.saveAndFlush(movie);
+    }
 }
