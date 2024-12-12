@@ -1514,3 +1514,275 @@ Location : redirection
 Set-Cookie : cookie gets set in Browser (Set-Cookie: sessionId=38afes7a8)
 
 ------------------------------------------------------------------------------------------------------------------------------
+
+Caffeine
+=====================
+- 1st-level caching / In-memory caching (Data is stored in a single machine)
+
+<!--Caffeine cache-->
+<dependency>
+	<groupId>org.springframework.boot</groupId>
+	<artifactId>spring-boot-starter-cache</artifactId>
+</dependency>
+
+<dependency>
+	<groupId>com.github.ben-manes.caffeine</groupId>
+	<artifactId>caffeine</artifactId>
+</dependency>
+
+@Configuration
+@EnableCaching
+public class CaffeineConfig {
+
+    public static final String HELLO_WORLD_CACHE = "helloWorldCache";
+     public static final String BU_CACHE = "buCache";
+
+    @Bean(name = "caffeine")
+    public @NonNull Caffeine<Object, Object> caffeine(){
+        return Caffeine
+                .newBuilder()
+                .initialCapacity(100)
+                .maximumSize(2000)
+                .expireAfterWrite(1, TimeUnit.HOURS);
+    }
+
+    @Bean
+    public CaffeineCacheManager caffeineCacheManager(@Qualifier("caffeine") Caffeine caffeine) {
+        CaffeineCacheManager caffeineCacheManager = new CaffeineCacheManager();
+        caffeineCacheManager.setCaffeine(caffeine);
+        caffeineCacheManager.setAllowNullValues(false);
+        caffeineCacheManager.setCacheNames(List.of(HELLO_WORLD_CACHE, BU_CACHE));
+        return caffeineCacheManager;
+    }
+
+}
+
+Service
+------------------
+@Cacheable(key = "#buCode.concat('-').concat(#buType).concat('-').concat(#countryCode)", cacheManager = "caffeineCacheManager", cacheNames = CaffeineConfig.BU_CACHE, unless = "#result==null")
+public Bucode getBuCode(String buCode, String buType, String countryCode) {
+    //This method call will by default try to retrieve from the Caffeine cache based on the key, if not found will go into the method and will set by default
+    System.out.println("Checking in Redis...");
+    String key = buCode.concat("-").concat(buType).concat("-").concat(countryCode);
+    Bucode bucode = (Bucode) buCodeRedisTemplate.opsForValue().get(key);
+    System.out.println("Value in Redis :: " + bucode);
+    if (Objects.isNull(bucode)) {
+        System.out.println("Going to DB...");
+        bucode = buRepository.findByBuCodeAndBuTypeAndCountryCode(buCode, buType, countryCode);
+
+        //set in Redis
+        buCodeRedisTemplate.opsForValue().set(key, bucode);
+    }
+    return bucode;
+}
+
+Service (Option 2)
+---------------------
+
+@Autowired
+private CaffeineCacheManager caffeineCacheManager;
+
+Cache.ValueWrapper valueWrapper = caffeineCacheManager.getCache(CaffeineConfig.HELLO_WORLD_CACHE).get(redisKey);
+List<Movie> movies = (List<Movie>) Optional.ofNullable(valueWrapper).map(Cache.ValueWrapper::get).orElse(null);
+
+---------------------------------------------------------------------------------------------
+
+
+
+Redis
+===============
+
+- Distributed caching (Data is stored across multiple machines - for faster access and more data -
+                    A distributed caching system combines the RAM of multiple computers into a single data store)
+- High Availability
+
+<!--Redis-->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-redis</artifactId>
+</dependency>
+
+<!--Apache commons, for Redis -->
+<dependency>
+    <groupId>org.apache.commons</groupId>
+    <artifactId>commons-pool2</artifactId>
+</dependency>
+
+Run Redis
+================
+Run RedisServer.bat -> start "" E:\Softwares\Redis-x64-3.2.100\redis-server.exe
+RedisInsight
+
+monitor Cache Metrics
+=============================
+/actuator/metrics/cache.gets
+/actuator/metrics/cache.puts
+/actuator/metrics/cache.evictions
+/actuator/metrics/cache.removals
+
+spring.redis.host=localhost
+spring.redis.port=6379
+spring.redis.password=
+spring.redis.timeout=60000
+spring.redis.lettuce.pool.max-active=8
+spring.redis.lettuce.pool.max-idle=8
+spring.redis.lettuce.pool.max-wait=-1
+spring.redis.lettuce.pool.min-idle=0
+
+@Configuration
+@EnableCaching
+@EnableConfigurationProperties(RedisProperties.class)
+public class RedisConfig {
+
+    @Bean(name = "moviesCachedRedisTemplate")
+    public RedisTemplate moviesCachedRedisTemplate(RedisConnectionFactory redisConnectionFactory) {
+        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<String, Object>();
+        redisTemplate.setKeySerializer(new StringRedisSerializer());
+        redisTemplate.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+        redisTemplate.setConnectionFactory(redisConnectionFactory);
+        redisTemplate.afterPropertiesSet();
+        return redisTemplate;
+    }
+
+}
+
+
+Service
+----------
+
+@Autowired
+@Qualifier("moviesCachedRedisTemplate")
+private RedisTemplate redisTemplate;
+
+
+// check in 1st Level cache (Caffeine), else check in 2nd Level cache (Redis)
+// if not found hit service and put in cache
+Cache.ValueWrapper valueWrapper = caffeineCacheManager.getCache(CaffeineConfig.HELLO_WORLD_CACHE).get(redisKey);
+List<Movie> movies = (List<Movie>) Optional.ofNullable(valueWrapper).map(Cache.ValueWrapper::get).orElse(null);
+
+if (CollectionUtils.isEmpty(movies)) {
+    movies = (List<Movie>) redisTemplate.opsForValue().get(redisKey);
+    log.info("Redis :: {}, transactionId  {} , movies {} ", "getMovieDetails", MDC.get("transactionId"), movies);
+
+    if (CollectionUtils.isEmpty(movies)) {
+        movies = restTemplate.exchange(uri, HttpMethod.GET, null, new ParameterizedTypeReference<List<Movie>>() {
+        }).getBody();
+
+        log.info("Service :: {}, transactionId  {} , movies {} ", "getMovieDetails", MDC.get("transactionId"), movies);
+
+        //put in Caffeine - 1st level Cache
+        caffeineCacheManager.getCache(CaffeineConfig.HELLO_WORLD_CACHE).put(redisKey, movies);
+
+        //put in Redis - 2nd level Cache
+        redisTemplate.opsForValue().set(redisKey, movies, Duration.ofMinutes(cacheItemExpireInMinutes));
+
+	    //multiGet
+	    //List<String> cacheKeys = getCacheKeys();
+        //List<String> responseItems = redisTemplate.multiGet(cacheKeys);
+
+
+    } else {
+        caffeineCacheManager.getCache(CaffeineConfig.HELLO_WORLD_CACHE).put(redisKey, movies);
+    }
+
+}
+
+---------------------------------------------------------------------------------------------
+
+Redis
+===============
+
+- Distributed caching (Data is stored across multiple machines - for faster access and more data)
+
+<!--Redis-->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-redis</artifactId>
+</dependency>
+
+<!--Apache commons, for Redis -->
+<dependency>
+    <groupId>org.apache.commons</groupId>
+    <artifactId>commons-pool2</artifactId>
+</dependency>
+
+Run Redis
+================
+Run RedisServer.bat -> start "" E:\Softwares\Redis-x64-3.2.100\redis-server.exe
+RedisInsight
+
+monitor Cache Metrics
+=============================
+/actuator/metrics/cache.gets
+/actuator/metrics/cache.puts
+/actuator/metrics/cache.evictions
+/actuator/metrics/cache.removals
+
+spring.redis.host=localhost
+spring.redis.port=6379
+spring.redis.password=
+spring.redis.timeout=60000
+spring.redis.lettuce.pool.max-active=8
+spring.redis.lettuce.pool.max-idle=8
+spring.redis.lettuce.pool.max-wait=-1
+spring.redis.lettuce.pool.min-idle=0
+
+@Configuration
+@EnableCaching
+@EnableConfigurationProperties(RedisProperties.class)
+public class RedisConfig {
+
+    @Bean(name = "moviesCachedRedisTemplate")
+    public RedisTemplate moviesCachedRedisTemplate(RedisConnectionFactory redisConnectionFactory) {
+        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<String, Object>();
+        redisTemplate.setKeySerializer(new StringRedisSerializer());
+        redisTemplate.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+        redisTemplate.setConnectionFactory(redisConnectionFactory);
+        redisTemplate.afterPropertiesSet();
+        return redisTemplate;
+    }
+
+}
+
+
+Service
+----------
+
+@Autowired
+@Qualifier("moviesCachedRedisTemplate")
+private RedisTemplate redisTemplate;
+
+
+// check in 1st Level cache (Caffeine), else check in 2nd Level cache (Redis)
+// if not found hit service and put in cache
+Cache.ValueWrapper valueWrapper = caffeineCacheManager.getCache(CaffeineConfig.HELLO_WORLD_CACHE).get(redisKey);
+List<Movie> movies = (List<Movie>) Optional.ofNullable(valueWrapper).map(Cache.ValueWrapper::get).orElse(null);
+
+if (CollectionUtils.isEmpty(movies)) {
+    movies = (List<Movie>) redisTemplate.opsForValue().get(redisKey);
+    log.info("Redis :: {}, transactionId  {} , movies {} ", "getMovieDetails", MDC.get("transactionId"), movies);
+
+    if (CollectionUtils.isEmpty(movies)) {
+        movies = restTemplate.exchange(uri, HttpMethod.GET, null, new ParameterizedTypeReference<List<Movie>>() {
+        }).getBody();
+
+        log.info("Service :: {}, transactionId  {} , movies {} ", "getMovieDetails", MDC.get("transactionId"), movies);
+
+        //put in Caffeine - 1st level Cache
+        caffeineCacheManager.getCache(CaffeineConfig.HELLO_WORLD_CACHE).put(redisKey, movies);
+
+        //put in Redis - 2nd level Cache
+        redisTemplate.opsForValue().set(redisKey, movies, Duration.ofMinutes(cacheItemExpireInMinutes));
+
+	    //multiGet
+	    //List<String> cacheKeys = getCacheKeys();
+        //List<String> responseItems = redisTemplate.multiGet(cacheKeys);
+
+
+    } else {
+        caffeineCacheManager.getCache(CaffeineConfig.HELLO_WORLD_CACHE).put(redisKey, movies);
+    }
+
+}
+
+---------------------------------------------------------------------------------------------
