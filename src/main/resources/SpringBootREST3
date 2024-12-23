@@ -1,3 +1,771 @@
+SpringBoot
+================
+1. Java-based Spring-framework to build Spring application
+   Eliminates a lot of boiler-plate code required for setting up a Spring application
+
+2. AutoConfiguration ::  Automatically configures beans
+    @SpringBootApplication = @Configuration +  @EnableAutoConfiguration  + @ComponentScan
+    @Configuration : source for @Bean
+    @EnableAutoConfiguration : Spring configures the application based on dependencies and libraries and sets the properties value
+    @ComponentScan : Spring searches for Spring beans annotated with @Configuration, @Controller, @Component, @Service, @Repository in the package and the sub-packages and puts them in ApplicationContext
+    @Bean - registering your bean in Spring Application Context
+    @Autowired - Spring Application Context injects the bean as a Spring Managed Bean(SMB) dependency in another object
+	    SMB - Lifecycle management , No new objects, Loose Coupling,  Easier to test
+    @RestController = @Controller + @ResponseBody(return value of the method will be serialized into HTTP ResponseBody)
+    @Entity - Mapping between the class and the Database table as ORM
+    @Transactional - Spring intercepts the method and starts a Transaction before the method - after the method is executed - Commit/Rollback .
+        The database transaction happens inside the scope of  Persistence Context.
+
+3. Embedded Tomcat server
+4. Spring datasource
+    spring:
+      datasource:
+        url: jdbc:postgresql://localhost:5432/springbootdb
+        driver-class-name: org.postgresql.Driver
+        username: postgres
+        password: ENC(fr05KZkgIQviKiJr2CE6kF042eGwt6QvEFjcccT3ZzU8iM4xforSPVNcul2bKApE)
+
+5. spring-boot starer dependencies
+        -makes development much easier and faster, no need to remember dependency versions
+                <dependency>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-web</artifactId>
+                </dependency>
+                <dependency>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-data-jpa</artifactId>
+                </dependency>
+                <dependency>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-actuator</artifactId>
+                </dependency>
+		<dependency>
+		    <groupId>org.springframework.boot</groupId>
+		    <artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+5. Plugins
+        <artifactId>spring-boot-maven-plugin</artifactId>
+        <artifactId>maven-jaxb2-plugin</artifactId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+6. Actuator
+
+-------------------------------------------------------------------------------------------------
+
+SpringBoot Architectures
+=================================
+1.  Microservices API driven architecture - is a software development approach that breaks down an application into a collection of independent services
+                              - independently developed, deployed, scaled, managed
+2.  Microservices Event driven architecture
+3.  Spring security architecture
+
+-------------------------------------------------------------------------------------------------
+
+1. Microservices API driven architecture
+==================================================
+
+OAuth2.0
+----------
+OAuth 2.0 is an Open Authorization Protocol that gives Clients limited access to user accounts on an HTTP service without exposing user credentials and get access to Resource
+
+Delegating the user authentication to a AUTHENTICATION SERVER that hosts user credentials
+On successful authentication AUTHENTICATION SERVER returns a JWTToken
+Client takes this token to RESOURCE SERVER and after validation of the token for authentication and authorization access is granted
+
+
+	     AUTHENTICATION SERVER		  (Authentication)
+	 {username, password, clientId, clientSecret, grantType, audience, scope}	   (U2M : Resource Owner Password flow)
+	 {clientId, clientSecret, grantType, audience, scope}     			           (M2M : Client Credential flow)
+		     |
+      	 	 | {JWTToken}
+      		 |		                httpHeaders.set("Authorization", "Bearer JWTToken");
+User/Machine    -------> CLIENT  -------------------------------------------------------->       CLOUD DNS             ------------>         RESOURCE SERVER
+			                                                                         |
+			                                                                AKAMAI (CDN) (IP whitelisting)                   -> validates JWTToken
+			                                                                         |                                       -> validates Role from the JWTToken
+			                                                                      KONG (Api Gateway)                         -> returns the secure resource to the client
+			                                                                         |
+			                                                                  CLOUD ARMOUR (firewall)     <---------- CLOUD FUNCTION (policies to support that CA only accepts IPs passed through Akamai)
+			                                                                         |
+			                                                                    INGRESS (Load Balancer)
+			                                                                        |
+			                                                                    WORKLOADS (services)
+ Benefits :
+1. CLIENT does not know user credentials - has only the JWTToken
+2. Granular access to CLIENT
+
+2. Microservices Event driven architecture
+========================================================
+1. Spring's event-driven architecture
+
+//create Event
+public class OrderPlacedEvent extends ApplicationEvent {
+    private final Order order;
+
+    public OrderPlacedEvent(Object source, Order order) {
+        super(source);
+        this.order = order;
+    }
+
+    public Order getOrder() {
+        return order;
+    }
+}
+
+//publish Event
+@Service
+public class OrderService {
+
+    @Autowired
+    private ApplicationEventPublisher applicationEventPublisher;
+
+    public void placeOrder(Order order) {
+        // Logic to place the order
+
+
+        // Publish the order placed event
+        applicationEventPublisher.publishEvent(new OrderPlacedEvent(this, order));
+    }
+}
+
+//Event listener
+@Component
+public class OrderConfirmationListener {
+
+    @EventListener
+    public void handleOrderPlacedEvent(OrderPlacedEvent event) {
+
+        //Logic to manage inventory
+        Order order = event.getOrder();
+
+        // Logic to send order confirmation email
+        Order order = event.getOrder();
+
+        // Logic to process payment
+        Order order = event.getOrder();
+
+        // Process payment for the order
+        System.out.println("Payment processed for order: " + order.getId());
+
+        // Send email to the customer confirming the order
+        System.out.println("Order confirmation email sent for order: " + order.getId());
+    }
+}
+
+2. Kafka (See SpringBootKafka)
+
+3. Spring Security Architecture
+=======================================================
+
+                UsernamePasswordAuthenticationToken (token)
+                     2  ↑                       |3
+                        |                       |
+             1          |                       ↓
+httpRequest ------> UsernamePasswordAuthenticationFilter ---->  AuthenticationManager ------> AuthenticationProvider ------> UserDetailsService (I)   >>>>>>  UserDetails
+                                                                (authenticate(token))                                      (loadUserByUserName(userId))
+    .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)                                                     |
+                                                                                                                                | JWT Token
+                                                                                                                                |
+                                                                                                                                ↓
+                                                                                                                        SecurityContext      -----------> returns JWT Token
+                                                                                                                            (JWT Token)
+
+AuthenticationFilter
+-----------------------
+
+<filter>
+    <filter-name>springSecurityFilterChain</filter-name>
+    <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+</filter>
+<filter-mapping>
+    <filter-name>springSecurityFilterChain</filter-name>
+    <url-pattern>/*</url-pattern>
+</filter-mapping>
+
+        Servlet                                          ApplicationContext                         SpringSecurityFilterChains
+   ----------------------                             ---------------------------------        -------------------------------------
+
+    <filter-name>                                       <filter-name>                               SpringSecurityFilterChains 1
+        springSecurityFilterChain                            springSecurityFilterChain                  -SpringSecurityFilter11
+    </filter-name>                                      </filter-name>                                  -SpringSecurityFilter12
+    <filter-class>                  ----------->        <filter-class>        --------->            SpringSecurityFilterChains 2
+        DelegatingFilterProxy                               FilterChainProxy                            -SpringSecurityFilter21
+    </filter-class>                                     </filter-class>                                 -SpringSecurityFilter22
+
+@Bean FilterChainProxy :: is created by Spring automatically.
+This FilterChainProxy contains a number of SecurityFilterChains and these SecurityFilterChains contain a number of filters.
+Every request goes through this SecurityFilterChains.
+
+ .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+
+
+AuthenticationManager
+-----------------------
+authenticate(UsernamePasswordAuthenticationToken token) - delegates the request to a list of AuthenticationProviders which on successful login returns an Authentication object which is passed to the SecurityContext
+
+UserDetailsService
+-----------------------
+Interface to retrieve the user’s authentication and authorization information
+1 method - UserDetails loadUserByUserName(String userId);
+
+UserDetails
+-----------------------
+Core class representing user details like principals, credentials, authorities
+
+SecurityContext
+-----------------------
+Authentication and Authorization information of the user currently accessing the application.
+
+SecurityContextHolder
+-----------------------
+Core class which holds the SecurityContext
+SecurityContextHolder uses “ThreadLocal” variables to store the principal details.
+
+ResponseEntity
+-----------------------
+
+return ResponseEntity
+                    .status(HttpStatus.OK)
+					.header("Custom-header", "value")
+					.body(accountMaster);
+
+return ResponseEntity
+                .status(HttpStatus.OK)
+				.cacheControl(CacheControl.maxAge(getCacheDuration()).noTransform().mustRevalidate())
+				.header("test","test")
+				.body(orderResponse);
+
+/*
+    must-revalidate :
+        - Once the cache expires, get new response
+        - If a response is cacheable for 10 seconds, then must-revalidate starts after 10 seconds
+
+    no-cache :
+
+ */
+
+----------------------------------------------------------------------------------------------------------------------
+
+
+
+Spring Boot Design Patterns
+=======================================
+
+1. REST (Synchronous Communication)
+----------------------------------------
+URI-based
+Lightweight (rely on HTTP(s) which means it is format-agonistic, JSON ,XML, html can be used as the messaging format)
+Stateless
+Cacheable
+
+
+2. API Gateway
+-----------------------------------------
+- Authentication
+- Authorization
+- Single Point of Entry
+- Transformation
+- Logging
+- Caching
+- Encryption
+- Load Balancing
+- Rate-limiting (DDoS Protection) (Distributed Denial-of-Service)
+
+Problems
+- Single point of failure - so put multiple APIGWs and a LoadBalancer in front
+- Slower
+
+Example : Orchis APIGW , Kong GW
+
+APIGW has different subscription plans for each consumer that dictates the allowed RPS(Request per second) and the BL (Burst Load).
+
+3. Load Balancing
+---------------------------------------
+Distributes incoming requests across multiple servers to improve performance, reliability, and availability
+
+4. Service Discovery
+-----------------------------
+@SpringBootApplication
+@EnableEurekaServer
+public class EurekaServerApplication {
+
+	//Eureka server :: http://localhost:8761/
+	public static void main(String[] args) {
+		SpringApplication.run(EurekaServerApplication.class, args);
+	}
+}
+
+eureka:
+  client:
+    registerWithEureka: true
+@SpringBootApplication
+@EnableDiscoveryClient
+public class SpringConversionFactorApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(SpringConversionFactorApplication.class, args);
+	}
+
+}
+
+@Configuration
+class WebClientConfig {
+
+    @Bean
+    WebClient.Builder webClientBuilder() {
+        return WebClient.builder();
+    }
+
+}
+
+//call this Eureka client from another service
+ return webClientBuilder
+                .build()
+                .get()
+                .uri("http://conversion-factor/eureka/v1/getConversionFactor/" + countryCode)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(String.class);
+
+5. Client-side Load Balancing
+----------------------------------
+SpringCloud LoadBalancer :: calling EurekaClient in a Load-Balanced manner
+
+@Configuration
+public class ServiceInstanceConfig {
+
+    @Bean
+    public ServiceInstanceListSupplier serviceInstanceListSupplier(){
+        return new ServiceInstanceSupplier("conversion-factor");
+    }
+}
+
+@LoadBalancerClient(name = "conversion-factor", configuration = ServiceInstanceConfig.class)
+@Configuration
+class WebClientConfig {
+
+    @LoadBalanced
+    @Bean
+    WebClient.Builder webClientBuilder() {
+        return WebClient.builder();
+    }
+
+}
+
+@RestController
+public class NavigationController {
+
+    @Autowired
+    private WebClient.Builder webClientBuilder;
+
+    //http://localhost:8071/getConversionFactorClient/AUD
+    @GetMapping(value = "/getConversionFactorClient/{countryCode}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Mono<String> convertCurrency(@PathVariable("countryCode") String countryCode) {
+
+    //call the Eureka client from another service in a load-balanced manner
+        return webClientBuilder
+                .build()
+                .get()
+                .uri("http://conversion-factor/eureka/v1/getConversionFactor/" + countryCode)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(String.class);
+
+
+    }
+
+}
+
+6. Pub/Sub (Asynchronous Communication)
+-----------------------------------------
+Decouples message producers and consumers, improves scalability and flexibility.
+
+
+7. Dependency Injection
+-------------------------------
+        - Objects define their dependencies through
+          (IoC :: a generic term where framework calls library implementation instead of application)
+
+        1.Field Injection:
+
+            @Component
+            public class MyService {
+
+                @Autowired
+                private MyRepository repository;  //does not allow final
+            }
+
+        2. Constructor Injection:
+
+            @Component
+            public class MyService {
+                private final MyRepository repository;
+
+                @Autowired
+                public MyService(MyRepository repository) {
+                    this.repository = repository;   //preferred :: All dependencies are provided at compile-time, improved testing
+                }
+            }
+
+        3. Setter Injection :
+
+            @Component
+            public class MyService {
+                private MyRepository repository;
+
+                @Autowired
+                public void setRepository(MyRepository repository) {
+                    this.repository = repository;
+                }
+            }
+
+
+8. Singleton
+------------------
+        -  1 instance in the ApplicationContext
+        -  Spring-Managed-Beans are singleton by default
+        -  Lifecycle managed by container
+
+public class SingletonEx {
+
+	private static volatile SingletonEx singletonEx = null;
+
+	// prevent Object creation by Constructor
+	private SingletonEx() {
+		//do nothing
+	}
+
+	// prevent Object creation by Cloning
+	@Override
+	protected Object clone() throws CloneNotSupportedException {
+		throw new CloneNotSupportedException();
+	}
+
+	// get Object instance by Double-check locking
+	public static SingletonEx getInstance() {
+		if (Objects.isNull(singletonEx)) {
+			synchronized (SingletonEx.class) {
+				if (Objects.isNull(singletonEx)) {
+					singletonEx = new SingletonEx();
+				}
+			}
+		}
+		return singletonEx;
+	}
+}
+
+9. Factory
+---------------------------------------
+ Factory will have all the objects whichever is needed at runtime will be provided
+
+        public interface PaymentProvider {
+            void acceptPayment();
+        }
+
+
+        @Service("GPayPayment") //service value
+        public class GPayPayment implements PaymentProvider{
+
+            @Override
+            public void acceptPayment() {
+                System.out.println("GPay payment...");
+            }
+        }
+
+        @Service("WhatsAppPayment") //service value
+        public class WhatsAppPayment implements PaymentProvider{
+
+            @Override
+            public void acceptPayment() {
+                System.out.println("WhatsApp payment...");
+            }
+        }
+
+
+        @Service
+        @AllArgsConstructor
+        public class PaymentFactory {
+            public Map<String, PaymentProvider> paymentProviderMap;
+
+            public PaymentProvider getPayment(String paymentProviderType) {
+                return paymentProviderMap.get(paymentProviderType);
+            }
+
+        }
+
+        @SpringBootApplication
+        public class SpringBootRest2Application implements CommandLineRunner {
+
+            @Autowired
+            private PaymentFactory paymentFactory;
+
+            public static void main(String[] args) {
+                SpringApplication.run(SpringBootRest2Application.class, args);
+            }
+
+            @Override
+            public void run(String... args) throws Exception {
+                WhatsAppPayment whatsAppPayment = (WhatsAppPayment) paymentFactory.getPayment("WhatsAppPayment");
+                whatsAppPayment.acceptPayment();    //WhatsApp payment...
+                GPayPayment gPayPayment = (GPayPayment) paymentFactory.getPayment("GPayPayment");
+                gPayPayment.acceptPayment();         //GPay payment...
+            }
+        }
+
+
+
+10. Builder Design pattern
+-------------------------------
+        - @Builder
+        User user = User.builder()
+                        .username("john_doe")
+                        .email("john@example.com")
+                        .age(30)
+                        .build();
+
+11. Proxy Design pattern (Sidecar)
+-----------------------------
+        - AOP framework to apply cross-cutting concerns to components without modifying their core logic
+
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-aop</artifactId>
+</dependency>
+
+Aspect :: module for cross-cutting-concerns
+          This allows to centralize cross-cutting logic in one place and keep your custom components focused on their specific business logic
+Advice :: action taken by an Aspect at a particular Joinpoint ("before", "after", "around")
+Pointcut :: expression that selects one or more JoinPoints where Advice is executed.
+JoinPoint :: method where Aspect gets plugged-in
+
+
+12. Backend for Frontend
+--------------------------------------------
+Separate APIGWs for separate types of client
+
+    Clients                 BFF                 Services
+    ---------           -----------             ------------
+
+    Web                   Web API GW             Authentication / Authorization
+
+    Mobile                Mobile API GW          Service A
+
+    Other clients         Other API GW           Service B
+
+-optimised
+-scalable
+
+13. Command Query Responsibility Segregation (CQRS)
+---------------------------------------------------------------------------
+
+Separates Commands(write to Database) from Queries(reading from Database) into separate services
+-auditing
+-scalable
+
+
+14. Circuit Breaker
+---------------------------------------------------------------------------
+
+
+                                    Count-based / Time-based          Count-based / Time-based
+                    CLOSED     ------------------>     HALF-OPEN      ------------------>       OPEN
+                 (success)                                             ( fallback )
+                            <-----------------------------------------------------------
+                                            (reset breaker)
+<!-- Actuator -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-actuator</artifactId>
+</dependency>
+
+<!-- AOP -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-aop</artifactId>
+</dependency>
+
+<!-- Resilience -->
+<dependency>
+    <groupId>io.github.resilience4j</groupId>
+    <artifactId>resilience4j-spring-boot3</artifactId>
+    <version>2.0.2</version>
+</dependency>
+
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      getMoviesOfDirector_CB:
+        register-health-indicator: true
+        sliding-window-type: count_based
+        sliding-window-size: 10
+        failure-rate-threshold: 70 #Circuitbreaker will open if 70% of the last 10 calls failed
+        slow-call-rate-threshold: 40
+        slow-call-duration-threshold: 2s
+        permitted-number-of-calls-in-half-open-state: 1
+        max-wait-duration-in-half-open-state: 10s
+        wait-duration-in-open-state: 10s
+        writable-stack-trace-enabled: true
+        automatic-transition-from-open-to-half-open-enabled: true
+
+@GetMapping(value = "/getMoviesOfDirector", produces = MediaType.APPLICATION_JSON_VALUE)
+@SneakyThrows
+@Logging
+@CircuitBreaker(name = "getMoviesOfDirector_CB",fallbackMethod = "getDummyValue")
+@RateLimiter(name = "basic")
+@Bulkhead(name = "serviceA", fallbackMethod = "getDummyValue")
+public List<Movie> getMoviesOfDirector(
+        @RequestParam(value = "director") String director) {
+    director = director.replaceAll(" ", "%20");
+
+    //Endpoint
+    String endpoint = "http://localhost:9050/orders/v1/getMoviesOfDirector/" + director;
+    URI uri = new URI(endpoint);
+
+    return restClientService.getMoviesOfDirector(uri, director);
+}
+
+public List<Movie> getDummyValue(Exception exception){
+    List<Movie> list = new ArrayList<>();
+    Movie movie = new Movie();
+    movie.setMovieId(100);
+    movie.setMovieName("someName");
+    list.add(movie);
+    return list;
+}
+
+15. Rate-limiter
+---------------------------------------------------------------------------
+
+resilience4j:
+  ratelimiter:
+      instances:
+        basic:
+          limitForPeriod: 2
+          limitRefreshPeriod: 1s # 2RPS
+          timeoutDuration: 10s     #time to acquire permission from RateLimiter before erroring out.
+
+@GetMapping(value = "/getMoviesOfDirector", produces = MediaType.APPLICATION_JSON_VALUE)
+@SneakyThrows
+@Logging
+@CircuitBreaker(name = "getMoviesOfDirector_CB",fallbackMethod = "getDummyValue")
+@RateLimiter(name = "basic")
+@Bulkhead(name = "serviceA", fallbackMethod = "getDummyValue")
+public List<Movie> getMoviesOfDirector(
+        @RequestParam(value = "director") String director) {
+    director = director.replaceAll(" ", "%20");
+
+    //Endpoint
+    String endpoint = "http://localhost:9050/orders/v1/getMoviesOfDirector/" + director;
+    URI uri = new URI(endpoint);
+
+    return restClientService.getMoviesOfDirector(uri, director);
+}
+
+16. Bulkhead
+---------------------------------------------------------------------------
+Latency in one service should not migrate to the whole system
+
+resilience4j:
+   bulkhead:
+     instances:
+       serviceA:
+         maxConcurrentCalls: 1
+
+@GetMapping(value = "/getMoviesOfDirector", produces = MediaType.APPLICATION_JSON_VALUE)
+@SneakyThrows
+@Logging
+@CircuitBreaker(name = "getMoviesOfDirector_CB",fallbackMethod = "getDummyValue")
+@RateLimiter(name = "basic")
+@Bulkhead(name = "serviceA", fallbackMethod = "getDummyValue")
+public List<Movie> getMoviesOfDirector(
+        @RequestParam(value = "director") String director) {
+    director = director.replaceAll(" ", "%20");
+
+    //Endpoint
+    String endpoint = "http://localhost:9050/orders/v1/getMoviesOfDirector/" + director;
+    URI uri = new URI(endpoint);
+
+    return restClientService.getMoviesOfDirector(uri, director);
+}
+
+public List<Movie> getDummyValue(Exception exception){
+    List<Movie> list = new ArrayList<>();
+    Movie movie = new Movie();
+    movie.setMovieId(100);
+    movie.setMovieName("someName");
+    list.add(movie);
+    return list;
+}
+
+17. Event Sourcing
+---------------------------------------------------------------------------
+Event logs
+- auditing
+- analytics
+
+
+18. Strangler pattern
+---------------------------------------------------------------------------
+Design pattern that incrementally transforms the monolithic application to microservice by replacing a particular functionality with a new service.
+Once the new functionality is ready, the old component is decommissioned.
+Candidate for Test-Driven Development
+
+
+19. 2-phase commit (2PC)
+-----------------------------------------------
+Immediate Transactions
+Commit or rollback entire transaction
+
+Phase1 : Prepare
+                                   Service 1
+                                    | C?  |
+                                    |      | Y/N        C?
+          Client   --------------> Controller   ----------->        Service 2
+                                    |     |     <-----------
+                                 C? |     | Y/N            Y/N
+                                  Service 3
+
+Phase2 : Commit
+
+                         Service 1
+                                  | C/R  |
+                                  |      | +/-        C/R
+        Client   --------------> Controller   ----------->        Service 2
+                                  |     |     <-----------
+                               C/R|     | +/-           +/-
+                                Service 3
+
+
+20. Saga
+---------------------------------------------------------------------------
+Distributed Transactions
+Every transaction has a Rollback action
+-more scalable than 2PC
+
+
+CHOREOGRAPHY
+----------------------
+
+    Order service ----------> Payment service -------> Catering service  ---------> Delivery service
+                <--------------------->
+                <--------------------------------------------->
+                <-------------------------------------------------------------------------->
+
+
+ORCHESTRATION
+----------------------
+
+        Order service               Payment service       Catering service      Delivery service
+            \   \ (4)           /         /               /               /       /           /
+             \   \           /         /            /               /       /           /
+              \   \         /         /         /           /           /           /
+               Orchestrator
+
+
+-------------------------------------------------------------------------------------------------
+
 SpringBoot3 changes
 ===========================================================
 
