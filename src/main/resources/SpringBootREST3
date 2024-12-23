@@ -766,6 +766,54 @@ ORCHESTRATION
 
 -------------------------------------------------------------------------------------------------
 
+
+
+Spring Boot Optimizations
+=============================
+
+Identifying Bottlenecks :: Latency, CPU Usage, DB Usage
+
+1. Asynchronous
+2. Caching (Caffeine -> Redis -> DB)
+
+	( JPA Optimizations )
+3. Table Indexing
+	@Entity
+        @Table(name = "BOOK", indexes = {@Index(name = "book_index", columnList = "book_id")})
+
+	CREATE INDEX idx_data_field ON data_table (field_name);
+
+4. JPA Query
+
+5. Batch Processing
+        saveAll(list)
+        deleteInBatch(list)
+
+6. Lazy Loading
+        @OneToMany(cascade = CascadeType.MERGE, mappedBy = "author" , fetch = FetchType.LAZY)
+        private List<Book> bookList;
+
+        @ManyToOne(cascade = CascadeType.MERGE, fetch = FetchType.EAGER)
+        @JoinColumn(name = "author_id")
+        private Author author;
+7. @Transactional
+8. DTO projection
+9. N+1
+10. Hikari Connection Pool
+11. Streaming
+
+12. JSON Schema validation
+13. GZIP large request
+14. Resilience4J : Circuit Breaker and Rate Limiter
+
+15. Kafka
+16. Sharding with MongoDB or Cassandra
+	- Each shard holds a portion of the data
+	- Horizontal Scaling
+
+
+-------------------------------------------------------------------------------------------------
+
 SpringBoot3 changes
 ===========================================================
 
