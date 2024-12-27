@@ -2,17 +2,20 @@ package com.example.SpringBootREST3.controller;
 
 import com.example.SpringBootREST3.entity.Movie;
 import com.example.SpringBootREST3.entity.MovieNew;
+import com.example.SpringBootREST3.exception.ErrorProperties;
 import com.example.SpringBootREST3.exception.ErrorResponse;
 import com.example.SpringBootREST3.exception.OrderException;
 import com.example.SpringBootREST3.model.AuthenticationResponse;
 import com.example.SpringBootREST3.model.MovieModel;
+import com.example.SpringBootREST3.model.OrderRequestForm;
+import com.example.SpringBootREST3.model.OrderResponse;
 import com.example.SpringBootREST3.model.Person;
 import com.example.SpringBootREST3.service.HomeService;
 import com.example.SpringBootREST3.service.MovieService;
 import com.example.SpringBootREST3.service.UserService;
 import com.example.SpringBootREST3.util.JWTTokenUtil;
+import com.example.SpringBootREST3.util.OrderServiceUtil;
 import io.jaegertracing.internal.JaegerTracer;
-import io.micrometer.core.annotation.Counted;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -42,14 +45,15 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.print.attribute.standard.Media;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.stream.Collectors;
 
 
 @RestController
@@ -80,6 +84,12 @@ public class NavController {
 
     @Autowired
     private JWTTokenUtil jwtTokenUtil;
+
+    @Autowired
+    private OrderServiceUtil orderServiceUtil;
+
+    @Autowired
+    private ErrorProperties errorProperties;
 
     Logger log = LoggerFactory.getLogger(NavController.class);
 
@@ -227,6 +237,54 @@ public class NavController {
 
         MovieNew movieNew = modelMapper.map(movieModel, MovieNew.class);
         return movieService.addMovie(movieNew);
+
+    }
+
+    //http://localhost:9100/v3/rest/getOrder3/Feb/red?parmRequestSource=web&parmAudienceType=external
+    //Header - Actor = Microservice
+    /*
+        {
+            "orderId": 100,
+            "item": "iPhone",
+            "itemType": "Phone",
+            "invoiceType": 2
+        }
+     */
+    @PostMapping(value = "/getOrder3/{month}/{colour}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<OrderResponse> getOrder3(
+            @PathVariable(value = "month") String month,
+            @PathVariable(value = "colour") String colour,
+            @RequestParam(value = "parmRequestSource") String parmRequestSource,
+            @RequestParam(required = false, value = "parmAudienceType") String parmAudienceType,
+            @RequestHeader(value = "Actor") String actor,
+            @RequestBody OrderRequestForm orderRequestForm) {
+
+        OrderResponse orderResponse = new OrderResponse();
+
+
+
+            String item = orderRequestForm.getItem();
+            String itemType = orderRequestForm.getItemType();
+            Integer invoiceType = orderRequestForm.getInvoiceType();
+
+            if(!orderServiceUtil.allowedItems.contains(item)) {
+                errorProperties.throwSPEException(ErrorProperties.ErrorCode.INVALID_ITEM, List.of(item));
+            }
+            else {
+                orderResponse.setOrderId(orderRequestForm.getOrderId());
+                orderResponse.setItem(orderRequestForm.getItem());
+                orderResponse.setItemType(orderRequestForm.getItemType());
+                orderResponse.setInvoiceType(orderRequestForm.getInvoiceType());
+                orderResponse.setParmRequestSource(parmRequestSource);
+                orderResponse.setParmAudienceType(parmAudienceType);
+                orderResponse.setMonth(month);
+                orderResponse.setActor(actor);
+            }
+
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .header("test", "test")
+                .body(orderResponse);
 
     }
 }

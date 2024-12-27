@@ -1414,6 +1414,18 @@ public class GlobalExceptionHandler {
                 .body(errorResponse);
     }
 
+    @ExceptionHandler(SPEException.class)
+    public ResponseEntity<ErrorCodeProperties> handleSPEException(SPEException speException) {
+        ErrorCodeProperties errorCodeProperties = new ErrorCodeProperties(speException.getGroup(),
+                                                                          speException.getType(),
+                                                                          speException.getMessage(),
+                                                                          speException.getInfoMessage(),
+                                                                          speException.getHttpStatus());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(errorCodeProperties);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException me) {
         String errorMessage = "Error in object '%s', error in field '%s', error is '%s'";
@@ -1436,7 +1448,146 @@ public class GlobalExceptionHandler {
 
 }
 
+@SpringBootApplication
+@EncryptablePropertySource("classpath:errorMessages_en.properties")
+public class SpringBootRest3Application {
+
+	public static void main(String[] args) {
+		SpringApplication.run(SpringBootRest3Application.class, args);
+	}
+
+}
+
+error.message.validation.itemMismatch = Item does not match
+error.message.validation.itemTypeMismatch = Item Type does not match
+error.message.dataConnection.itemAndItemTypeMismatch = Item and Item type mismatch
+
+error.infomessage.validation.itemMismatch = Item does not match for %1s
+error.infomessage.validation.itemTypeMismatch = Item Type does not match for %1s
+error.infomessage.dataConnection.itemAndItemTypeMismatch = Item and Item type mismatch for %1s:%2s
+
+
+
+@Configuration
+@ConfigurationProperties(prefix = "error.message")
+@Data
+@Validated
+public class ErrorMessageProperties {
+
+    @Valid
+    private final ErrorMessageProperties.Validation validation = new ErrorMessageProperties.Validation();
+
+    @Valid
+    private final ErrorMessageProperties.DataConnection dataConnection = new ErrorMessageProperties.DataConnection();
+
+    @Data
+    public static class Validation {
+        @NotNull
+        private String itemMismatch;
+        @NotNull
+        private String itemTypeMismatch;
+    }
+
+    @Data
+    public static class DataConnection {
+        @NotNull
+        private String itemAndItemTypeMismatch;
+
+    }
+}
+
+
+@Configuration
+@ConfigurationProperties(prefix = "error.infomessage")
+@Data
+public class ErrorInfoMessageProperties {
+
+    @Valid
+    private final ErrorInfoMessageProperties.Validation validation = new ErrorInfoMessageProperties.Validation();
+
+    @Valid
+    private final ErrorInfoMessageProperties.DataConnection dataConnection = new ErrorInfoMessageProperties.DataConnection();
+
+    @Data
+    public static class Validation {
+        @NotNull
+        private String itemMismatch;
+        @NotNull
+        private String itemTypeMismatch;
+    }
+
+    @Data
+    public static class DataConnection {
+        @NotNull
+        private String itemAndItemTypeMismatch;
+    }
+}
+
+
+
+@Component
+public class ErrorProperties {
+
+    private final Map<ErrorCode, ErrorCodeProperties> errorPropertiesMap;
+
+    public ErrorProperties(ErrorMessageProperties errorMessageProperties,
+                           ErrorInfoMessageProperties errorInfoMessageProperties) {
+
+        errorPropertiesMap = new EnumMap<>(ErrorCode.class);
+
+        errorPropertiesMap.put(ErrorCode.INVALID_ITEM,
+                new ErrorCodeProperties(Group.CONFIGURATION_ERROR,
+                        Type.CART_VALIDATION_ERROR,
+                        errorMessageProperties.getValidation().getItemMismatch(),
+                        errorInfoMessageProperties.getValidation().getItemMismatch(),
+                        HttpStatus.BAD_REQUEST));
+
+        errorPropertiesMap.put(ErrorCode.INVALID_ITEM_TYPE,
+                new ErrorCodeProperties(Group.CONFIGURATION_ERROR,
+                        Type.CART_VALIDATION_ERROR,
+                        errorMessageProperties.getValidation().getItemTypeMismatch(),
+                        errorInfoMessageProperties.getValidation().getItemTypeMismatch(),
+                        HttpStatus.BAD_REQUEST));
+
+        errorPropertiesMap.put(ErrorCode.INVALID_ITEM_ITEM_TYPE_MISMATCH,
+                new ErrorCodeProperties(Group.CONFIGURATION_ERROR,
+                        Type.CART_VALIDATION_ERROR,
+                        errorMessageProperties.getDataConnection().getItemAndItemTypeMismatch(),
+                        errorInfoMessageProperties.getDataConnection().getItemAndItemTypeMismatch(),
+                        HttpStatus.BAD_REQUEST));
+    }
+
+    public enum ErrorCode {
+        INVALID_ITEM,
+        INVALID_ITEM_TYPE,
+        INVALID_ITEM_ITEM_TYPE_MISMATCH
+    }
+
+    public enum Group {
+        CONFIGURATION_ERROR
+    }
+
+    public enum Type {
+        CART_VALIDATION_ERROR
+    }
+
+    public void throwSPEException(ErrorProperties.ErrorCode errorCode, List<String> errorInfo) {
+        ErrorCodeProperties errorCodeProperties = errorPropertiesMap.get(errorCode);
+        throw new SPEException(errorCodeProperties.getGroup(),
+                            errorCodeProperties.getType(),
+                            errorCodeProperties.getMessage(),
+                            CollectionUtils.isEmpty(errorInfo)? errorCodeProperties.getInfoMessage(): String.format(errorCodeProperties.getInfoMessage(), errorInfo),
+                            errorCodeProperties.getHttpStatus());
+    }
+
+}
+
+if(!orderServiceUtil.allowedItems.contains(item)) {
+    errorProperties.throwSPEException(ErrorProperties.ErrorCode.INVALID_ITEM, List.of(item));
+}
+
 --------------------------------------------------------------------------------------------------------
+
 
 Rate-limiter
 ------------------

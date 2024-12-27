@@ -19,6 +19,18 @@ public class GlobalExceptionHandler {
                 .body(errorResponse);
     }
 
+    @ExceptionHandler(SPEException.class)
+    public ResponseEntity<ErrorCodeProperties> handleSPEException(SPEException speException) {
+        ErrorCodeProperties errorCodeProperties = new ErrorCodeProperties(speException.getGroup(),
+                                                                          speException.getType(),
+                                                                          speException.getMessage(),
+                                                                          speException.getInfoMessage(),
+                                                                          speException.getHttpStatus());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(errorCodeProperties);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException me) {
         String errorMessage = "Error in object '%s', error in field '%s', error is '%s'";
