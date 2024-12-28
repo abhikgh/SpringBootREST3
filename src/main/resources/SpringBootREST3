@@ -70,7 +70,7 @@ OAuth 2.0 is an Open Authorization Protocol that gives Clients limited access to
 Delegating the user authentication to a AUTHENTICATION SERVER that hosts user credentials
 On successful authentication AUTHENTICATION SERVER returns a JWTToken
 Client takes this token to RESOURCE SERVER and after validation of the token for authentication and authorization access is granted
-
+OAuth2.0 SSL is required for all the communications required to generate the token
 
 	     AUTHENTICATION SERVER		  (Authentication)
 	 {username, password, clientId, clientSecret, grantType, audience, scope}	   (U2M : Resource Owner Password flow)
@@ -89,6 +89,12 @@ User/Machine    -------> CLIENT  -----------------------------------------------
 			                                                                    INGRESS (Load Balancer)
 			                                                                        |
 			                                                                    WORKLOADS (services)
+
+			     AUTHENTICATION SERVER (private key, signature) ----------------> RESOURCE SERVER (public key, verify signature)
+                                    -private key : AUTHENTICATION SERVER uses the private key to sign the JWT
+                                    -public key  : RESOURCE SERVER uses the public key to verify the signature of the JWTToken (shared widely)
+
+
  Benefits :
 1. CLIENT does not know user credentials - has only the JWTToken
 2. Granular access to CLIENT
@@ -2843,5 +2849,65 @@ Implement malicious code in user's website
 When the malicious code is processed, it can fetch any data.
 Javascript-based
 more dangerous
+
+---------------------------------------------------------------------------------------------------------------------------
+
+mvcMatcher vs antMatcher
+================================
+
+mvcMatcher is more secure than an antMatcher. As an example:
+
+.antMatchers(HttpMethod.POST, "/orders/v1/getOrder2").permitAll()
+.mvcMatchers(HttpMethod.POST, "/orders/v1/getOrder2/**").permitAll()
+
+Secured Spring Application
+===============================
+
+Object :  @Autowired /  @Bean
+Variable :  No global variable
+Jaxb2Marshaller
+DataSource and Hikari
+JWT
+APIGW
+
+@AllArgsConstructor                                   vs                                  @RequiredArgsConstructor
+============================================================================================================================
+constructor for all fields                                                               constructor for final fields
+
+
+Import java class into Spring container
+===========================================
+
+public class A {
+}
+
+@Import(A.class)
+@Configuration
+public class TestConfiguration {
+
+}
+
+class {
+
+    @Autowired
+    private A a;
+}
+
+Encoding vs Encryption
+===========================================
+
+Encoding    :: Text + algorithm = Cipher-Text
+Encryption  :: Text + key + algorithm = Cipher-Text
+
+Symmetric Encryption                                            vs                                      Asymmetric Encryption
+---------------------------------------------------------------------------------------------------------------------------------------
+Single key is used for encryption and decryption                                    Two different keys are used — Private Key and Public Key
+- AES (Advanced Encryption Standard) , DES (Data Encryption Standard)               -RSA
+
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+
+
 
 ---------------------------------------------------------------------------------------------------------------------------
