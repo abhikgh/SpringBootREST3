@@ -2760,3 +2760,88 @@ Idempotent keys in header
 Token-Based Request Validation
 
 ---------------------------------------------------------------------------------------------
+
+
+MDC (Mapped Diagnostic Context)
+====================================
+- To transfer value within service
+
+JSON logging
+====================
+JSON logging is enabled through LogstashEncoder
+
+<!-- JSON Logging -->
+<dependency>
+    <groupId>net.logstash.logback</groupId>
+    <artifactId>logstash-logback-encoder</artifactId>
+    <version>5.2</version>
+</dependency>
+
+logback.xml
+---------------
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+      <!-- console log appender -->
+       <appender name="jsonConsole" class="ch.qos.logback.core.ConsoleAppender">
+           <encoder class ="net.logstash.logback.encoder.LogstashEncoder">
+               <!-- append fields into logstash log by MDC-->
+               <includeMdcKeyName>x-flow-id</includeMdcKeyName>
+               <includeMdcKeyName>month</includeMdcKeyName>
+               <includeMdcKeyName>parmRequestSource</includeMdcKeyName>
+           </encoder>
+       </appender>
+
+    <root level="INFO">
+        <appender-ref ref="jsonConsole"/>
+    </root>
+
+</configuration>
+
+private final Logger logger = LoggerFactory.getLogger(NavigationController.class);
+
+String requestJSON = objectMapper.writeValueAsString(orderRequestForm);
+MDC.put("month", month);
+MDC.put("parmRequestSource", parmRequestSource);
+MDC.put("x-flow-id", UUID.randomUUID().toString());
+logger.info(requestJSON);
+
+{
+	"@timestamp": "2024-09-21T11:49:09.875+05:30",
+	"@version": "1",
+	"message": "{\r\n  \"orderId\" : 100,\r\n  \"location\" : \"Kolkata\",\r\n  \"invoiceType\" : 2,\r\n  \"orderItems\" : [ {\r\n    \"itemId\" : 1001,\r\n    \"itemName\" : \"iPhoneX\",\r\n    \"quantity\" : 2\r\n  }, {\r\n    \"itemId\" : 1002,\r\n    \"itemName\" : \"iPad\",\r\n    \"quantity\" : 2\r\n  }, {\r\n    \"itemId\" : 1003,\r\n    \"itemName\" : \"LED TV\",\r\n    \"quantity\" : 2\r\n  } ]\r\n}",
+	"logger_name": "com.example.SpringBootREST2.controller.NavigationController",
+	"thread_name": "http-nio-9050-exec-3",
+	"level": "INFO",
+	"level_value": 20000,
+	"month": "Feb",
+	"parmRequestSource": "web",
+	"x-flow-id": "8f73e973-c37a-4236-855d-ad25dcb5c1a1"
+}
+
+----------------------------------------------------------------------------------------------------------------------
+
+CORS (Cross-Origin Resource Sharing)
+========================================
+@CrossOrigin
+Allows API to share resources with Browser
+
+
+CSRF (Cross-Site Request Forgery)
+===================================================================
+If a user is logged into a website (e.g., a banking site), an attacker can create a malicious page
+that tricks the user’s browser into sending requests to that site.
+
+CSRF protection - CSRF token to be shared between client and server
+
+httpSecurity
+        .csrf().disable() //disable for APIs as it is stateless or JWT authentication
+
+XSS (Cross-Site Scripting)
+===============================
+Implement malicious code in user's website
+When the malicious code is processed, it can fetch any data.
+Javascript-based
+more dangerous
+
+---------------------------------------------------------------------------------------------------------------------------
