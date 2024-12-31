@@ -1670,12 +1670,6 @@ public HeroDetailsResponse getHeroDetailsASync(HeroDetailsRequest heroDetailsReq
     return heroDetailsResponse;
 }
 
-RestTemplate                            vs                      WebClient                           vs                          RestClient              vs                   FeignClient
----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-Synchronous HTTP call                                        ASynchronous HTTP call                                           Synchronous HTTP call                         Synchronous HTTP call
-                                                             Fluid API                                                        Fluid API                                     Interface with @FeignClient
-Servlet Stack                                                Reactive Stack                                                   Servlet Stack
-
 --------------------------------------------------------------------------------------------------------
 
 Class Data Sharing (CDS)
@@ -2910,4 +2904,260 @@ Single key is used for encryption and decryption                                
 - AES (Advanced Encryption Standard) , DES (Data Encryption Standard)               -RSA
 
 
+Pen test
+==============
+API penetration testing is a security testing method that simulates hacker attacks to evaluate the security of an API
+- BurpSuite
+
+GHAS / SonarQube
+=====================
+Static code analysis tool
+
+Disaster recovery
+========================
+Terraform - IaaC -> define your infrastructure, so it can be recreated quickly in case of disaster
+Auto-Scaling
+Failover
+Multi-region
+
+        Hot Failover: Backup systems run simultaneously with the primary systems. Failover happens automatically and almost instantaneously.
+        Cold Failover: Backup systems remain offline and only come online when a failure occurs. The recovery process takes time as services and systems need to be started manually.
+        Warm Failover: Backup systems are running with minimal services enabled, and they are prepared to take over quickly with some manual intervention.
+
+Performance Testing
+====================
+Gatling / JMeter
+
+
+A/B Testing
+==================
+compares 2 versions to check which version is more performant/appeals more
+
+Trivy
+======
+Image Scanning for vulnerabilities
+
+Blackduck
+==========
+BlackDuck -> Image Scanning for vulnerabilities + compliance +  code-quality
+
+
 ---------------------------------------------------------------------------------------------------------------------------------------
+
+Gatling
+======================
+
+Gatling : Performance test by simulation
+Compared to JMeter : Gatling is faster, lightweight, and provides more detailed and colorful reports
+
+simulation service :: E:\Softwares\gatling-charts-highcharts-bundle-3.9.5\user-files\simulations\GatlingSimulations.java
+
+Run gatling :: E:\Softwares\gatling-charts-highcharts-bundle-3.9.5\bin\gatling.bat
+
+Results :: E:\Softwares\gatling-charts-highcharts-bundle-3.9.5\results
+
+<dependency>
+    <groupId>io.gatling</groupId>
+    <artifactId>gatling-core</artifactId>
+    <version>3.9.3</version>
+</dependency>
+<!-- https://mvnrepository.com/artifact/io.gatling.highcharts/gatling-charts-highcharts -->
+<dependency>
+    <groupId>io.gatling.highcharts</groupId>
+    <artifactId>gatling-charts-highcharts</artifactId>
+    <version>3.9.3</version>
+</dependency>
+<!-- https://mvnrepository.com/artifact/io.gatling/gatling-maven-plugin -->
+<dependency>
+    <groupId>io.gatling</groupId>
+    <artifactId>gatling-maven-plugin</artifactId>
+    <version>4.3.1</version>
+</dependency>
+
+Gatling Simulation
+------------------------------
+
+package com.example.SpringBootREST2.service;
+
+import static io.gatling.javaapi.core.CoreDsl.*;
+import static io.gatling.javaapi.http.HttpDsl.*;
+
+import io.gatling.javaapi.core.*;
+import io.gatling.javaapi.http.*;
+
+public class GatlingSimulation extends Simulation {
+
+    HttpProtocolBuilder httpProtocol =
+        http.baseUrl("http://localhost:9050")
+            .acceptHeader("text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+            .acceptLanguageHeader("en-US,en;q=0.5")
+            .acceptEncodingHeader("gzip, deflate")
+            .userAgentHeader(
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:16.0) Gecko/20100101 Firefox/16.0"
+            );
+
+    ChainBuilder read = exec(http("Read Spring Rest Controller").get("/orders/v1/getMoviesOfDirector/Satyajit Ray"));
+    ScenarioBuilder users = scenario("Users Read").exec(read);
+
+    {
+        setUp(
+            users.injectOpen(
+                atOnceUsers(1),
+                nothingFor(2),
+                atOnceUsers(4),
+                rampUsers(50).during(10),
+                constantUsersPerSec(20.0).during(20),
+                constantUsersPerSec(30.0).during(30)
+            )
+        ).protocols(httpProtocol);
+    }
+}
+
+----------------------------------------------------------------------------------------------------------------------
+
+SonarQube
+==============
+
+Static code analysis tool
+ - Code quality
+ - Code complexity
+ - Code duplications
+ - Code coverage
+ - Code smells
+ - Detects bugs and vulnerabilities
+
+ - Project status - passed / failed
+ Can integrate with build tools like Maven, Gradle and with CI Tools like Jenkins, Github Actions
+
+<!-- JaCoCo -->
+<dependency>
+    <groupId>org.jacoco</groupId>
+    <artifactId>jacoco-maven-plugin</artifactId>
+    <version>0.8.8</version>
+</dependency>
+
+ JaCoCo allows you to configure rules that can be verified during the build process, stopping it if these rules are not met.
+ JaCoCo will give the unit test coverage
+
+Run Sonar
+------------------
+E:\Softwares\sonarqube-10.2.1.78527\conf\sonar.properties
+        sonar.jdbc.username=postgres
+        sonar.jdbc.password=postgres
+
+E:\Softwares\sonarqube-10.2.1.78527\bin\windows-x86-64\StartSonar.bat
+http://localhost:9000
+
+D:\workspace2\SpringBootREST2 >
+mvn clean verify sonar:sonar -Dsonar.projectKey=SpringBootREST2 -Dsonar.projectName='SpringBootREST2' -Dsonar.host.url=http://localhost:9000 -Dsonar.token=sqp_5b83985ddb470a1350f16fc2363daefbde691605
+
+----------------------------------------------------------------------------------------------------------------------
+
+GitHub Advanced Security
+============================
+
+Code scanning
+Secret scanning
+Dependency review
+
+
+----------------------------------------------------------------------------------------------------------------------
+
+@Conditional
+--------------------------
+1.@ConditionalOnProperty
+
+@Configuration
+@ConditionalOnProperty(value = "opentracing.jaeger.enabled", havingValue = "true", matchIfMissing = true)
+public class JaegerConfig {
+}
+//matchIfMissing : Specify if the condition should match if the property is not set
+//so if opentracing.jaeger.enabled is not present then it will not match
+
+2.@ConditionalOnBean
+
+@Bean
+@ConditionalOnBean(DataSource.class)
+public ExampleService exampleService(DataSource dataSource) {
+    return new ExampleService(dataSource);
+}
+
+3.@ConditionalOnMissingBean
+
+@Bean
+@ConditionalOnMissingBean(ExampleService.class)
+public ExampleService defaultExampleService() {
+    return new DefaultExampleService();
+}
+
+4.@Conditional
+
+@Component
+@Conditional(SomeCondition.class)
+public class MyComponent {
+  // ... your component code here
+}
+
+public class SomeCondition implements Condition {
+
+  @Override
+  public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
+    //return true/false
+  }
+}
+
+----------------------------------------------------------------------------------------------------------------------
+
+RestTemplate                            vs                      WebClient                           vs                          RestClient              vs                   FeignClient
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Synchronous HTTP call                                        ASynchronous HTTP call                                           Synchronous HTTP call                         Synchronous HTTP call
+                                                             Fluid API                                                        Fluid API                                     Interface with @FeignClient
+Servlet Stack                                                Reactive Stack                                                   Servlet Stack
+
+
+
+Client-side Load Balancing                  vs                                         Server-side Load-balancing
+----------------------------------------------------------------------------------------------------------------------
+Spring Cloud Load Balancer	                                                             Single point of failure
+EurekaServer                                                                             INGRESS
+
+
+
+
+Forward Proxy                                      vs                               Reverse Proxy
+-------------------------------------------------------------------------------------------------------------
+
+Client -> Forward Proxy -> Internet -> Server
+        - IP masking (Client anonimity)
+        - Logging
+        - Caching
+        - Encryption
+        - Load Balancing
+
+                                                                        Client -> Internet  -> Reverse Proxy -> Server
+                                                                                - IP masking (Server anonimity)
+                                                                                - Logging
+                                                                                - Caching
+                                                                                - Encryption
+                                                                                - Load Balancing
+                                                                                - Rate-limiting (DDoS Protection) (Distributed Denial-of-Service)
+
+
+---------------------------------------------------------------------------------------------------------------------------
+
+DDos (Distributed Denial of Service) attack
+------------------------------------------------------
+
+A distributed denial-of-service (DDoS) attack is a malicious attempt to disrupt the normal traffic of a targeted server, service or network
+by overwhelming the target or its surrounding infrastructure with a flood of Internet traffic.
+
+Spring Bean scopes
+--------------------------
+1. singleton ::    1 instance in SpringApplicationContext
+2. prototype ::    1 instance in every call
+3. request ::      1 instance in request
+4. session ::      1 instance in session
+5. application ::  1 instance in appliocation(ServletContext)
+6. websocket ::    1 instance in WebSocket
+
+---------------------------------------------------------------------------------------------------------------------------
