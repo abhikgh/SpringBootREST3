@@ -13,6 +13,12 @@ git checkout -b <branch_name>
 git pull
 git merge development
 
+You have not concluded your merge (MERGE_HEAD exists). Please, commit your changes before you merge
+-------------------------------------------------------------------------------------------------------
+git merge --abort
+git reset --merge
+Pull the branch and resolve the conflicts
+
 
 Port check
 -------------
