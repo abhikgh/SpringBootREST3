@@ -19,6 +19,9 @@ git merge --abort
 git reset --merge
 Pull the branch and resolve the conflicts
 
+git stash 
+git stash pop (removes from stash) / git stash apply (keeps in stash)
+
 
 Port check
 -------------
