@@ -1789,15 +1789,24 @@ Actuator
 ===========================
 Exposes metrics by exposing management endpoints - CPU usage, memory usage, request rate, error rate
 
+<!-- Actuator -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-actuator</artifactId>
+</dependency>
+
 http://localhost:9100/actuator
 //health and info are auto-enabled
 
 /health
 /info
+/metrics
+/sessions
+
 /env
 /loggers
 /httptrace
-/sessions
+
 /startup
 /shutdown
 
