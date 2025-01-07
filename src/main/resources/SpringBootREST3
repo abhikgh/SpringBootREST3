@@ -528,9 +528,9 @@ public class SingletonEx {
                         .age(30)
                         .build();
 
-11. Proxy Design pattern (Sidecar)
------------------------------
-        - AOP framework to apply cross-cutting concerns to components without modifying their core logic
+11. Aspect Design pattern (Proxy/Sidecar)
+------------------------------------------------
+- AOP framework to apply cross-cutting concerns to modules without changing their core logic
 
 <dependency>
     <groupId>org.springframework.boot</groupId>
@@ -538,10 +538,61 @@ public class SingletonEx {
 </dependency>
 
 Aspect :: module for cross-cutting-concerns
-          This allows to centralize cross-cutting logic in one place and keep your custom components focused on their specific business logic
+JoinPoint :: method where Aspect gets plugged-in
 Advice :: action taken by an Aspect at a particular Joinpoint ("before", "after", "around")
 Pointcut :: expression that selects one or more JoinPoints where Advice is executed.
-JoinPoint :: method where Aspect gets plugged-in
+
+
+
+1. Annotation
+
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Logging {
+}
+
+2. Aspect
+
+@Aspect
+@Component
+@Slf4j
+public class LoggingAspect {
+
+    /*
+        1. @Around -> Advice
+        2. aroundGovernedTransaction -> JoinPoint	
+	3. @annotation(Logging) -> PointCut
+    */
+    @Around("@annotation(Logging)")
+    public Object aroundGovernedTransaction(ProceedingJoinPoint joinPoint) throws Throwable {
+        MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
+
+        //Get intercepted method details
+        String methodName = methodSignature.getName();
+        String className = methodSignature.getDeclaringType().getSimpleName();
+
+        long start = System.currentTimeMillis();
+        String transactionId = UUID.randomUUID().toString();
+        MDC.put("transactionId", transactionId);
+        beforeGoverenedTransaction(methodName, className);
+        Object response = joinPoint.proceed(); //executes the joinpoint
+        afterGovernedTransaction(methodName, className, start);
+        return response;
+    }
+
+    private void beforeGoverenedTransaction(String methodName, String className) {
+        log.info("Start :: Method {} , transactionId is {}", methodName + ":" +className, MDC.get("transactionId"));
+    }
+
+    private void afterGovernedTransaction(String methodName, String className, long start) {
+        log.info("End :: Method {} , transactionId is {}, time in millis {}", methodName + ":" +className, MDC.get("transactionId"), System.currentTimeMillis() - start);
+    }
+
+}
+
+3. @Logging
+public ResponseEntity<OrderResponse> getOrder(
+
 
 
 12. Backend for Frontend
