@@ -2766,66 +2766,6 @@ Token-Based Request Validation
 
 ---------------------------------------------------------------------------------------------
 
-
-MDC (Mapped Diagnostic Context)
-====================================
-- To transfer value within service
-
-JSON logging
-====================
-JSON logging is enabled through LogstashEncoder
-
-<!-- JSON Logging -->
-<dependency>
-    <groupId>net.logstash.logback</groupId>
-    <artifactId>logstash-logback-encoder</artifactId>
-    <version>5.2</version>
-</dependency>
-
-logback.xml
----------------
-<?xml version="1.0" encoding="UTF-8"?>
-<configuration>
-
-      <!-- console log appender -->
-       <appender name="jsonConsole" class="ch.qos.logback.core.ConsoleAppender">
-           <encoder class ="net.logstash.logback.encoder.LogstashEncoder">
-               <!-- append fields into logstash log by MDC-->
-               <includeMdcKeyName>x-flow-id</includeMdcKeyName>
-               <includeMdcKeyName>month</includeMdcKeyName>
-               <includeMdcKeyName>parmRequestSource</includeMdcKeyName>
-           </encoder>
-       </appender>
-
-    <root level="INFO">
-        <appender-ref ref="jsonConsole"/>
-    </root>
-
-</configuration>
-
-private final Logger logger = LoggerFactory.getLogger(NavigationController.class);
-
-String requestJSON = objectMapper.writeValueAsString(orderRequestForm);
-MDC.put("month", month);
-MDC.put("parmRequestSource", parmRequestSource);
-MDC.put("x-flow-id", UUID.randomUUID().toString());
-logger.info(requestJSON);
-
-{
-	"@timestamp": "2024-09-21T11:49:09.875+05:30",
-	"@version": "1",
-	"message": "{\r\n  \"orderId\" : 100,\r\n  \"location\" : \"Kolkata\",\r\n  \"invoiceType\" : 2,\r\n  \"orderItems\" : [ {\r\n    \"itemId\" : 1001,\r\n    \"itemName\" : \"iPhoneX\",\r\n    \"quantity\" : 2\r\n  }, {\r\n    \"itemId\" : 1002,\r\n    \"itemName\" : \"iPad\",\r\n    \"quantity\" : 2\r\n  }, {\r\n    \"itemId\" : 1003,\r\n    \"itemName\" : \"LED TV\",\r\n    \"quantity\" : 2\r\n  } ]\r\n}",
-	"logger_name": "com.example.SpringBootREST2.controller.NavigationController",
-	"thread_name": "http-nio-9050-exec-3",
-	"level": "INFO",
-	"level_value": 20000,
-	"month": "Feb",
-	"parmRequestSource": "web",
-	"x-flow-id": "8f73e973-c37a-4236-855d-ad25dcb5c1a1"
-}
-
-----------------------------------------------------------------------------------------------------------------------
-
 CORS (Cross-Origin Resource Sharing)
 ========================================
 @CrossOrigin
@@ -3161,3 +3101,182 @@ Spring Bean scopes
 6. websocket ::    1 instance in WebSocket
 
 ---------------------------------------------------------------------------------------------------------------------------
+
+Logging
+==================
+In SpringBoot the default logging is Logback
+
+<dependency>
+   <groupId>org.springframework.boot</groupId>
+   <artifactId>spring-boot-starter-web</artifactId>
+</dependency>
+
+logging:
+  level:
+    root: INFO
+    com.example.yourpackage: DEBUG
+    org.springframework.web: ERROR
+    org.hibernate.type.descriptor.sql: TRACE
+  file:
+    path: 
+
+logback-spring.xml
+------------------
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <property name="APP_LOG" value="logs/app.log"/>
+    <property name="logging.file.name" value="info-log" />
+    <property name="logging.file.path" value="./"/>
+    <property name="logging.error.file.name" value="error-log" />
+    <property name="logging.error.file.path" value="./"/>
+
+    <!-- console log appender -->
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%-5p [%d{ISO8601}] [%t] %F:%L - %msg%n</pattern>
+            <!--  <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern> -->
+        </encoder>
+    </appender>
+
+    <!-- Normal log appender -->
+    <appender name="NORMAL_FILE" class="ch.qos.logback.core.FileAppender">
+        <file>${logging.file.path}/${logging.file.name}</file>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- rolling log appender -->
+    <appender name="FILE-ROLLING" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${APP_LOG}</file>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/archived/app.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <!-- each archived file, size max 10MB -->
+            <maxFileSize>10MB</maxFileSize>
+            <!-- total size of all archive files, if total size > 20GB,
+				it will delete old archived file -->
+            <totalSizeCap>20GB</totalSizeCap>
+            <!-- 60 days to keep -->
+            <maxHistory>60</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d %p %c{1.} [%t] %m%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Error log appender -->
+    <appender name="ERROR_FILE" class="ch.qos.logback.core.FileAppender">
+        <file>${logging.error.file.path}/${logging.error.file.name}</file>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="FILE-ROLLING"/>
+        <appender-ref ref="console"/>
+        <appender-ref ref="NORMAL_FILE"/>
+        <appender-ref ref="ERROR_FILE"/>
+    </root>
+
+</configuration>
+
+Logger
+-----------
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+private final Logger logger = LoggerFactory.getLogger(NavigationController.class);
+
+logger.info("In getMoviesByDirectorAndGenreAndNationalAward :: {}, {}, {}", director, genre, nationalAward);
+2024-04-05 20:10:46,906 INFO com.example.SpringBootREST2.controller.NavigationController [http-nio-9050-exec-2] In getMoviesByDirectorAndGenreAndNationalAward :: Satyajit Ray, Family, true
+
+loggedIn:
+  user: Logged-in user is %s
+System.out.println("property2 : " + String.format(environment.getProperty("loggedIn.user"), "user1"));
+
+Logging levels
+-----------------------
+TRACE > DEBUG > INFO > WARN > ERROR > FATAL
+
+
+MDC (Mapped Diagnostic Context)
+====================================
+- To transfer value within service
+
+JSON logging
+====================
+JSON logging is enabled through LogstashEncoder
+
+<!-- JSON Logging -->
+<dependency>
+    <groupId>net.logstash.logback</groupId>
+    <artifactId>logstash-logback-encoder</artifactId>
+    <version>5.2</version>
+</dependency>
+
+logback.xml
+---------------
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+      <!-- console log appender -->
+       <appender name="jsonConsole" class="ch.qos.logback.core.ConsoleAppender">
+           <encoder class ="net.logstash.logback.encoder.LogstashEncoder">
+               <!-- append fields into logstash log by MDC-->
+               <includeMdcKeyName>x-flow-id</includeMdcKeyName>
+               <includeMdcKeyName>month</includeMdcKeyName>
+               <includeMdcKeyName>parmRequestSource</includeMdcKeyName>
+	       <pattern>
+			logging.pattern.console=%d{yyyy-MM-dd HH:mm:ss} [%X{userId}] %-5level %logger{36} - %msg%n
+		</pattern>	
+           </encoder>
+       </appender>
+
+    <root level="INFO">
+        <appender-ref ref="jsonConsole"/>
+    </root>
+
+</configuration>
+
+private final Logger logger = LoggerFactory.getLogger(NavigationController.class);
+
+String requestJSON = objectMapper.writeValueAsString(orderRequestForm);
+MDC.put("month", month);
+MDC.put("parmRequestSource", parmRequestSource);
+MDC.put("x-flow-id", UUID.randomUUID().toString());
+logger.info(requestJSON);
+
+{
+	"@timestamp": "2024-09-21T11:49:09.875+05:30",
+	"@version": "1",
+	"message": "{\r\n  \"orderId\" : 100,\r\n  \"location\" : \"Kolkata\",\r\n  \"invoiceType\" : 2,\r\n  \"orderItems\" : [ {\r\n    \"itemId\" : 1001,\r\n    \"itemName\" : \"iPhoneX\",\r\n    \"quantity\" : 2\r\n  }, {\r\n    \"itemId\" : 1002,\r\n    \"itemName\" : \"iPad\",\r\n    \"quantity\" : 2\r\n  }, {\r\n    \"itemId\" : 1003,\r\n    \"itemName\" : \"LED TV\",\r\n    \"quantity\" : 2\r\n  } ]\r\n}",
+	"logger_name": "com.example.SpringBootREST2.controller.NavigationController",
+	"thread_name": "http-nio-9050-exec-3",
+	"level": "INFO",
+	"level_value": 20000,
+	"month": "Feb",
+	"parmRequestSource": "web",
+	"x-flow-id": "8f73e973-c37a-4236-855d-ad25dcb5c1a1"
+}
+
+ //JSON Masking
+File fileUnmasked = new File("src/main/resources/Input.json");
+JsonNode jsonTree = objectMapper.readTree(fileUnmasked);
+
+String fieldsToMask = "subOrgTxt,personId";
+String[] listFieldsToMask = fieldsToMask.split(",");
+
+for (String fieldToMask : listFieldsToMask) {
+    if (Objects.nonNull(jsonTree.findValue(fieldToMask))) {
+	for (JsonNode parent : jsonTree.findParents(fieldToMask)) {
+	    Optional.ofNullable(parent).ifPresent(parentNode -> ((ObjectNode) parentNode).put(fieldToMask, "XXXXXX"));
+	}
+    }
+}
+
+------------------------------------------------------------------------------------------------------------
