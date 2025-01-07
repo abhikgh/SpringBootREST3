@@ -3331,3 +3331,159 @@ for (String fieldToMask : listFieldsToMask) {
 }
 
 ------------------------------------------------------------------------------------------------------------
+
+JSON Schema Validation
+========================
+jakarta.validation(prev: javax.validation)
+
+Controller :: public ResponseEntity<ServiceForm> serviceForm(@RequestBody @Valid ServiceForm serviceForm){
+
+
+@Getter
+@Setter
+@ToString
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonPropertyOrder({
+        "orderId",
+        "location",
+        "invoiceType",
+        "orderItems"
+})
+public class ServiceForm implements Serializable {
+
+    //@NotNull - Integer
+    //@NotBlank - String
+    //@NotEmpty - List
+
+    //@Nonnull - preventing null-related issues at the development stage, doesn’t trigger any runtime validation
+    @JsonProperty(value = "orderId")
+    @Schema(description = "orderID of the request", example = "12") //will be mapped to Swagger doc
+    @NotNull(message = "Order Id should not be not null")
+    @Digits(integer = 3,fraction = 0,message = "Invalid Order ID") //can be both +ve or -ve
+    private Integer orderId;
+
+    @JsonProperty(value = "location")
+    @Schema(description = "Location of the request", example = "ANT")
+    @NotBlank(message = "Location is required")
+    @Size(min = 2, max = 20)
+    private String location;
+
+    @JsonProperty(value = "invoiceType")
+    @Schema(description = "invoiceType of the request", example = "22")
+    @NotNull(message = "Invoice type should not be not null") //for Integer
+    @Positive(message = "Invoice type should not be negative")
+    @Max(900)
+    @Min(2)
+    private Integer invoiceType;
+
+    @JsonProperty(value = "orderItems")
+    @ArraySchema(schema = @Schema(description = "item nos of the request", implementation = OrderItem.class, example = "[{itemId:1001, itemName:iphoneX, quantity:2}, {itemId:1002, itemName:ipad, quantity:2}]"))
+    @NotEmpty(message = "Order Items cannot be empty") //for List
+    private List<OrderItem> orderItems = new ArrayList<OrderItem>();
+
+    @JsonProperty(value = "itemNos")
+    @ArraySchema(arraySchema = @Schema(description = "item nos of the request", example = "[\"1234567890\",\"99989990\"]"))
+    @NotEmpty(message = "Item nos cannot be empty")  //for Set
+    private Set<@Pattern(regexp = "^\\d{8,10}$", message = "Invalid item no... valid item nos are between 8 to 10 digits") String> itemNos = new HashSet<>();
+
+    @JsonProperty(value = "customerType")
+    @Schema(description = "customerType of the request", example = "Business")
+    private CustomerType customerType;
+
+    @JsonProperty(value = "validForDate")
+    @Schema(description = "validForDate of the request", example = "2012-03-20T21:22:33Z", pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
+    @ValidDate
+    private String validForDate;
+
+    @JsonProperty(value = "invoiceDate")
+    @Schema(description = "invoiceDate of the request", example = "2012-03-20", pattern = "yyyy-MM-dd")
+    @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2}$")
+    @NotBlank(message = "Invoice date is required")
+    private String invoiceDate;
+
+    @Getter
+    @Setter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class OrderItem {
+        @JsonProperty(value = "itemId")
+        private int itemId;
+        @JsonProperty(value = "itemName")
+        private String itemName;
+        @JsonProperty(value = "quantity")
+        private int quantity;
+    }
+
+}
+
+public enum CustomerType {
+
+    Private("Private"),
+    Business("Business");
+
+    private final String value;
+    CustomerType(String value){
+        this.value = value;
+    }
+
+}
+
+@Target(ElementType.FIELD)
+@Retention(RetentionPolicy.RUNTIME)
+@Constraint(validatedBy = DateValidator.class)
+public @interface ValidDate {
+    String message() default "Invalid validForDate";
+    Class<?>[] groups() default {};
+    Class<? extends Payload>[] payload() default {};
+}
+
+
+public class DateValidator implements ConstraintValidator<ValidDate, String> {
+
+    @Override
+    public void initialize(ValidDate constraintAnnotation) {
+        ConstraintValidator.super.initialize(constraintAnnotation);
+    }
+
+    @Override
+    public boolean isValid(String value, ConstraintValidatorContext context) {
+        if (value == null) {
+            return false;
+        } else {
+
+            Pattern pattern = Pattern.compile("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$");
+            Matcher matcher = pattern.matcher(value);
+            if (matcher.matches()) {
+                SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+                simpleDateFormat.setLenient(false);
+                try {
+                    simpleDateFormat.parse(value);
+                    return true;
+                } catch (Exception e) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        }
+    }
+}
+
+
+@RestControllerAdvice
+public class OrderExceptionHandler {
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException me) {
+        String errorMessage = "Error in object '%s', error in field '%s', error is '%s'";
+        FieldError fieldError = me.getBindingResult().getFieldError();
+        errorMessage = String.format(errorMessage, fieldError.getObjectName(), fieldError.getField(), fieldError.getDefaultMessage());
+        ErrorResponse errorResponse = new ErrorResponse("101", errorMessage, HttpStatus.BAD_REQUEST);
+        return ResponseEntity
+                .badRequest()
+                .body(errorResponse);
+    }
+
+}
+------------------------------------------------------------------------------------------------------------------------
