@@ -1738,7 +1738,13 @@ java -Xshare:on -XX:SharedArchiveFile=app-cds.jsa -jar myapp.jar
 
 GraalVM native image 
 ========================
-Compiles the Java code into a standalone executable, eliminating the need for a JVM at runtime.
+Spring Ahead-of-Time Processor compiles the Java code into a standalone executable,  eliminating the need for a JVM at runtime.
+<plugin>
+ <groupId>org.graalvm.buildtools</groupId>
+ <artifactId>native-maven-plugin</artifactId>
+</plugin>
+
+mvn -Pnative spring-boot:build-image    ---> Docker image
 
 ----------------------------------------------------------------------------------------------------------------------
 
