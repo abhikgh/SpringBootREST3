@@ -388,10 +388,10 @@ Decouples message producers and consumers, improves scalability and flexibility.
 
 7. Dependency Injection
 -------------------------------
-        - Objects define their dependencies through
-          (IoC :: a generic term where framework calls library implementation instead of application)
+-Design framework by which Spring container “injects” dependent objects into other objects
+-Makes loosely-coupled applications
 
-        1.Field Injection:
+           1.Field Injection:
 
             @Component
             public class MyService {
@@ -830,46 +830,58 @@ Anti-Patterns
 
 ---------------------------------------------------------------------------------------------------------------------------
 
-Spring Boot Optimizations
+Microservice Optimizations
 =============================
 
 Identifying Bottlenecks :: Latency, CPU Usage, DB Usage
 
-1. Asynchronous
+1. ASync
 2. Caching (Caffeine -> Redis -> DB)
 
-	( JPA Optimizations )
-3. Table Indexing
+3. Load-Balancing
+----------------------
+Ingress
+
+4. Clustering
+--------------------
+Group multiple servers into a cluster - so that if 1 server fails other can process the request
+
+5. Monitoring
+---------------------
+Spring Boot Actuator - health, info, metrics
+
+
+6. Table Indexing
 	@Entity
         @Table(name = "BOOK", indexes = {@Index(name = "book_index", columnList = "book_id")})
 
 	CREATE INDEX idx_data_field ON data_table (field_name);
 
-4. JPA Query
+7. JPA Query
 
-5. Batch Processing
+8. Batch Processing
         saveAll(list)
         deleteInBatch(list)
 
-6. Lazy Loading
+9. Lazy Loading
         @OneToMany(cascade = CascadeType.MERGE, mappedBy = "author" , fetch = FetchType.LAZY)
         private List<Book> bookList;
 
         @ManyToOne(cascade = CascadeType.MERGE, fetch = FetchType.EAGER)
         @JoinColumn(name = "author_id")
         private Author author;
-7. @Transactional
-8. DTO projection
-9. N+1
-10. Hikari Connection Pool
-11. Streaming
+10. @Transactional
+11. DTO projection
+12. N+1
+13. Hikari Connection Pool
 
-12. JSON Schema validation
-13. GZIP large request
-14. Resilience4J : Circuit Breaker and Rate Limiter
+14. Streaming
+15. JSON Schema validation
+16. GZIP large request
+17. Resilience4J : Circuit Breaker and Rate Limiter
 
-15. Kafka
-16. Sharding with MongoDB or Cassandra
+18. Kafka
+19. Sharding with MongoDB or Cassandra
 	- Each shard holds a portion of the data
 	- Horizontal Scaling
 
@@ -3511,5 +3523,10 @@ Horizontal scaling :: adding more servers
 	AutoScaling happens depending on the Pod - Resource metrics - like CPU, memory usage, request count
 	--- HPA (Horizontal Pod Autoscaler) ---
 	kubectl autoscale deployment endpoints --cpu-percent=50 --min=1 --max=10
+
+------------------------------------------------------------------------------------------------------------------------
+
+To route all requests through this path :
+server.servlet.context-path=/my-project
 
 ------------------------------------------------------------------------------------------------------------------------
