@@ -3502,3 +3502,14 @@ public class OrderExceptionHandler {
 
 }
 ------------------------------------------------------------------------------------------------------------------------
+
+Horizontal Scaling vs Vertical Scaling
+-----------------------------------------------
+
+Vertical Scaling   :: adding more resources to existing server , like more CPU, RAM, Network, Storage
+Horizontal scaling :: adding more servers
+	AutoScaling happens depending on the Pod - Resource metrics - like CPU, memory usage, request count
+	--- HPA (Horizontal Pod Autoscaler) ---
+	kubectl autoscale deployment endpoints --cpu-percent=50 --min=1 --max=10
+
+------------------------------------------------------------------------------------------------------------------------
