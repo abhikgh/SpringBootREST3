@@ -3089,8 +3089,7 @@ Dependency review
 @ConditionalOnProperty(value = "opentracing.jaeger.enabled", havingValue = "true", matchIfMissing = true)
 public class JaegerConfig {
 }
-//matchIfMissing : Specify if the condition should match if the property is not set
-//so if opentracing.jaeger.enabled is not present then it will not match
+//matchIfMissing = true : assume condition is true when property is absent
 
 2.@ConditionalOnBean
 
