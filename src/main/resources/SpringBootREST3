@@ -782,8 +782,6 @@ Anti-Patterns
 Spring Boot Optimizations
 =============================
 
-Identifying Bottlenecks :: Latency, CPU Usage, DB Usage
-
 1. Asynchronous
 2. Caching (Caffeine -> Redis -> DB)
 
