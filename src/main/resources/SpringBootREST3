@@ -833,7 +833,7 @@ Anti-Patterns
 Microservice Optimizations
 =============================
 
-1. Asynchronous
+1. Async
 2. Caching (Caffeine -> Redis -> DB)
 
 3. Load-Balancing
