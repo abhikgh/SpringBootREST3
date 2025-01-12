@@ -388,10 +388,10 @@ Decouples message producers and consumers, improves scalability and flexibility.
 
 7. Dependency Injection
 -------------------------------
-        - Objects define their dependencies through
-          (IoC :: a generic term where framework calls library implementation instead of application)
+-Design framework by which Spring container “injects” dependent objects into other objects
+-Makes loosely-coupled applications
 
-        1.Field Injection:
+           1.Field Injection:
 
             @Component
             public class MyService {
@@ -528,9 +528,9 @@ public class SingletonEx {
                         .age(30)
                         .build();
 
-11. Proxy Design pattern (Sidecar)
------------------------------
-        - AOP framework to apply cross-cutting concerns to components without modifying their core logic
+11. Aspect Design pattern (Proxy/Sidecar)
+------------------------------------------------
+- AOP framework to apply cross-cutting concerns to modules without changing their core logic
 
 <dependency>
     <groupId>org.springframework.boot</groupId>
@@ -538,10 +538,61 @@ public class SingletonEx {
 </dependency>
 
 Aspect :: module for cross-cutting-concerns
-          This allows to centralize cross-cutting logic in one place and keep your custom components focused on their specific business logic
+JoinPoint :: method where Aspect gets plugged-in
 Advice :: action taken by an Aspect at a particular Joinpoint ("before", "after", "around")
 Pointcut :: expression that selects one or more JoinPoints where Advice is executed.
-JoinPoint :: method where Aspect gets plugged-in
+
+
+
+1. Annotation
+
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Logging {
+}
+
+2. Aspect
+
+@Aspect
+@Component
+@Slf4j
+public class LoggingAspect {
+
+    /*
+        1. @Around -> Advice
+        2. aroundGovernedTransaction -> JoinPoint
+	3. @annotation(Logging) -> PointCut
+    */
+    @Around("@annotation(Logging)")
+    public Object aroundGovernedTransaction(ProceedingJoinPoint joinPoint) throws Throwable {
+        MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
+
+        //Get intercepted method details
+        String methodName = methodSignature.getName();
+        String className = methodSignature.getDeclaringType().getSimpleName();
+
+        long start = System.currentTimeMillis();
+        String transactionId = UUID.randomUUID().toString();
+        MDC.put("transactionId", transactionId);
+        beforeGoverenedTransaction(methodName, className);
+        Object response = joinPoint.proceed(); //executes the joinpoint
+        afterGovernedTransaction(methodName, className, start);
+        return response;
+    }
+
+    private void beforeGoverenedTransaction(String methodName, String className) {
+        log.info("Start :: Method {} , transactionId is {}", methodName + ":" +className, MDC.get("transactionId"));
+    }
+
+    private void afterGovernedTransaction(String methodName, String className, long start) {
+        log.info("End :: Method {} , transactionId is {}, time in millis {}", methodName + ":" +className, MDC.get("transactionId"), System.currentTimeMillis() - start);
+    }
+
+}
+
+3. @Logging
+public ResponseEntity<OrderResponse> getOrder(
+
 
 
 12. Backend for Frontend
@@ -779,44 +830,56 @@ Anti-Patterns
 
 ---------------------------------------------------------------------------------------------------------------------------
 
-Spring Boot Optimizations
+Microservice Optimizations
 =============================
 
 1. Asynchronous
 2. Caching (Caffeine -> Redis -> DB)
 
-	( JPA Optimizations )
-3. Table Indexing
+3. Load-Balancing
+----------------------
+Ingress
+
+4. Clustering
+--------------------
+Group multiple servers into a cluster - so that if 1 server fails other can process the request
+
+5. Monitoring
+---------------------
+Spring Boot Actuator - health, info, metrics
+
+
+6. Table Indexing
 	@Entity
         @Table(name = "BOOK", indexes = {@Index(name = "book_index", columnList = "book_id")})
 
 	CREATE INDEX idx_data_field ON data_table (field_name);
 
-4. JPA Query
+7. JPA Query
 
-5. Batch Processing
+8. Batch Processing
         saveAll(list)
         deleteInBatch(list)
 
-6. Lazy Loading
+9. Lazy Loading
         @OneToMany(cascade = CascadeType.MERGE, mappedBy = "author" , fetch = FetchType.LAZY)
         private List<Book> bookList;
 
         @ManyToOne(cascade = CascadeType.MERGE, fetch = FetchType.EAGER)
         @JoinColumn(name = "author_id")
         private Author author;
-7. @Transactional
-8. DTO projection
-9. N+1
-10. Hikari Connection Pool
-11. Streaming
+10. @Transactional
+11. DTO projection
+12. N+1
+13. Hikari Connection Pool
 
-12. JSON Schema validation
-13. GZIP large request
-14. Resilience4J : Circuit Breaker and Rate Limiter
+14. Streaming
+15. JSON Schema validation
+16. GZIP large request
+17. Resilience4J : Circuit Breaker and Rate Limiter
 
-15. Kafka
-16. Sharding with MongoDB or Cassandra
+18. Kafka
+19. Sharding with MongoDB or Cassandra
 	- Each shard holds a portion of the data
 	- Horizontal Scaling
 
@@ -1685,7 +1748,13 @@ java -Xshare:on -XX:SharedArchiveFile=app-cds.jsa -jar myapp.jar
 
 GraalVM native image 
 ========================
-Compiles the Java code into a standalone executable, eliminating the need for a JVM at runtime.
+Spring Ahead-of-Time Processor compiles the Java code into a standalone executable,  eliminating the need for a JVM at runtime.
+<plugin>
+ <groupId>org.graalvm.buildtools</groupId>
+ <artifactId>native-maven-plugin</artifactId>
+</plugin>
+
+mvn -Pnative spring-boot:build-image    ---> Docker image
 
 ----------------------------------------------------------------------------------------------------------------------
 
@@ -1736,15 +1805,24 @@ Actuator
 ===========================
 Exposes metrics by exposing management endpoints - CPU usage, memory usage, request rate, error rate
 
+<!-- Actuator -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-actuator</artifactId>
+</dependency>
+
 http://localhost:9100/actuator
 //health and info are auto-enabled
 
 /health
 /info
+/metrics
+/sessions
+
 /env
 /loggers
 /httptrace
-/sessions
+
 /startup
 /shutdown
 
@@ -2764,66 +2842,6 @@ Token-Based Request Validation
 
 ---------------------------------------------------------------------------------------------
 
-
-MDC (Mapped Diagnostic Context)
-====================================
-- To transfer value within service
-
-JSON logging
-====================
-JSON logging is enabled through LogstashEncoder
-
-<!-- JSON Logging -->
-<dependency>
-    <groupId>net.logstash.logback</groupId>
-    <artifactId>logstash-logback-encoder</artifactId>
-    <version>5.2</version>
-</dependency>
-
-logback.xml
----------------
-<?xml version="1.0" encoding="UTF-8"?>
-<configuration>
-
-      <!-- console log appender -->
-       <appender name="jsonConsole" class="ch.qos.logback.core.ConsoleAppender">
-           <encoder class ="net.logstash.logback.encoder.LogstashEncoder">
-               <!-- append fields into logstash log by MDC-->
-               <includeMdcKeyName>x-flow-id</includeMdcKeyName>
-               <includeMdcKeyName>month</includeMdcKeyName>
-               <includeMdcKeyName>parmRequestSource</includeMdcKeyName>
-           </encoder>
-       </appender>
-
-    <root level="INFO">
-        <appender-ref ref="jsonConsole"/>
-    </root>
-
-</configuration>
-
-private final Logger logger = LoggerFactory.getLogger(NavigationController.class);
-
-String requestJSON = objectMapper.writeValueAsString(orderRequestForm);
-MDC.put("month", month);
-MDC.put("parmRequestSource", parmRequestSource);
-MDC.put("x-flow-id", UUID.randomUUID().toString());
-logger.info(requestJSON);
-
-{
-	"@timestamp": "2024-09-21T11:49:09.875+05:30",
-	"@version": "1",
-	"message": "{\r\n  \"orderId\" : 100,\r\n  \"location\" : \"Kolkata\",\r\n  \"invoiceType\" : 2,\r\n  \"orderItems\" : [ {\r\n    \"itemId\" : 1001,\r\n    \"itemName\" : \"iPhoneX\",\r\n    \"quantity\" : 2\r\n  }, {\r\n    \"itemId\" : 1002,\r\n    \"itemName\" : \"iPad\",\r\n    \"quantity\" : 2\r\n  }, {\r\n    \"itemId\" : 1003,\r\n    \"itemName\" : \"LED TV\",\r\n    \"quantity\" : 2\r\n  } ]\r\n}",
-	"logger_name": "com.example.SpringBootREST2.controller.NavigationController",
-	"thread_name": "http-nio-9050-exec-3",
-	"level": "INFO",
-	"level_value": 20000,
-	"month": "Feb",
-	"parmRequestSource": "web",
-	"x-flow-id": "8f73e973-c37a-4236-855d-ad25dcb5c1a1"
-}
-
-----------------------------------------------------------------------------------------------------------------------
-
 CORS (Cross-Origin Resource Sharing)
 ========================================
 @CrossOrigin
@@ -3069,8 +3087,7 @@ Dependency review
 @ConditionalOnProperty(value = "opentracing.jaeger.enabled", havingValue = "true", matchIfMissing = true)
 public class JaegerConfig {
 }
-//matchIfMissing : Specify if the condition should match if the property is not set
-//so if opentracing.jaeger.enabled is not present then it will not match
+//matchIfMissing = true : assume condition is true when property is absent
 
 2.@ConditionalOnBean
 
@@ -3159,3 +3176,354 @@ Spring Bean scopes
 6. websocket ::    1 instance in WebSocket
 
 ---------------------------------------------------------------------------------------------------------------------------
+
+Logging
+==================
+In SpringBoot the default logging is Logback
+
+<dependency>
+   <groupId>org.springframework.boot</groupId>
+   <artifactId>spring-boot-starter-web</artifactId>
+</dependency>
+
+logging:
+  level:
+    root: INFO
+    com.example.yourpackage: DEBUG
+    org.springframework.web: ERROR
+    org.hibernate.type.descriptor.sql: TRACE
+  file:
+    path:
+
+logback-spring.xml
+------------------
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <property name="APP_LOG" value="logs/app.log"/>
+    <property name="logging.file.name" value="info-log" />
+    <property name="logging.file.path" value="./"/>
+    <property name="logging.error.file.name" value="error-log" />
+    <property name="logging.error.file.path" value="./"/>
+
+    <!-- console log appender -->
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%-5p [%d{ISO8601}] [%t] %F:%L - %msg%n</pattern>
+            <!--  <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern> -->
+        </encoder>
+    </appender>
+
+    <!-- Normal log appender -->
+    <appender name="NORMAL_FILE" class="ch.qos.logback.core.FileAppender">
+        <file>${logging.file.path}/${logging.file.name}</file>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- rolling log appender -->
+    <appender name="FILE-ROLLING" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${APP_LOG}</file>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/archived/app.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <!-- each archived file, size max 10MB -->
+            <maxFileSize>10MB</maxFileSize>
+            <!-- total size of all archive files, if total size > 20GB,
+				it will delete old archived file -->
+            <totalSizeCap>20GB</totalSizeCap>
+            <!-- 60 days to keep -->
+            <maxHistory>60</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d %p %c{1.} [%t] %m%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Error log appender -->
+    <appender name="ERROR_FILE" class="ch.qos.logback.core.FileAppender">
+        <file>${logging.error.file.path}/${logging.error.file.name}</file>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="FILE-ROLLING"/>
+        <appender-ref ref="console"/>
+        <appender-ref ref="NORMAL_FILE"/>
+        <appender-ref ref="ERROR_FILE"/>
+    </root>
+
+</configuration>
+
+Logger
+-----------
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+private final Logger logger = LoggerFactory.getLogger(NavigationController.class);
+
+logger.info("In getMoviesByDirectorAndGenreAndNationalAward :: {}, {}, {}", director, genre, nationalAward);
+2024-04-05 20:10:46,906 INFO com.example.SpringBootREST2.controller.NavigationController [http-nio-9050-exec-2] In getMoviesByDirectorAndGenreAndNationalAward :: Satyajit Ray, Family, true
+
+loggedIn:
+  user: Logged-in user is %s
+System.out.println("property2 : " + String.format(environment.getProperty("loggedIn.user"), "user1"));
+
+Logging levels
+-----------------------
+TRACE > DEBUG > INFO > WARN > ERROR > FATAL
+
+
+MDC (Mapped Diagnostic Context)
+====================================
+- To transfer value within service
+
+JSON logging
+====================
+JSON logging is enabled through LogstashEncoder
+
+<!-- JSON Logging -->
+<dependency>
+    <groupId>net.logstash.logback</groupId>
+    <artifactId>logstash-logback-encoder</artifactId>
+    <version>5.2</version>
+</dependency>
+
+logback.xml
+---------------
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+      <!-- console log appender -->
+       <appender name="jsonConsole" class="ch.qos.logback.core.ConsoleAppender">
+           <encoder class ="net.logstash.logback.encoder.LogstashEncoder">
+               <!-- append fields into logstash log by MDC-->
+               <includeMdcKeyName>x-flow-id</includeMdcKeyName>
+               <includeMdcKeyName>month</includeMdcKeyName>
+               <includeMdcKeyName>parmRequestSource</includeMdcKeyName>
+	       <pattern>
+			logging.pattern.console=%d{yyyy-MM-dd HH:mm:ss} [%X{userId}] %-5level %logger{36} - %msg%n
+		</pattern>
+           </encoder>
+       </appender>
+
+    <root level="INFO">
+        <appender-ref ref="jsonConsole"/>
+    </root>
+
+</configuration>
+
+private final Logger logger = LoggerFactory.getLogger(NavigationController.class);
+
+String requestJSON = objectMapper.writeValueAsString(orderRequestForm);
+MDC.put("month", month);
+MDC.put("parmRequestSource", parmRequestSource);
+MDC.put("x-flow-id", UUID.randomUUID().toString());
+logger.info(requestJSON);
+
+{
+	"@timestamp": "2024-09-21T11:49:09.875+05:30",
+	"@version": "1",
+	"message": "{\r\n  \"orderId\" : 100,\r\n  \"location\" : \"Kolkata\",\r\n  \"invoiceType\" : 2,\r\n  \"orderItems\" : [ {\r\n    \"itemId\" : 1001,\r\n    \"itemName\" : \"iPhoneX\",\r\n    \"quantity\" : 2\r\n  }, {\r\n    \"itemId\" : 1002,\r\n    \"itemName\" : \"iPad\",\r\n    \"quantity\" : 2\r\n  }, {\r\n    \"itemId\" : 1003,\r\n    \"itemName\" : \"LED TV\",\r\n    \"quantity\" : 2\r\n  } ]\r\n}",
+	"logger_name": "com.example.SpringBootREST2.controller.NavigationController",
+	"thread_name": "http-nio-9050-exec-3",
+	"level": "INFO",
+	"level_value": 20000,
+	"month": "Feb",
+	"parmRequestSource": "web",
+	"x-flow-id": "8f73e973-c37a-4236-855d-ad25dcb5c1a1"
+}
+
+ //JSON Masking
+File fileUnmasked = new File("src/main/resources/Input.json");
+JsonNode jsonTree = objectMapper.readTree(fileUnmasked);
+
+String fieldsToMask = "subOrgTxt,personId";
+String[] listFieldsToMask = fieldsToMask.split(",");
+
+for (String fieldToMask : listFieldsToMask) {
+    if (Objects.nonNull(jsonTree.findValue(fieldToMask))) {
+	for (JsonNode parent : jsonTree.findParents(fieldToMask)) {
+	    Optional.ofNullable(parent).ifPresent(parentNode -> ((ObjectNode) parentNode).put(fieldToMask, "XXXXXX"));
+	}
+    }
+}
+
+------------------------------------------------------------------------------------------------------------
+
+JSON Schema Validation
+========================
+jakarta.validation(prev: javax.validation)
+
+Controller :: public ResponseEntity<ServiceForm> serviceForm(@RequestBody @Valid ServiceForm serviceForm){
+
+
+@Getter
+@Setter
+@ToString
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonPropertyOrder({
+        "orderId",
+        "location",
+        "invoiceType",
+        "orderItems"
+})
+public class ServiceForm implements Serializable {
+
+    //@NotNull - Integer
+    //@NotBlank - String
+    //@NotEmpty - List
+
+    //@Nonnull - preventing null-related issues at the development stage, doesn’t trigger any runtime validation
+    @JsonProperty(value = "orderId")
+    @Schema(description = "orderID of the request", example = "12") //will be mapped to Swagger doc
+    @NotNull(message = "Order Id should not be not null")
+    @Digits(integer = 3,fraction = 0,message = "Invalid Order ID") //can be both +ve or -ve
+    private Integer orderId;
+
+    @JsonProperty(value = "location")
+    @Schema(description = "Location of the request", example = "ANT")
+    @NotBlank(message = "Location is required")
+    @Size(min = 2, max = 20)
+    private String location;
+
+    @JsonProperty(value = "invoiceType")
+    @Schema(description = "invoiceType of the request", example = "22")
+    @NotNull(message = "Invoice type should not be not null") //for Integer
+    @Positive(message = "Invoice type should not be negative")
+    @Max(900)
+    @Min(2)
+    private Integer invoiceType;
+
+    @JsonProperty(value = "orderItems")
+    @ArraySchema(schema = @Schema(description = "item nos of the request", implementation = OrderItem.class, example = "[{itemId:1001, itemName:iphoneX, quantity:2}, {itemId:1002, itemName:ipad, quantity:2}]"))
+    @NotEmpty(message = "Order Items cannot be empty") //for List
+    private List<OrderItem> orderItems = new ArrayList<OrderItem>();
+
+    @JsonProperty(value = "itemNos")
+    @ArraySchema(arraySchema = @Schema(description = "item nos of the request", example = "[\"1234567890\",\"99989990\"]"))
+    @NotEmpty(message = "Item nos cannot be empty")  //for Set
+    private Set<@Pattern(regexp = "^\\d{8,10}$", message = "Invalid item no... valid item nos are between 8 to 10 digits") String> itemNos = new HashSet<>();
+
+    @JsonProperty(value = "customerType")
+    @Schema(description = "customerType of the request", example = "Business")
+    private CustomerType customerType;
+
+    @JsonProperty(value = "validForDate")
+    @Schema(description = "validForDate of the request", example = "2012-03-20T21:22:33Z", pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
+    @ValidDate
+    private String validForDate;
+
+    @JsonProperty(value = "invoiceDate")
+    @Schema(description = "invoiceDate of the request", example = "2012-03-20", pattern = "yyyy-MM-dd")
+    @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2}$")
+    @NotBlank(message = "Invoice date is required")
+    private String invoiceDate;
+
+    @Getter
+    @Setter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class OrderItem {
+        @JsonProperty(value = "itemId")
+        private int itemId;
+        @JsonProperty(value = "itemName")
+        private String itemName;
+        @JsonProperty(value = "quantity")
+        private int quantity;
+    }
+
+}
+
+public enum CustomerType {
+
+    Private("Private"),
+    Business("Business");
+
+    private final String value;
+    CustomerType(String value){
+        this.value = value;
+    }
+
+}
+
+@Target(ElementType.FIELD)
+@Retention(RetentionPolicy.RUNTIME)
+@Constraint(validatedBy = DateValidator.class)
+public @interface ValidDate {
+    String message() default "Invalid validForDate";
+    Class<?>[] groups() default {};
+    Class<? extends Payload>[] payload() default {};
+}
+
+
+public class DateValidator implements ConstraintValidator<ValidDate, String> {
+
+    @Override
+    public void initialize(ValidDate constraintAnnotation) {
+        ConstraintValidator.super.initialize(constraintAnnotation);
+    }
+
+    @Override
+    public boolean isValid(String value, ConstraintValidatorContext context) {
+        if (value == null) {
+            return false;
+        } else {
+
+            Pattern pattern = Pattern.compile("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$");
+            Matcher matcher = pattern.matcher(value);
+            if (matcher.matches()) {
+                SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+                simpleDateFormat.setLenient(false);
+                try {
+                    simpleDateFormat.parse(value);
+                    return true;
+                } catch (Exception e) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        }
+    }
+}
+
+
+@RestControllerAdvice
+public class OrderExceptionHandler {
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException me) {
+        String errorMessage = "Error in object '%s', error in field '%s', error is '%s'";
+        FieldError fieldError = me.getBindingResult().getFieldError();
+        errorMessage = String.format(errorMessage, fieldError.getObjectName(), fieldError.getField(), fieldError.getDefaultMessage());
+        ErrorResponse errorResponse = new ErrorResponse("101", errorMessage, HttpStatus.BAD_REQUEST);
+        return ResponseEntity
+                .badRequest()
+                .body(errorResponse);
+    }
+
+}
+------------------------------------------------------------------------------------------------------------------------
+
+Horizontal Scaling vs Vertical Scaling
+-----------------------------------------------
+
+Vertical Scaling   :: adding more resources to existing server , like more CPU, RAM, Network, Storage
+Horizontal scaling :: adding more servers
+	AutoScaling happens depending on the Pod - Resource metrics - like CPU, memory usage, request count
+	--- HPA (Horizontal Pod Autoscaler) ---
+	kubectl autoscale deployment endpoints --cpu-percent=50 --min=1 --max=10
+
+------------------------------------------------------------------------------------------------------------------------
+
+To route all requests through this path :
+server.servlet.context-path=/my-project
+
+------------------------------------------------------------------------------------------------------------------------
