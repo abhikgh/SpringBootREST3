@@ -8,6 +8,7 @@ mvn clean install -U
 mvn clean install -U -DskipTests
 mvn -version
 mvn verify (runs integration test)
+mvn spring-boot:run
 
 git checkout -b <branch_name>
 git pull
