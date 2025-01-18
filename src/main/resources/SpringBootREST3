@@ -886,6 +886,26 @@ Spring Boot Actuator - health, info, metrics
 
 -------------------------------------------------------------------------------------------------
 
+Key Challenges in High-Traffic Systems
+===========================================================
+
+Scalability:
+Latency : How to ensure low response times despite large datasets?
+Fault Tolerance: Achieving resilience during partial failures.
+Data Consistency: Synchronizing operations across distributed systems.
+
+Horizontal Scaling vs Vertical Scaling
+-----------------------------------------------
+
+Horizontal scaling :: adding more servers
+	AutoScaling happens depending on the Pod - Resource metrics - like CPU usage, memory usage, request count
+	--- HPA (Horizontal Pod Autoscaler) ---
+	kubectl autoscale deployment endpoints --cpu-percent=50 --min=1 --max=10
+Vertical Scaling   :: adding more resources to existing server , like more CPU, RAM, Network, Storage
+
+
+------------------------------------------------------------------------------------------------------------------------
+
 SpringBoot3 changes
 ===========================================================
 
@@ -2635,112 +2655,11 @@ List<Movie> movies = (List<Movie>) Optional.ofNullable(valueWrapper).map(Cache.V
 
 ---------------------------------------------------------------------------------------------
 
-
-
 Redis
 ===============
 
-- Distributed caching (Data is stored across multiple machines - for faster access and more data -
-                    A distributed caching system combines the RAM of multiple computers into a single data store)
+- Distributed caching (Data is stored across multiple servers - for faster access and more data)
 - High Availability
-
-<!--Redis-->
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-data-redis</artifactId>
-</dependency>
-
-<!--Apache commons, for Redis -->
-<dependency>
-    <groupId>org.apache.commons</groupId>
-    <artifactId>commons-pool2</artifactId>
-</dependency>
-
-Run Redis
-================
-Run RedisServer.bat -> start "" E:\Softwares\Redis-x64-3.2.100\redis-server.exe
-RedisInsight
-
-monitor Cache Metrics
-=============================
-/actuator/metrics/cache.gets
-/actuator/metrics/cache.puts
-/actuator/metrics/cache.evictions
-/actuator/metrics/cache.removals
-
-spring.redis.host=localhost
-spring.redis.port=6379
-spring.redis.password=
-spring.redis.timeout=60000
-spring.redis.lettuce.pool.max-active=8
-spring.redis.lettuce.pool.max-idle=8
-spring.redis.lettuce.pool.max-wait=-1
-spring.redis.lettuce.pool.min-idle=0
-
-@Configuration
-@EnableCaching
-@EnableConfigurationProperties(RedisProperties.class)
-public class RedisConfig {
-
-    @Bean(name = "moviesCachedRedisTemplate")
-    public RedisTemplate moviesCachedRedisTemplate(RedisConnectionFactory redisConnectionFactory) {
-        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<String, Object>();
-        redisTemplate.setKeySerializer(new StringRedisSerializer());
-        redisTemplate.setValueSerializer(new GenericJackson2JsonRedisSerializer());
-        redisTemplate.setConnectionFactory(redisConnectionFactory);
-        redisTemplate.afterPropertiesSet();
-        return redisTemplate;
-    }
-
-}
-
-
-Service
-----------
-
-@Autowired
-@Qualifier("moviesCachedRedisTemplate")
-private RedisTemplate redisTemplate;
-
-
-// check in 1st Level cache (Caffeine), else check in 2nd Level cache (Redis)
-// if not found hit service and put in cache
-Cache.ValueWrapper valueWrapper = caffeineCacheManager.getCache(CaffeineConfig.HELLO_WORLD_CACHE).get(redisKey);
-List<Movie> movies = (List<Movie>) Optional.ofNullable(valueWrapper).map(Cache.ValueWrapper::get).orElse(null);
-
-if (CollectionUtils.isEmpty(movies)) {
-    movies = (List<Movie>) redisTemplate.opsForValue().get(redisKey);
-    log.info("Redis :: {}, transactionId  {} , movies {} ", "getMovieDetails", MDC.get("transactionId"), movies);
-
-    if (CollectionUtils.isEmpty(movies)) {
-        movies = restTemplate.exchange(uri, HttpMethod.GET, null, new ParameterizedTypeReference<List<Movie>>() {
-        }).getBody();
-
-        log.info("Service :: {}, transactionId  {} , movies {} ", "getMovieDetails", MDC.get("transactionId"), movies);
-
-        //put in Caffeine - 1st level Cache
-        caffeineCacheManager.getCache(CaffeineConfig.HELLO_WORLD_CACHE).put(redisKey, movies);
-
-        //put in Redis - 2nd level Cache
-        redisTemplate.opsForValue().set(redisKey, movies, Duration.ofMinutes(cacheItemExpireInMinutes));
-
-	    //multiGet
-	    //List<String> cacheKeys = getCacheKeys();
-        //List<String> responseItems = redisTemplate.multiGet(cacheKeys);
-
-
-    } else {
-        caffeineCacheManager.getCache(CaffeineConfig.HELLO_WORLD_CACHE).put(redisKey, movies);
-    }
-
-}
-
----------------------------------------------------------------------------------------------
-
-Redis
-===============
-
-- Distributed caching (Data is stored across multiple machines - for faster access and more data)
 
 <!--Redis-->
 <dependency>
@@ -3512,18 +3431,465 @@ public class OrderExceptionHandler {
 }
 ------------------------------------------------------------------------------------------------------------------------
 
-Horizontal Scaling vs Vertical Scaling
------------------------------------------------
-
-Vertical Scaling   :: adding more resources to existing server , like more CPU, RAM, Network, Storage
-Horizontal scaling :: adding more servers
-	AutoScaling happens depending on the Pod - Resource metrics - like CPU, memory usage, request count
-	--- HPA (Horizontal Pod Autoscaler) ---
-	kubectl autoscale deployment endpoints --cpu-percent=50 --min=1 --max=10
-
-------------------------------------------------------------------------------------------------------------------------
-
 To route all requests through this path :
 server.servlet.context-path=/my-project
 
 ------------------------------------------------------------------------------------------------------------------------
+
+RestTemplate
+======================
+
+<!-- Web  (for RestTemplate)  -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-web</artifactId>
+</dependency>
+
+<!-- Spring WS-Core  (for WsConfigurationSupport, by @EnableWs)  -->
+<dependency>
+    <groupId>org.springframework.ws</groupId>
+    <artifactId>spring-ws-core</artifactId>
+</dependency>
+
+<!-- spring-retry -->
+<dependency>
+    <groupId>org.springframework.retry</groupId>
+    <artifactId>spring-retry</artifactId>
+    <version>1.3.2</version>
+</dependency>
+
+<!-- HTTPClient (for Retry Template, not used in v2 )-->
+<dependency>
+    <groupId>org.apache.httpcomponents</groupId>
+    <artifactId>httpclient</artifactId>
+</dependency>
+
+@Configuration
+@EnableWs
+public class RestConfig {
+
+	@Value("${rest.timeOut:10000}")
+	private long timeOut;
+
+	@Value("${rest.backOffPeriod}")
+	private long backOffPeriod;
+
+	@Value("${rest.maxAttempts}")
+	private int maxAttempts;
+
+	@Bean
+	@Scope(value = "prototype")
+	public RestTemplate restTemplate(RestTemplateBuilder restTemplateBuilder){
+		return restTemplateBuilder
+				.setConnectTimeout(Duration.ofMillis(timeOut))
+				.setReadTimeout(Duration.ofMillis(timeOut))
+				.build();
+	}
+
+	@Bean
+    public ObjectMapper objectMapper() {
+        return JsonMapper
+                .builder()
+                .enable(SerializationFeature.INDENT_OUTPUT)
+                .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+                .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                .configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true)
+                .serializationInclusion(JsonInclude.Include.NON_NULL)
+                .build();
+    }
+
+	@Bean
+	public ModelMapper modelMapper(){
+		ModelMapper modelMapper = new ModelMapper();
+		modelMapper.getConfiguration().setDeepCopyEnabled(Boolean.TRUE);
+		modelMapper.getConfiguration().setAmbiguityIgnored(Boolean.TRUE);
+		modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
+		return modelMapper;
+	}
+
+}
+
+---------------------------------------------------------------------------------------------
+
+RestTemplate
+======================
+
+HttpHeaders httpHeaders = new HttpHeaders();
+httpHeaders.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+httpHeaders.set("Authorization", "Basic YWJoaWtnaDp3ZWxjb21lQDFh");
+httpHeaders.set("Actor", "MicroService");
+
+HttpEntity<String> httpEntity = new HttpEntity<>(httpHeaders);
+HttpEntity<String> httpEntity = new HttpEntity<>(requestJson, httpHeaders);
+
+ResponseEntity<T> = restTemplate.exchange(uri, HttpMethod, httpEntity, OrderResponse.class)
+ResponseEntity<T> = restTemplate.exchange(uri, HttpMethod, httpEntity, new ParameterizedTypeReference<List<Movie>>(){})
+ResponseEntity<T> = restTemplate.exchange(endpoint, HttpMethod, httpEntity, OrderResponse.class, Map<String, ?> uriVariables)
+ResponseEntity<T> = restTemplate.exchange(endpoint, HttpMethod, httpEntity, OrderResponse.class, Object... uriVariables)
+ResponseEntity<T> = restTemplate.exchange(endpoint, HttpMethod, httpEntity, new ParameterizedTypeReference<List<Movie>>(){}, Map<String, ?> uriVariables)
+ResponseEntity<T> = restTemplate.exchange(endpoint, HttpMethod, httpEntity, new ParameterizedTypeReference<List<Movie>>(){}, Object... uriVariables)
+
+    T = restTemplate.getForObject(uri, Movie.class)
+    T = restTemplate.getForObject(endpoint, Movie.class, Object... uriVariables)
+    T = restTemplate.getForObject(endpoint, Movie.class, Map<String, ?> uriVariables)
+
+    ResponseEntity<T> = restTemplate.getForEntity(uri, Movie.class)
+    ResponseEntity<T> = restTemplate.getForEntity(endpoint, Movie.class, Object... uriVariables)
+    ResponseEntity<T> = restTemplate.getForEntity(endpoint, Movie.class, Map<String, ?> uriVariables)
+
+    T = restTemplate.postForObject(uri, httpEntity, OrderResponse.class);
+    T = restTemplate.postForObject(endpoint, httpEntity, OrderResponse.class, Object... uriVariables)
+    T = restTemplate.postForObject(endpoint, httpEntity, OrderResponse.class, Map<String, ?> uriVariables)
+
+
+---------------------------------------------------------------------------------------------
+
+RestTemplate Client call with Spring Retry
+===============================================
+<!-- spring-retry -->
+<dependency>
+    <groupId>org.springframework.retry</groupId>
+    <artifactId>spring-retry</artifactId>
+    <version>1.3.2</version>
+</dependency>
+
+@EnableRetry
+
+@Retryable(value = Exception.class, maxAttempts = 3, backoff = @Backoff(delay = 2000, multiplier = 2))
+//it will retry after 2s, 4s, 8s
+public OrderResponse callOrderService(String month, String parmRequestSource, String parmAudienceType, String requestJson) {
+
+    //caller :: POST : http://localhost:9050/orders/v1/getOrder/{month}?parmRequestSource={parmRequestSource}&parmAudienceType={parmAudienceType}
+
+    String endPoint = "http://localhost:9050/orders/v1/getOrder/{month}";
+
+    //URI
+    Map<String, String> pathVariablesMap = new HashMap<>();
+    pathVariablesMap.put("month", month);
+
+    URI uri = UriComponentsBuilder
+            .fromUriString(endPoint)
+            .queryParam("parmRequestSource", parmRequestSource)
+            .queryParam("parmAudienceType", parmAudienceType)
+            .buildAndExpand(pathVariablesMap)
+            .encode()
+            .toUri();
+
+    //HttpHeaders
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+    httpHeaders.set("Authorization", "Basic YWJoaWtnaDp3ZWxjb21lQDFh");
+    httpHeaders.set("Actor", "MicroService");
+
+    //HttpEntity
+    HttpEntity<String> httpEntity = new HttpEntity<>(requestJson, httpHeaders);
+
+
+
+    if (Objects.nonNull(RetrySynchronizationManager.getContext()) && RetrySynchronizationManager.getContext().getRetryCount() > 0) {
+        log.info("Retry count {} for service {}", RetrySynchronizationManager.getContext().getRetryCount(), "callOrderService");
+    }
+
+    return restTemplate.exchange(uri, HttpMethod.POST, httpEntity, OrderResponse.class).getBody();
+
+}
+
+@Recover
+private OrderResponse recover(Exception exception) {
+    System.out.println("In recover method...");
+    throw new RuntimeException(exception);
+}
+
+---------------------------------------------------------------------------------------------
+RestTemplate Client call
+=============================================
+
+public List<Movie> getMoviesByDirectorAndGenreAndNationalAward(String director, String genre, boolean nationalAward) {
+
+    //caller : GET : http://localhost:9050/orders/v1/getMoviesByDirectorAndGenreAndNationalAward/Satyajit Ray/Family?nationalAward=true
+
+    String endPoint = "http://localhost:9050/orders/v1/getMoviesByDirectorAndGenreAndNationalAward/{director}/{genre}";
+
+    Map<String, String> pathVariablesMap = new HashMap<>();
+    pathVariablesMap.put("director", director);
+    pathVariablesMap.put("genre", genre);
+
+    URI uri = UriComponentsBuilder
+            .fromUriString(endPoint)
+            .queryParam("nationalAward", nationalAward)
+            .buildAndExpand(pathVariablesMap)
+            .encode()
+            .toUri();
+
+    System.out.println(uri);
+
+    return restTemplate.exchange(uri, HttpMethod.GET, null, new ParameterizedTypeReference<List<Movie>>() {}).getBody();
+
+}
+
+--------------------------------------------------------------------------------------------
+RestTemplate Client call with no parameters
+=============================================
+String endPoint = "http://localhost:9050/orders/v1/auth";
+
+URI uri = UriComponentsBuilder
+        .fromUriString(endPoint)
+        .build()
+        .encode()
+        .toUri();
+
+HttpHeaders httpHeaders = new HttpHeaders();
+httpHeaders.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+
+Map<String, Object> claims = new HashMap<>();
+claims.put("userId","eyabhikg");
+claims.put("password","12345");
+
+HttpEntity httpEntity = new HttpEntity<>(claims, httpHeaders);
+
+AuthenticationResponse authenticationResponse = restTemplate.exchange(uri, HttpMethod.POST, httpEntity, AuthenticationResponse.class).getBody();
+
+---------------------------------------------------------------------------------------------
+
+@ConfigurationProperties, @EnableConfigurationProperties, @EncryptablePropertySources
+=========================================================================================
+
+Read properties (using ConfigurationProperties)
+-----------------------------------------------------------
+
+statistics:
+  gather: Yes
+  platforms: Linux | Windows | FreeBSD | SunOS | Mac | AIX
+  browsers: Firefox | Netscape | Opera | Safari | Gecko | MSIE
+  systems : API | MicroServices | BlockChain
+
+@Configuration
+@ConfigurationProperties(prefix = "statistics")
+@Getter
+@Setter
+public class StatisticsConfig {
+
+	private String gather;
+	private String platforms;
+	private String browsers;
+	private String systems;
+
+}
+
+@Autowired
+private StatisticsConfig statisticsConfig;
+
+System.out.println(statisticsConfig.getGather());
+System.out.println(statisticsConfig.getPlatforms());
+System.out.println(statisticsConfig.getBrowsers());
+System.out.println(statisticsConfig.getSystems());
+
+
+Read properties as list (using ConfigurationProperties)
+-----------------------------------------------------------
+
+order2:
+  statuses:
+    pending
+    success
+    failed
+
+@Configuration
+@ConfigurationProperties(prefix = "order2")
+@Getter
+@Setter
+public class PropsListConfig {
+    private List<String> statuses;
+}
+
+@Autowired
+private PropsListConfig propsListConfig;
+
+System.out.println(propsListConfig.getStatuses().get(0));
+
+Read properties as map (using ConfigurationProperties)
+-----------------------------------------------------------
+
+application:
+  applicationMap:
+    306: this is a test
+    3061: this is second test
+
+@Configuration
+@ConfigurationProperties(prefix = "application")
+@Getter
+@Setter
+public class ApplicationMapConfig {
+
+    private Map<String, String> applicationMap = new HashMap<>();
+
+}
+
+@Autowired
+private ApplicationMapConfig applicationMapConfig;
+
+String value1 = applicationMapConfig.getApplicationMap().get("306");
+
+
+Get individual property from Environment
+------------------------------------------
+
+@Autowired
+private Environment environment;
+
+System.out.println("~~~~~~~~~~~~~~~From environment ~~~~~~~~~~~~~~~~~~~~~~~~~~");
+System.out.println("property1 : " + environment.getProperty("spring.application.name"));
+System.out.println("property2 : " + String.format(environment.getProperty("loggedIn.user"), "user1"));
+
+
+reading property from pom
+--------------------------------
+spring:
+  application:
+    name: @project.name@
+
+
+default values
+----------------------
+//default = empty String
+//@Value("${topic:}")
+
+//default = null
+//@Value("${topic:#{null}}")
+
+//default = some value
+@Value("${topic:abc}")
+
+private String topic;
+
+@EnableConfigurationProperties(class)
+---------------------------------------
+
+spring.redis.host=localhost
+spring.redis.port=6379
+spring.redis.password=
+spring.redis.timeout=60000
+spring.redis.lettuce.pool.max-active=8
+spring.redis.lettuce.pool.max-idle=8
+spring.redis.lettuce.pool.max-wait=-1
+spring.redis.lettuce.pool.min-idle=0
+
+@ConfigurationProperties(prefix = "spring.redis")
+public class RedisProperties {
+
+    private int database;
+    private java.lang.String url;
+    private java.lang.String host;
+    private java.lang.String username;
+    private java.lang.String password;
+    private int port;
+    private boolean ssl;
+    private java.time.Duration timeout;
+    private java.time.Duration connectTimeout;
+    private java.lang.String clientName;
+}
+
+@Configuration
+@EnableCaching
+@EnableConfigurationProperties(RedisProperties.class)
+public class RedisConfig {
+
+    @Bean(name = "moviesCachedRedisTemplate")
+    public RedisTemplate<String,Object> moviesCachedRedisTemplate(RedisConnectionFactory redisConnectionFactory) {
+        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<String, Object>();
+        redisTemplate.setKeySerializer(new StringRedisSerializer());
+        redisTemplate.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+        redisTemplate.setConnectionFactory(redisConnectionFactory);
+        redisTemplate.afterPropertiesSet();
+        return redisTemplate;
+    }
+
+}
+
+EncryptablePropertySource
+-----------------------------------
+
+infoMessages_en.properties
+------------------------
+encrypt:
+  value1: ENC(36zNhYsNLf7Od6yxC1gZXmYBB7RKubDW40DVUsVyhh3cakuV/2O73JUdZ6oTCvY2)
+  value2: ENC(4uU+ljpDIlbBkTuFj5IpMKz4fZhLO7oG6BV8TSVQmf5Axt2RvrExItNfje/w+w7A)
+
+jasypt:
+  encryptor:
+    password: masterpassword
+
+@EncryptablePropertySource("classpath:infoMessages_en.properties")
+
+@Value("${encrypt.value1}")
+private String encryptValue1; //scott
+
+---------------------------------------------------------------------------------------------
+
+ELK
+============
+Elasticsearch - Logstash - Kibana
+Centralized logging, log search, log analysis
+
+SpringBoot ------>   Logstash   ----------------------------->  Elasticsearch   ----------> Kibana
+                  (-> Input Plugin      -> Output Plugin)
+
+Logstash: accepts data from multiple sources and sends processed data to ElasticSearch
+Elasticsearch : distributed search engine that stores indexed data
+Kibana : web-ui for data search and analysis
+
+---------------------------------------------------------------------------------------------
+
+Health check
+-----------------
+
+@Autowired
+private HealthEndpoint healthEndpoint;
+
+@Scheduled(fixedRate = 20000, initialDelay = 1000)
+public void healthCheck(){
+    logger.info("Liveness status :: {} ", healthEndpoint.health().getStatus());
+}
+
+@Scheduled(fixedRateString = "${healthCheck.rate}", initialDelay = 1000)
+public void healthCheck() {
+    logger.info("Liveness status :: {} ", healthEndpoint.health().getStatus());
+}
+
+
+{
+	"@timestamp": "2024-08-29T22:31:00.785+05:30",
+	"@version": "1",
+	"message": "Liveness status :: UP ",
+	"logger_name": "com.example.SpringRESTClient2.controller.ClientController",
+	"thread_name": "scheduling-1",
+	"level": "INFO",
+	"level_value": 20000
+}
+
+---------------------------------------------------------------------------------------------
+
+WsConfigurationSupport (imported by @EnableWs)
+=================================================
+
+<dependency>
+    <groupId>org.springframework.ws</groupId>
+    <artifactId>spring-ws-core</artifactId>
+</dependency>
+
+
+WsConfigurerAdapter (imported by @EnableWs)
+=================================================
+
+<dependency>
+    <groupId>org.springframework.ws</groupId>
+    <artifactId>spring-ws-core</artifactId>
+</dependency>
+
+WebMvcConfigurer (I)
+=======================
+for interceptors
+
+------------------------------------------------------------------------------------------
