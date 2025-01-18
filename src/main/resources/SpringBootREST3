@@ -1290,8 +1290,7 @@ private String getJWTToken() {
                     .getJwt();
 
     System.out.println("jwt - " + jwt);
-    return
-            jwt;
+    return jwt;
 }
 
 --------------------------------------------------------------------------------------------------------
@@ -3652,6 +3651,96 @@ HttpEntity httpEntity = new HttpEntity<>(claims, httpHeaders);
 AuthenticationResponse authenticationResponse = restTemplate.exchange(uri, HttpMethod.POST, httpEntity, AuthenticationResponse.class).getBody();
 
 ---------------------------------------------------------------------------------------------
+
+RestClient
+===============================================
+
+@Configuration
+public class RestClientConfig {
+
+    @Bean(name = "restClient1")
+    public RestClient restClient() {
+        return RestClient
+                .builder()
+                .baseUrl("http://localhost:9100/v3/rest")
+                .defaultHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                .defaultHeader(HttpHeaders.CONTENT_ENCODING,"gzip")
+                .defaultHeader(HttpHeaders.ACCEPT_ENCODING,"gzip")
+                .build();
+    }
+
+}
+
+@Autowired
+@Qualifier("restClient1")
+private RestClient restClient;
+
+public List<Movie> getMoviesOfDirectorClient(String director) {
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.set("Authorization","Bearer " + getJWTToken());
+    return
+            restClient
+                .get()
+                .uri("/getMoviesOfDirector/" + director)
+                .headers(headers -> headers.addAll(httpHeaders))
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() {});
+}
+
+private String getJWTToken() {
+    Map<String, Object> claims = new HashMap<>();
+    claims.put("userId","eyabhikg");
+    claims.put("password", "12345");
+
+    String jwt =
+            Objects.requireNonNull(restClient
+                                        .post()
+                                        .uri("/authenticate")
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .accept(MediaType.APPLICATION_JSON)
+                                        .body(claims)
+                                        .retrieve()
+                                        .body(AuthenticationResponse.class))
+                                    .getJwt();
+
+    System.out.println("jwt - " + jwt);
+    return jwt;
+}
+
+---------------------------------------------------------------------------------------------
+
+WebClient
+==============
+
+@Configuration
+class WebClientConfig {
+
+    @Bean
+    public WebClient webClient(){
+         return WebClient
+               .builder()
+               .baseUrl("http://localhost:9898/rx")
+               .build();
+
+    }
+
+}
+
+@Autowired
+private WebClient webClient;
+
+ return
+                webClient
+                .get()
+                .uri("/getEmployees")
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(String.class);
+
+---------------------------------------------------------------------------------------------
+
 
 @ConfigurationProperties, @EnableConfigurationProperties, @EncryptablePropertySources
 =========================================================================================
