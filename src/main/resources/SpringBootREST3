@@ -890,9 +890,9 @@ Key Challenges in High-Traffic Systems
 ===========================================================
 
 Scalability:
-Latency : How to ensure low response times despite large datasets?
-Fault Tolerance: Achieving resilience during partial failures.
-Data Consistency: Synchronizing operations across distributed systems.
+Latency :
+Fault Tolerance: handling partial failures.
+Data Consistency: 
 
 Horizontal Scaling vs Vertical Scaling
 -----------------------------------------------
@@ -1349,8 +1349,10 @@ Retry / Circuit-Breaker
 Retry is when the failure is expected to be short-lived
 Circuit-Breaker is when the failure is expected to be long-lived as the connection will be broken
 
+---------------------------------------------------------------------------------------------------
+
 Spring Retry
-----------------
+======================
 
 <!-- Actuator -->
 <dependency>
@@ -1408,6 +1410,8 @@ private CompletableFuture<Hero> getHeroDetails(String heroName) {
 public HeroDetailsResponse defaultGetHeroDetails(Exception exception){
     return new HeroDetailsResponse();
 }
+
+---------------------------------------------------------------------------------------------------
 
 Circuit-Breaker
 --------------------
@@ -3980,5 +3984,13 @@ WsConfigurerAdapter (imported by @EnableWs)
 WebMvcConfigurer (I)
 =======================
 for interceptors
+
+------------------------------------------------------------------------------------------
+
+Spring Profiles
+======================
+
+spring.profiles.active=dev  -- will run application-dev.properties
+property in application.properties will be overridden by application-dev.properties
 
 ------------------------------------------------------------------------------------------
