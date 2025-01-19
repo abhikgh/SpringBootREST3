@@ -314,16 +314,20 @@ public class SpringConversionFactorApplication {
 @Configuration
 class WebClientConfig {
 
+
     @Bean
-    WebClient.Builder webClientBuilder() {
-        return WebClient.builder();
-    }
+    public WebClient webClient(){
+         return WebClient
+               .builder()
+               .baseUrl("http://conversion-factor/eureka")
+               .build();
+
+        }
 
 }
 
 //call this Eureka client from another service
- return webClientBuilder
-                .build()
+ return       webClient
                 .get()
                 .uri("http://conversion-factor/eureka/v1/getConversionFactor/" + countryCode)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
@@ -348,29 +352,34 @@ public class ServiceInstanceConfig {
 @Configuration
 class WebClientConfig {
 
-    @LoadBalanced
+
     @Bean
-    WebClient.Builder webClientBuilder() {
-        return WebClient.builder();
-    }
+    public WebClient webClient(){
+         return WebClient
+               .builder()
+               .baseUrl("http://conversion-factor/eureka")
+               .build();
+
+        }
 
 }
+
+
 
 @RestController
 public class NavigationController {
 
     @Autowired
-    private WebClient.Builder webClientBuilder;
+    private WebClient webClient;
 
     //http://localhost:8071/getConversionFactorClient/AUD
     @GetMapping(value = "/getConversionFactorClient/{countryCode}", produces = MediaType.APPLICATION_JSON_VALUE)
     public Mono<String> convertCurrency(@PathVariable("countryCode") String countryCode) {
 
     //call the Eureka client from another service in a load-balanced manner
-        return webClientBuilder
-                .build()
+        return webClient
                 .get()
-                .uri("http://conversion-factor/eureka/v1/getConversionFactor/" + countryCode)
+                .uri("/v1/getConversionFactor/" + countryCode)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
@@ -892,7 +901,7 @@ Key Challenges in High-Traffic Systems
 Scalability:
 Latency :
 Fault Tolerance: handling partial failures.
-Data Consistency: 
+Data Consistency:
 
 Horizontal Scaling vs Vertical Scaling
 -----------------------------------------------
@@ -3992,5 +4001,204 @@ Spring Profiles
 
 spring.profiles.active=dev  -- will run application-dev.properties
 property in application.properties will be overridden by application-dev.properties
+
+------------------------------------------------------------------------------------------
+
+Spring Cloud
+=======================
+Spring Cloud is a family of libraries that integrates common patterns in the Spring application.
+
+Spring Cloud EurekaServer
+Spring Cloud EurekaClient
+Spring Cloud LoadBalancer
+Spring Cloud Gateway
+
+EurekaServer
+===================================
+service registration and discovery service
+
+<version>3.2.7</version>
+<version>2023.0.0</version>
+
+<parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.2.7</version>
+    <relativePath />
+</parent>
+
+<!-- Eureka server -->
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-netflix-eureka-server</artifactId>
+</dependency>
+
+eureka:
+   client:
+      registerWithEureka: false
+      fetchRegistry: false
+
+@SpringBootApplication
+@EnableEurekaServer
+public class EurekaServerApplication {
+
+	//Eureka server :: http://localhost:8761/
+	public static void main(String[] args) {
+		SpringApplication.run(EurekaServerApplication.class, args);
+	}
+}
+
+EurekaClient
+============================
+SpringConversionFactor
+
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+</dependency>
+
+spring:
+  application:
+    name: conversion-factor
+eureka:
+  client:
+    registerWithEureka: true
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka
+
+@SpringBootApplication
+@EnableDiscoveryClient
+public class SpringConversionFactorApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(SpringConversionFactorApplication.class, args);
+	}
+
+}
+
+http://localhost:8061/eureka/v1/addConversionFactor
+{
+    "countryCode": "AUD",
+    "conversionFactor": "1.41"
+}
+http://localhost:8062/eureka/v1/updateConversionFactor
+{
+    "countryCode": "AUD",
+    "conversionFactor": "1.42"
+}
+http://localhost:8061/eureka/v1/getConversionFactor/AUD
+http://localhost:8062/eureka/v1/getConversionFactor/AUD
+
+Run SpringBootConversionFactor in IntelliJ on port 8061
+AND
+[Run SpringBootConversionFactor in Eclipse on port 8062 OR
+ D:\workspace2\SpringConversionFactor>java -jar -Dserver.port=8062 target/SpringConversionFactor-0.0.2-SNAPSHOT.jar]
+Check in Eureka 2 instances are running
+Run SpringBootConversionClient from Postman (8061/8062) and check requests are going to both IntelliJ and Eclipse
+
+Client (calling EurekaClient in a Load-Balanced manner)
+===================================================================================
+SpringConversionFactorFeignClient
+
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-loadbalancer</artifactId>
+    <version>4.0.1</version>
+</dependency>
+
+@Configuration
+public class ServiceInstanceConfig {
+
+    @Bean
+    public ServiceInstanceListSupplier serviceInstanceListSupplier(){
+        return new ServiceInstanceSupplier("conversion-factor");
+    }
+}
+
+@LoadBalancerClient(name = "conversion-factor", configuration = ServiceInstanceConfig.class)
+@Configuration
+class WebClientConfig {
+
+    @LoadBalanced
+    @Bean
+    public WebClient webClient(){
+         return WebClient
+               .builder()
+               .baseUrl("http://conversion-factor/eureka")
+               .build();
+
+        }
+
+}
+
+@RestController
+public class NavigationController {
+
+    @Autowired
+    private WebClient webclient;
+
+    //http://localhost:8071/getConversionFactorClient/AUD
+    @GetMapping(value = "/getConversionFactorClient/{countryCode}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Mono<String> convertCurrency(@PathVariable("countryCode") String countryCode) {
+
+        return webclient
+                .get()
+                .uri("/v1/getConversionFactor/" + countryCode)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(String.class);
+
+    }
+
+}
+
+Spring Cloud Gateway
+=======================
+
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-gateway</artifactId>
+</dependency>
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-actuator</artifactId>
+</dependency>
+
+spring:
+  application:
+    name: conversion-factor
+  cloud:
+    gateway:
+      routes:
+        - id: baeldung_route
+          uri: http://baeldung.com
+          predicates:
+            - Path=/baeldung/
+        - id: test_route
+          uri: http://baeldung.com
+          predicates:
+            - Path=/test/
+
+http://localhost:8061/actuator/gateway/routes/baeldung_route
+{
+  "predicate": "Paths: [/baeldung/], match trailing slash: true",
+  "route_id": "baeldung_route",
+  "filters": [],
+  "uri": "http://baeldung.com:80",
+  "order": 0
+}
+http://localhost:8061/baeldung/ -> https://www.baeldung.com/baeldung/
+
+
+http://localhost:8061/actuator/gateway/routes/test_route
+{
+  "predicate": "Paths: [/test/], match trailing slash: true",
+  "route_id": "test_route",
+  "filters": [],
+  "uri": "http://baeldung.com:80",
+  "order": 0
+}
+http://localhost:8061/test/ ->  https://www.baeldung.com/test/
 
 ------------------------------------------------------------------------------------------
