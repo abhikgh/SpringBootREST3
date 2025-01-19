@@ -4202,3 +4202,106 @@ http://localhost:8061/actuator/gateway/routes/test_route
 http://localhost:8061/test/ ->  https://www.baeldung.com/test/
 
 ------------------------------------------------------------------------------------------
+
+Spring Cloud Config Server
+=============================
+
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-config-server</artifactId>
+</dependency>
+
+<parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.1.5</version>
+    <relativePath/>
+</parent>
+
+<properties>
+    <java.version>21</java.version>
+    <spring-cloud.version>2022.0.3</spring-cloud.version>
+</properties>
+
+
+@RefreshScope
+@EnableConfigServer
+@SpringBootApplication
+public class SpringBootCloudConfigApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(SpringBootCloudConfigApplication.class, args);
+    }
+
+}
+
+//Create Git repo
+
+/*
+ * $ git init
+ *
+ * $ git add .
+ *
+ * $ git commit -m "initial commit"
+ */
+
+D:\workspace2\configRepo\production>git init
+D:\workspace2\configRepo\production>git add .
+D:\workspace2\configRepo\production>git commit -m "aa"
+
+
+application.yml
+-------------------
+spring:
+  application:
+    name: SpringBootCloudConfig
+  cloud:
+    config:
+      server:
+        git:
+          uri: D:\\workspace2\\configRepo\\production
+          default-label: master # now default branch name of GitHub is "main", but Spring Cloud Config still looks for "master" as a label name
+
+http://localhost:8888/SpringBootCloudConfigClient/development
+    {"name":"SpringBootCloudConfigClient","profiles":["development"],"label":null,"version":"e74117163b5a0891486a02293c78856f8da5a5cd","state":null,"propertySources":[{"name":"D:\\\\workspace2\\\\configRepo\\\\production/SpringBootCloudConfigClient.yml","source":{"ibm.mq.queueManager":"ABHIKTESTQM","ibm.mq.channel":"CLOUD.ADMIN.SVRCONN","ibm.mq.connName":"abhiktestqm-ff9e.qm.eu-gb.mq.appdomain.cloud(32503)","ibm.mq.user":"ghosha24","ibm.mq.password":"pceI1ObgLP4EzuDWfkPJG7z09WOeD1zh7KX_oV59R1hx","ibm.mq.timeout":60000,"ibm.mq.maxAttempts":3,"ibm.mq.receiveTimeout":5000,"ibm.mq.userAuthentication":true,"ibm.mq.transportType":1,"ibm.mq.appRequestQueue":"APP.REQUEST.Q","ibm.mq.appResponseQueue":"APP.RESPONSE.Q","test.data":"this is NEW PROD data","spring.password":"p0Fhr1SxkogmSZGid8hkuQ==","jasypt.encryptor.password":"Sdmjsj23#2"}}]}
+http://localhost:8888/SpringBootCloudConfigClient/production
+    {"name":"SpringBootCloudConfigClient","profiles":["production"],"label":null,"version":"e74117163b5a0891486a02293c78856f8da5a5cd","state":null,"propertySources":[{"name":"D:\\\\workspace2\\\\configRepo\\\\production/SpringBootCloudConfigClient.yml","source":{"ibm.mq.queueManager":"ABHIKTESTQM","ibm.mq.channel":"CLOUD.ADMIN.SVRCONN","ibm.mq.connName":"abhiktestqm-ff9e.qm.eu-gb.mq.appdomain.cloud(32503)","ibm.mq.user":"ghosha24","ibm.mq.password":"pceI1ObgLP4EzuDWfkPJG7z09WOeD1zh7KX_oV59R1hx","ibm.mq.timeout":60000,"ibm.mq.maxAttempts":3,"ibm.mq.receiveTimeout":5000,"ibm.mq.userAuthentication":true,"ibm.mq.transportType":1,"ibm.mq.appRequestQueue":"APP.REQUEST.Q","ibm.mq.appResponseQueue":"APP.RESPONSE.Q","test.data":"this is NEW PROD data","spring.password":"p0Fhr1SxkogmSZGid8hkuQ==","jasypt.encryptor.password":"Sdmjsj23#2"}}]}
+
+
+Config Client
+==================
+
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-config</artifactId>
+</dependency>
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-bootstrap</artifactId>
+</dependency>
+
+
+
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-dependencies</artifactId>
+            <version>${spring-cloud.version}</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+
+bootstrap.yml
+--------------
+
+spring:
+  application:
+    name: SpringBootJPA4 # maps to the property file name in git
+  cloud:
+    config:
+      url: http://localhost:8888  # the config server url
+
+------------------------------------------------------------------------------------------

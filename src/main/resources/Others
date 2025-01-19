@@ -3,6 +3,8 @@ M2 = C:\Program Files\apache-maven-3.6.1\bin
 M2_HOME = C:\Program Files\apache-maven-3.6.1
 Path = ;C:\Program Files\apache-maven-3.6.1\bin
 
+mvn commands
+=====================
 mvn clean install -DskipTests
 mvn clean install -U
 mvn clean install -U -DskipTests
@@ -10,9 +12,12 @@ mvn -version
 mvn verify (runs integration test)
 mvn spring-boot:run
 
+git commands
+===================
 git checkout -b <branch_name>
 git pull
 git merge development
+git branch -m <old_name> <new_name>
 
 You have not concluded your merge (MERGE_HEAD exists). Please, commit your changes before you merge
 -------------------------------------------------------------------------------------------------------
