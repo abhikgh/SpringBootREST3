@@ -830,12 +830,13 @@ ORCHESTRATION
 
 -------------------------------------------------------------------------------------------------
 
-Anti-Patterns
+Anti-Patterns in Spring Boot
 ===========================================
 
-1. Choose Constructor Injection
+1. Choose Constructor Injection over Field and Setter Injection
 2. Avoid 1 Controller if too many endpoints
-3. Constant Interface
+3. Constants should be in class, not in Interface
+4. Don’t integrate Spring to Core Business Logic
 
 ---------------------------------------------------------------------------------------------------------------------------
 
