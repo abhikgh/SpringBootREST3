@@ -3062,6 +3062,21 @@ Synchronous HTTP call                                        ASynchronous HTTP c
                                                              Fluid API                                                        Fluid API                                     Interface with @FeignClient
 Servlet Stack                                                Reactive Stack                                                   Servlet Stack
 
+RestTemplate                            vs                      WebClient                           vs                          RestClient              vs                   FeignClient
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Spring MVC (Spring Web Framework)                            Spring WebFlux (Spring Reactive Web Framework)
+Synchronous HTTP call                                        ASynchronous HTTP call                                           Synchronous HTTP call                          Synchronous HTTP call
+                                                             Fluent API                                                       Fluent API                                     Interface with @FeignClient
+Servlet Stack                                                Reactive Stack                                                   Reactive Stack
+Synchronous, Blocking I/O                                    Event-driven, non-blocking programming which communicates over asynchronous data streams
+                                                             High-concurrency scenarios
+Servlet -> Thread model                                      Servlet->Thread Pool model
+ - Finite number of Servlet-threads                             - Every request comes with a Handler function and call-back function
+ - Each Servlet-thread creates a Worker-thread                  - Servlet-thread delegates the request to a thread-pool
+    for DB/IO/MQ and waits for the Worker-thread to complete    - 1 thread from Thread pool delegates the request to its Handler function
+                                                                - When the Handler function is complete, 1 thread from Thread-pool takes the response and passes it to the call-back function
+                                                             Backpressure to stabilise the flow of asynchronous data streams
+
 
 
 Client-side Load Balancing                  vs                                         Server-side Load-balancing
@@ -3070,6 +3085,26 @@ Spring Cloud Load Balancer	                                                     
 EurekaServer                                                                             INGRESS
 
 
+Object-Oriented Programming             vs              Functional Programming             vs              Reactive Programming
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Objects and Classes - which mimic real world entities and their behavior.
+Encapsulation, Inheritance, Polymorphism, and Abstraction (EIPA)
+Encapsulation :: Data and data accessors are in a single class so hiding the internal state of the object from outside
+Code perspective : State-change and verbose
+
+                                                       Data transformation
+                                                       Immutability, Transparency, Higher-order functions, Recursion (ITHR)
+                                                       FP uses Immutability to ensure that data cannot be modified after it is created,
+                                                             Transparency to ensure that a function will always produce the same outputs given the same inputs
+                                                             Higher-order functions to accept 1/more functions as input and/or return a function as output
+                                                             Recursion for iteration
+                                                       Code perspective : No state-change and compact
+
+
+                                                                                                Event-driven, non-blocking programming which communicates over asynchronous data streams
+                                                                                                pub-sub mode
+                                                                                                High-concurrency scenarios
 
 
 Forward Proxy                                      vs                               Reverse Proxy
@@ -3089,6 +3124,12 @@ Client -> Forward Proxy -> Internet -> Server
                                                                                 - Encryption
                                                                                 - Load Balancing
                                                                                 - Rate-limiting (DDoS Protection) (Distributed Denial-of-Service)
+
+
+ Request timeout            vs          Read timeout            vs              Connection timeout
+ -----------------------------------------------------------------------------------------------------------
+ time for the request to come back with a response (time to resolve the hostname + open the TCP connection + perform the TLS handshake etc)
+                                        time to read data                   time to open the TCP connection
 
 
 ---------------------------------------------------------------------------------------------------------------------------
@@ -3670,6 +3711,14 @@ AuthenticationResponse authenticationResponse = restTemplate.exchange(uri, HttpM
 RestClient
 ===============================================
 
+<version>3.2.5</version>
+<java.version>21</java.version>
+
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-web</artifactId>
+</dependency>
+
 @Configuration
 public class RestClientConfig {
 
@@ -3702,6 +3751,16 @@ public List<Movie> getMoviesOfDirectorClient(String director) {
                 .retrieve()
                 .body(new ParameterizedTypeReference<>() {});
 }
+
+public Employee getEmployeeById(Integer employeeId) {
+        return restClient
+                .get()
+                .uri("/getEmployeeById/" + employeeId)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .body(Employee.class);
+    }
 
 private String getJWTToken() {
     Map<String, Object> claims = new HashMap<>();
@@ -4306,4 +4365,187 @@ spring:
     config:
       url: http://localhost:8888  # the config server url
 
-------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------
+
+Reactive Programming
+========================
+
+Event-driven, non-blocking programming which communicates over asynchronous data streams
+High-concurrency scenarios
+Spring WebFlux (Spring Reactive Web Framework)
+ASynchronous HTTP call
+Fluent API
+Servlet->Thread Pool model
+Backpressure to stabilise the flow of asynchronous data streams
+R2DBC - allows you to work with SQL databases with a Reactive non-blocking API.
+
+Why Reactive Programming?
+-----------------------------
+1. Non-blocking I/O - scaling
+2. Servlet->Thread Pool model -  a small number of threads can serve large no of requests
+        - Every request comes with a Handler function and call-back function
+        - Servlet-thread delegates the request to a thread-pool
+        - 1 thread from Thread pool delegates the request to its Handler function
+        - When the Handler function is complete, 1 thread from Thread-pool takes the response and passes it to the call-back function
+3. Improves Latency
+
+
+Mono and Flux
+--------------------
+In Spring WebFlux, Mono and Flux are ASync publishers
+
+Mono: Mono is a Publisher that returns 0 or 1 async components
+
+public class UserService {
+    public Mono<User> getUserById(String userId) {
+        // Simulating a user lookup
+        if ("123".equals(userId)) {
+            return Mono.just(new User("123", "John Doe"));
+        } else {
+            return Mono.empty();  // Returns an empty Mono if user not found
+        }
+    }
+}
+
+Mono.just(value)
+Mono.empty()
+Mono.error(exception)
+
+Flux: Flux is a Publisher that returns 0…N async components
+
+public class UserService {
+    public Flux<User> getAllUsers() {
+        return Flux.just(
+                new User("123", "John Doe"),
+                new User("456", "Jane Smith"),
+                new User("789", "Robert Brown")
+        );
+    }
+}
+
+Flux.just(value1, value2, ...)
+Flux.empty()
+Flux.fromIterable(iterable)
+Flux.range(start, count)
+
+public Mono<Employee> getEmployeeById(Integer id) {
+    return springBootReactiveRepository.findById(id);
+}
+
+public Flux<Employee> getEmployees() {
+    return springBootReactiveRepository.findAll();
+}
+
+public Mono<Book> getBookDetails(Integer id){
+    return bookRepository.findById(id);
+}
+
+public Mono<Employee> changeEmployeeFirstNameToUpperCase(Integer id) {
+    return springBootReactiveRepository.findById(id)
+            .map(employee -> {
+                employee.setFirstName(employee.getFirstName().toUpperCase(Locale.ENGLISH));
+                return employee;
+            }).flatMap(employee -> springBootReactiveRepository.save(employee));
+}
+
+
+R2DBC
+---------------
+Reactive Relational Database Connectivity
+R2DBC allows you to work with SQL databases with a Reactive non-blocking API.
+
+<!--R2DBC -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-r2dbc</artifactId>
+</dependency>
+
+<!--R2DBC Postgresql-->
+<dependency>
+    <groupId>org.postgresql</groupId>
+    <artifactId>r2dbc-postgresql</artifactId>
+    <scope>runtime</scope>
+</dependency>
+
+@Repository
+@EnableR2dbcRepositories
+public interface SpringBootReactiveRepository extends ReactiveCrudRepository<Employee, Integer> {
+
+}
+
+
+Spring Webflux
+-----------------------
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-webflux</artifactId>
+</dependency>
+
+
+@Configuration
+public class ReactiveConfig {
+
+    @Value("${connectionTimeout}")
+    private Integer connectionTimeout;
+
+    @Value("${requestTimeout}")
+    private Integer requestTimeout;
+
+    @Value("${readTimeout}")
+    private Integer readTimeout;
+
+    @Bean
+    public WebClient webClient(){
+       HttpClient httpClient =
+                HttpClient.create()
+                        .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectionTimeout)
+                        .responseTimeout(Duration.ofMillis(requestTimeout))
+                        .doOnConnected(connection -> connection.addHandlerLast(new ReadTimeoutHandler(readTimeout)));
+
+        return WebClient
+               .builder()
+               .baseUrl("http://localhost:9898/rx")
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
+               .build();
+    }
+}
+
+public Mono<Book> getBookDetails(Integer id){
+        return webClient
+                .get()
+                .uri("/getBookDetails/"+id)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .onStatus(HttpStatus::isError, response -> Mono.error(new RuntimeException("Exception :: " + response)))
+                .bodyToMono(Book.class)
+                .retryWhen(Retry.backoff(3, Duration.ofSeconds(1)))
+                .onErrorResume(error -> Mono.just(new Book()));
+}
+
+public Flux<Employee> getEmployeesAsync() {
+        return webClient
+                .get()
+                .uri("/getEmployees")
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToFlux(Employee.class);
+    }
+
+--- Mono to Flux---
+public Flux<Order> getOrdersForUser(String userId) {
+    return userService.getUserById(userId)  // Returns a Mono<User>
+            .flatMapMany(user -> orderRepository.findByUserId(user.getId()));  // Returns a Flux<Order>
+}
+
+
+Backpressure
+-------------------------
+Backpressure is the ability of the Subscriber to report to the Publisher that it is emitting events at a higher rate
+ than the Subscriber can consume.
+For Spring Webflux , Backpressure is inbuilt - How ?
+When Mono/Flux emits events, it does not directly send it to the Subscriber -
+it waits for the Subscriber to send a signal as to how much data it can consume - and then sends that data.
+
+------------------------------------------------------------------------------------------------------------
