@@ -2673,6 +2673,7 @@ Redis
 
 - Distributed caching (Data is stored across multiple servers - for faster access and more data)
 - High Availability
+- Scalability: Redis can handle millions of concurrent connections, making it ideal for distributed systems
 
 <!--Redis-->
 <dependency>
