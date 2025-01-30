@@ -3167,11 +3167,11 @@ Spring Bean scopes
 
 Logging
 ==================
-In SpringBoot the default logging is Logback
+SLF4J (Simple Logging Facade for Java) logging abstraction + Logback (implementation)
 
 <dependency>
-   <groupId>org.springframework.boot</groupId>
-   <artifactId>spring-boot-starter-web</artifactId>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-logging</artifactId>
 </dependency>
 
 logging:
@@ -3266,14 +3266,13 @@ Logging levels
 -----------------------
 TRACE > DEBUG > INFO > WARN > ERROR > FATAL
 
+Logging patterns
+-----------------------
+1. Simple logging - date, log-level,message
+   logging.pattern.console=%d{yyyy-MM-dd HH:mm:ss} [%p] %m%n
+   2025-01-23 10:20:00 [INFO] Application started
 
-MDC (Mapped Diagnostic Context)
-====================================
-- To transfer value within service
-
-JSON logging
-====================
-JSON logging is enabled through LogstashEncoder
+2. JSON logging
 
 <!-- JSON Logging -->
 <dependency>
@@ -3282,12 +3281,7 @@ JSON logging is enabled through LogstashEncoder
     <version>5.2</version>
 </dependency>
 
-logback.xml
----------------
-<?xml version="1.0" encoding="UTF-8"?>
-<configuration>
-
-      <!-- console log appender -->
+<!-- console log appender -->
        <appender name="jsonConsole" class="ch.qos.logback.core.ConsoleAppender">
            <encoder class ="net.logstash.logback.encoder.LogstashEncoder">
                <!-- append fields into logstash log by MDC-->
@@ -3303,8 +3297,6 @@ logback.xml
     <root level="INFO">
         <appender-ref ref="jsonConsole"/>
     </root>
-
-</configuration>
 
 private final Logger logger = LoggerFactory.getLogger(NavigationController.class);
 
@@ -3327,20 +3319,52 @@ logger.info(requestJSON);
 	"x-flow-id": "8f73e973-c37a-4236-855d-ad25dcb5c1a1"
 }
 
- //JSON Masking
+3. Rolling File logging
+
+<configuration>
+    <appender name="ROLLING" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/application.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/application-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>7</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+<root level="info">
+        <appender-ref ref="ROLLING"/>
+    </root>
+</configuration>
+
+MDC (Mapped Diagnostic Context)
+====================================
+- To transfer value within service
+
+JSON Masking
+============================
 File fileUnmasked = new File("src/main/resources/Input.json");
-JsonNode jsonTree = objectMapper.readTree(fileUnmasked);
+JsonNode jsonNode = objectMapper.readTree(fileUnmasked);
 
 String fieldsToMask = "subOrgTxt,personId";
 String[] listFieldsToMask = fieldsToMask.split(",");
 
 for (String fieldToMask : listFieldsToMask) {
-    if (Objects.nonNull(jsonTree.findValue(fieldToMask))) {
-	for (JsonNode parent : jsonTree.findParents(fieldToMask)) {
+    if (Objects.nonNull(jsonNode.findValue(fieldToMask))) {
+	for (JsonNode parent : jsonNode.findParents(fieldToMask)) {
 	    Optional.ofNullable(parent).ifPresent(parentNode -> ((ObjectNode) parentNode).put(fieldToMask, "XXXXXX"));
 	}
     }
 }
+
+Logging best practices
+============================
+1. Use SLF4J
+2. Use logging levels 
+   TRACE > DEBUG > INFO > WARN > ERROR > FATAL
+3. Log masking
+	
 
 ------------------------------------------------------------------------------------------------------------
 
