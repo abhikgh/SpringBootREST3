@@ -73,8 +73,8 @@ Client takes this token to RESOURCE SERVER and after validation of the token for
 OAuth2.0 SSL is required for all the communications required to generate the token
 
 	     AUTHENTICATION SERVER		  (Authentication)
-	 {username, password, clientId, clientSecret, grantType, audience, scope}	   (U2M : Resource Owner Password flow)
-	 {clientId, clientSecret, grantType, audience, scope}     			           (M2M : Client Credential flow)
+	 {username, password, clientId, clientSecret, grantType, audience, scope}	            (Resource Owner Password flow)
+	 {clientId, clientSecret, grantType, audience, scope}     			            (Client Credential flow)
 		     |
       	 	 | {JWTToken}
       		 |		                httpHeaders.set("Authorization", "Bearer JWTToken");
@@ -827,6 +827,20 @@ ORCHESTRATION
               \   \         /         /         /           /           /           /
                Orchestrator
 
+
+-------------------------------------------------------------------------------------------------
+
+Security in Architecture
+==========================================
+
+OAuth2.0 with Client Credentials flow
+sonar / GHAS -  Code scanning for security vulnerabilities, secret scanning, Dependency review
+trivy : image scan for security vulnerabilities + dependency updates
+Renovate :  automates dependency management 
+GCP Security Command center : for Threats and vulnerabilities
+AKAMAI (CDN) (IP whitelisting)  
+KONG (Api Gateway)     
+CLOUD ARMOUR (firewall) <- CLOUD FUNCTION (WAF rules to support that CA only accepts IPs passed through Akamai)
 
 -------------------------------------------------------------------------------------------------
 
