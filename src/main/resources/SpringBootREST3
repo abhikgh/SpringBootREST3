@@ -4780,3 +4780,95 @@ Then build B - for local testing - take the snapshot version of B and put the sn
 Also check A ->External libraries -> B -> changed code
 
 ------------------------------------------------------------------------------------------------------------
+
+Docker commands
+=======================
+
+>wsl --update
+
+Build Image
+-------------------
+dockerfile > docker build . -t voting-app
+dockerfile > docker build . -t springbootdockercompose.jar --no-cache
+
+Run Image
+-------------
+docker run -d --name jaeger-ui -p 16686:16686 -p 6831:6831/udp jaegertracing/all-in-one:1.9
+docker run -d --name=redis redis
+docker run -d --name=db -e POSTGRES_PASSWORD=postgres postgres:9.4
+docker run -d -p 9798:9798 app.jar
+
+All images
+-------------------
+docker images
+
+Running containers
+----------------------------
+docker ps
+
+All docker containers
+----------------------
+docker ps -a
+
+Docker-compose
+--------------------
+docker-compose.yml > docker-compose up --build
+
+Port mapping establishes communication between host machine and Docker Container.
+
+System info
+----------------------
+docker system info
+
+Export image
+----------------------
+docker save -o <exported_name>.tar <container-name>
+
+Check version
+-----------------
+docker –v
+
+Stopping a running container
+----------------------------------
+docker stop <container_id>
+OR
+docker kill <container_id>
+
+Deleting  container
+----------------------------
+docker rm <container_id>
+
+Stopping all running containers
+----------------------------------
+docker stop $(docker ps -a -q)
+
+Remove all containers
+----------------------------
+docker rm -f $(docker ps -a -q)
+
+Remove image
+-------------------
+docker rmi -f <image_id>
+
+Remove all images
+-----------------------
+docker rmi -f $(docker images -q)
+
+Go inside a running container
+----------------------------------------
+docker exec -it <container_id> bash
+docker exec -it <container_id> sh
+
+Inspect container
+------------------------
+docker inspect <container_id>
+
+Remove all stopped containers, unused networks, build caches, and dangling images
+------------------------------------------------------------------------------------
+docker system prune -a
+
+Log of a Container
+-------------------------
+docker logs 8e9613f44ab6
+
+------------------------------------------------------------------------------------------------------------
