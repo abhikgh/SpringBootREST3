@@ -3146,12 +3146,11 @@ Client -> Proxy -> Internet -> Server
         - Load Balancing
 
                                                                         Client -> Internet  -> Reverse Proxy -> Server
-                                                                                - IP masking (Server anonimity)
-                                                                                - Logging
-                                                                                - Caching
-                                                                                - Encryption
-                                                                                - Load Balancing
-                                                                                - Rate-limiting (DDoS Protection) (Distributed Denial-of-Service)
+										- Logging
+										- Caching
+										- Routing
+										- Load Balancing
+										- Rate-limiting (DDoS Protection) (Distributed Denial-of-Service)
 
 									API Gws are reverse proxy
 
