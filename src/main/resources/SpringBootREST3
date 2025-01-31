@@ -845,7 +845,7 @@ ORCHESTRATION
 Security in Architecture
 ==========================================
 
-OAuth2.0 with Client Credentials flow
+RESTT APIs are protected by OAuth2.0 Authentication protocol by JWT token with Client Credentials flow
 sonar / GHAS -  Code scanning for security vulnerabilities, secret scanning, Dependency review
 trivy : image scan for security vulnerabilities + dependency updates
 Renovate :  automates dependency management 
@@ -853,6 +853,8 @@ GCP Security Command center : for Threats and vulnerabilities
 AKAMAI (CDN) (IP whitelisting)  
 KONG (Api Gateway)     
 CLOUD ARMOUR (firewall) <- CLOUD FUNCTION (WAF rules to support that CA only accepts IPs passed through Akamai)
+@JsonIgnoreProperties(ignoreUnknown = true)
+Pen test - API penetration testing is a security testing method that simulates hacker attacks to evaluate the security of an API
 
 -------------------------------------------------------------------------------------------------
 
