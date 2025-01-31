@@ -850,7 +850,7 @@ sonar / GHAS -  Code scanning for security vulnerabilities, secret scanning, Dep
 trivy : image scan for security vulnerabilities + dependency updates
 Renovate :  automates dependency management 
 GCP Security Command center : for Threats and vulnerabilities
-AKAMAI (CDN) (IP whitelisting)  
+AKAMAI (IP whitelisting)  
 KONG (Api Gateway)     
 CLOUD ARMOUR (firewall) <- CLOUD FUNCTION (WAF rules to support that CA only accepts IPs passed through Akamai)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -3135,10 +3135,10 @@ Code perspective : State-change and verbose
                                                                                                 High-concurrency scenarios
 
 
-Forward Proxy                                      vs                               Reverse Proxy
+Proxy                                      vs                               Reverse Proxy
 -------------------------------------------------------------------------------------------------------------
 
-Client -> Forward Proxy -> Internet -> Server
+Client -> Proxy -> Internet -> Server
         - IP masking (Client anonimity)
         - Logging
         - Caching
@@ -3152,6 +3152,8 @@ Client -> Forward Proxy -> Internet -> Server
                                                                                 - Encryption
                                                                                 - Load Balancing
                                                                                 - Rate-limiting (DDoS Protection) (Distributed Denial-of-Service)
+
+									API Gws are reverse proxy
 
 
  Request timeout            vs          Read timeout            vs              Connection timeout
