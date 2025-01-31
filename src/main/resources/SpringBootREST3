@@ -51,6 +51,18 @@ SpringBoot
 
 -------------------------------------------------------------------------------------------------
 
+@Component vs @Controller / @Service / @Repository 
+------------------------------------------------------------
+
+1. All are Spring-Managed-Beans so their lifecycle will be maintained by the Spring Application Context 
+2. @Component is a generic stereotype for any Spring-Managed-Bean.
+@Repository is a stereotype for the persistence layer.
+@Service is a stereotype for the service layer.
+@Controller is a stereotype for the presentation layer (spring-MVC)
+3. Meta-data :: DispatcherServlet will check for @GetMapping / @PostMapping in a class annotated with @RestController / @Controller
+
+----------------------------------------------------------------------------------------------------------------------
+
 SpringBoot Architectures
 =================================
 1.  Microservices API driven architecture - is a software development approach that breaks down an application into a collection of independent services
@@ -4405,6 +4417,67 @@ spring:
 
 ------------------------------------------------------------------------------------------------------------
 
+Spring Cloud Sleuth + Zipkin :: Distributed Tracing service
+=================================================================
+
+Spring Cloud Sleuth  :: Distributed Tracing service :: logs are printed in the following format − [TraceId:SpanId:ParentSpanId:Flags]
+
+Zipkin :: Storing and Visualizing of Spring Cloud Sleuth logs 
+            Collector — collects traces from application (port :9411)
+            Storage   — MySQL / MongoDB/ Cassandra
+            Web UI    — visualize trace data
+            Search    — on trace data
+
+Client
+--------
+Span reported: ef0ffd1475991d16:c09a39b05c45cd71:ef0ffd1475991d16:1 - GET
+                                                 /
+Span reported: ef0ffd1475991d16:ef0ffd1475991d16:0:1 - getMovieDetails
+
+Service
+----------
+Span reported: ef0ffd1475991d16:6dd6c4bf98adad39:c09a39b05c45cd71:1 - getMovieDetails
+
+
+Add Spring Cloud Sleuth and Zipkin dependency and Spring Cloud dependency management in pom of SpringREST2 and SpringRESTClient3
+
+        <!--Spring Cloud Sleuth -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-sleuth</artifactId>
+        </dependency>
+
+         <!-- Zipkin -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-zipkin</artifactId>
+            <version>2.2.8.RELEASE</version>
+        </dependency>
+
+         <dependencyManagement>
+                 <dependencies>
+                     <dependency>
+                         <groupId>org.springframework.cloud</groupId>
+                         <artifactId>spring-cloud-dependencies</artifactId>
+                         <version>2021.0.0</version>
+                         <type>pom</type>
+                         <scope>import</scope>
+                     </dependency>
+                 </dependencies>
+         </dependencyManagement>
+
+
+            Run Zipkin
+            -------------------
+            E:\Softwares> java -jar zipkin-server-2.12.9-exec.jar
+            OR
+            Start Docker Desktop
+            gitbash > docker run -d -p 9411:9411 openzipkin/zipkin
+
+http://localhost:9411/zipkin/
+
+--------------------------------------------------------------------------------------------------
+
 Reactive Programming
 ========================
 
@@ -4585,5 +4658,122 @@ Backpressure is the ability of the Subscriber to report to the Publisher that it
 For Spring Webflux , Backpressure is inbuilt - How ?
 When Mono/Flux emits events, it does not directly send it to the Subscriber -
 it waits for the Subscriber to send a signal as to how much data it can consume - and then sends that data.
+
+------------------------------------------------------------------------------------------------------------
+
+SpringBoot Proxy
+=========================
+Proxy is a middleman that provides extra functionality like logging, validation, routing etc
+Proxy can be achieved in 2 ways : Interceptor / Proxy service
+	- for Interceptor all requests will be intercepted, for proxy service only those service calls will be proxied
+
+Spring Interceptor
+========================
+http request -------> Filter ---------> DispatcherServlet  ------------- > HandlerInterceptor  ----------> Controller/Handler
+
+                      Filter                                                                Interceptor
+                      -------------                                                         -------------
+                      Authentication                                                        Authorization
+                      Logging and auditing                                                  Cross-cutting concerns
+                      Image and data compression
+                      Any functionality we want to be decoupled from Spring MVC
+
+preHandle() – Executed before the target handler is called
+postHandle() – Executed after the target handler but before DispatcherServlet
+afterCompletion() – Callback after completion of request
+
+@Configuration
+public class RestConfig implements WebMvcConfigurer {
+
+    //add the Interceptor in the Spring container
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(new RequestInterceptor());
+    }
+
+}
+
+
+@Component
+public class RequestInterceptor implements HandlerInterceptor {
+    @Override
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        if (StringUtils.isNotBlank(request.getHeader("test")))
+            System.out.println("Hello :: " + request.getHeader("test"));
+
+        MDC.put("test", "hello");
+        return true;
+    }
+
+    @Override
+    public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {
+        HandlerInterceptor.super.postHandle(request, response, handler, modelAndView);
+    }
+
+    @Override
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
+        HandlerInterceptor.super.afterCompletion(request, response, handler, ex);
+    }
+}
+
+Proxy Service
+====================
+http request -------> Filter ---------> DispatcherServlet  ------------- >   ----------> Controller/Handler  --------> proxy service -----------> Service
+
+
+------------------------------------------------------------------------------------------------------------
+
+Filter
+=================
+Filter is a component of the web that is executed by the Servlet for each incoming HTTP request and for each HTTP response
+intercepts the request and checks the request
+implement javax.servlet.Filter interface
+ex: OncePerRequestFilter
+
+init(FilterConfig config)
+doFilter(HttpServletRequest request,HttpServletResponse response, FilterChain chain)
+destroy()
+
+Servlet
+=============
+It is a Java class that is used to extend the capabilities of servers that host applications accessed by means of a request-response programming model.
+javax.servlet and javax.servlet.http packages provide interfaces and classes for writing servlets
+
+init()
+service()
+destroy()
+
+ServletContainer
+======================
+Servlets run in a ServletContainer which handles the networking side(parsing, connection handling) - Tomcat
+The three main components of a ServletContainer are the Filter, Servlet, Interceptor and Listener
+
+------------------------------------------------------------------------------------------------------------
+
+Request Compression with GZip
+====================================
+Zips the JSON response from server so lesser bandwidth and lesser latency
+(P) - CPU Overhead
+
+server:
+  port: 9050
+  compression:
+    enabled: true
+    min-response-size: 2048 #This will compress responses larger than 2KB for the specified MIME types.
+    mime-types: application/json,application/xml
+
+------------------------------------------------------------------------------------------------------------
+
+Dependent service
+===================================
+- Exists as a jar dependency in pom of Deployed microservices.
+- All properties of dependents will come from kube.deploy.yml of some deployed services.
+
+Change in Java code  ->  Merge, Build, Deploy
+Change in kube.deploy.yml   -> Merge, Deploy
+
+Suppose A has B as dependency and there is a change in B.
+Then build B - for local testing - take the snapshot version of B and put the snapshot version jar in A’s pom.
+Also check A ->External libraries -> B -> changed code
 
 ------------------------------------------------------------------------------------------------------------
