@@ -3386,7 +3386,7 @@ JSON Schema Validation
 ========================
 jakarta.validation(prev: javax.validation)
 
-Controller :: public ResponseEntity<ServiceForm> serviceForm(@RequestBody @Valid ServiceForm serviceForm){
+Controller :: public ResponseEntity<ServiceForm> serviceForm(@Valid @RequestBody ServiceForm serviceForm){
 
 
 @Getter
