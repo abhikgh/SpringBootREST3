@@ -2798,7 +2798,7 @@ if (CollectionUtils.isEmpty(movies)) {
 
 Handling Duplicate Requests
 ------------------------------
-Idempotent keys in header
+Idempotent key in header
 Token-Based Request Validation
 
 ---------------------------------------------------------------------------------------------
