@@ -278,16 +278,14 @@ Cacheable
 -----------------------------------------
 - Authentication
 - Authorization
-- Single Point of Entry
-- Transformation
+- Routing
 - Logging
 - Caching
-- Encryption
-- Load Balancing
+- Transformation
 - Rate-limiting (DDoS Protection) (Distributed Denial-of-Service)
 
 Problems
-- Single point of failure - so put multiple APIGWs and a LoadBalancer in front
+- Single point of failure
 - Slower
 
 Example : Orchis APIGW , Kong GW
@@ -646,7 +644,8 @@ Separates Commands(write to Database) from Queries(reading from Database) into s
 
                                     Count-based / Time-based          Count-based / Time-based
                     CLOSED     ------------------>     HALF-OPEN      ------------------>       OPEN
-                 (success)                                             ( fallback )
+                 ( success )                                             ( failure )
+                 ( normal )                                              ( fallback )
                             <-----------------------------------------------------------
                                             (reset breaker)
 <!-- Actuator -->
@@ -710,6 +709,12 @@ public List<Movie> getDummyValue(Exception exception){
     list.add(movie);
     return list;
 }
+
+Benefits
+    Fail Fast
+    Prevents Cascading Failures
+    Improves Resilience
+    Fault Tolerance
 
 15. Rate-limiter
 ---------------------------------------------------------------------------
@@ -816,10 +821,11 @@ Phase2 : Commit
 
 20. Saga
 ---------------------------------------------------------------------------
-Distributed Transactions
-Every transaction has a Rollback action
--more scalable than 2PC
-
+Data consistency in Distributed Transactions
+Every transaction has a corresponding Rollback action
+This design pattern splits a large transaction into a series of smaller, isolated operations.
+ - Resiliency
+ - Eventually consistent
 
 CHOREOGRAPHY
 ----------------------
