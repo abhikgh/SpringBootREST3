@@ -839,6 +839,14 @@ ORCHESTRATION
               \   \         /         /         /           /           /           /
                Orchestrator
 
+Controller  ----> processBooking (DB)             processPayment (DB)             (a+b) ? Confirm booking : Cancel booking
+                        |                       /       |                       /
+                O   R   C   H   E   S   T   R   A   T   O   R   (Kafka Listener)
+
+
+Controller \    processBooking (DB)             processPayment (DB)             (a+b) ? Confirm booking : Cancel booking
+            \            |        \               /       |                       /
+                O   R   C   H   E   S   T   R   A   T   O   R   (Kafka Listener)
 
 -------------------------------------------------------------------------------------------------
 
