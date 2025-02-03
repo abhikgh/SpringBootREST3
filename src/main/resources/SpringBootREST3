@@ -4915,3 +4915,29 @@ class UserService {
                                                                                 }
 
 ------------------------------------------------------------------------------------------------------------------------------------------
+
+Cicrular dependency
+------------------------------
+
+@Service
+public class UserService {
+    private final RetryService retryService;
+
+//I prefer Constructor Injection
+
+public UserService(@Lazy RetryService retryService) {  //Used @Lazy here
+        this.retryService = retryService;
+    }
+}
+@Service
+public class RetryService {
+    private final UserService userService;
+    public RetryService(UserService userService) {
+        userService = userService;
+    }
+}
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
