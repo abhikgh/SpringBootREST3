@@ -87,6 +87,7 @@ OAuth2.0 SSL is required for all the communications required to generate the tok
 	     AUTHENTICATION SERVER		  (Authentication)
 	 {username, password, clientId, clientSecret, grantType, audience, scope}	            (Resource Owner Password flow)
 	 {clientId, clientSecret, grantType, audience, scope}     			            (Client Credential flow)
+	 {apiKey} 										    (APIKey flow)
 		     |
       	 	 | {JWTToken}
       		 |		                httpHeaders.set("Authorization", "Bearer JWTToken");
@@ -106,6 +107,10 @@ User/Machine    -------> CLIENT  -----------------------------------------------
                                     -private key : AUTHENTICATION SERVER uses the private key to sign the JWT
                                     -public key  : RESOURCE SERVER uses the public key to verify the signature of the JWTToken (shared widely)
 
+API Key flow : 
+You get an API key from the service (in essence a shared secret).
+Add the key to an Authorization header.
+Call the API.
 
  Benefits :
 1. CLIENT does not know user credentials - has only the JWTToken
