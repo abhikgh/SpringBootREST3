@@ -3407,6 +3407,11 @@ Logging best practices
 JSON Schema Validation
 ========================
 jakarta.validation(prev: javax.validation)
+<dependency>
+    <groupId>jakarta.validation</groupId>
+    <artifactId>jakarta.validation-api</artifactId>
+    <version>3.0.2</version>
+</dependency>
 
 Controller :: public ResponseEntity<ServiceForm> serviceForm(@Valid @RequestBody ServiceForm serviceForm){
 
