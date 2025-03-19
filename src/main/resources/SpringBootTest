@@ -388,3 +388,13 @@ public class NavigationControllerTest {
 }
 
 ----------------------------------------------------------------------------------------
+
+Run with coverage
+---------------------------
+1. Run main() with coverage
+2. Stop the run
+3. View->Tool Windows->Coverage
+4. Hide coverage -> Click on the coverage in the gutter and click Hide Coverage
+
+
+----------------------------------------------------------------------------------------
