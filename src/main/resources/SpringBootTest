@@ -1,0 +1,390 @@
+<!-- Test -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-test</artifactId>
+</dependency>
+<dependency>
+    <groupId>org.mockito</groupId>
+    <artifactId>mockito-core</artifactId>
+    <version>3.6.0</version>
+    <scope>test</scope>
+</dependency>
+<dependency>
+    <groupId>org.mockito</groupId>
+    <artifactId>mockito-inline</artifactId>
+    <version>3.6.0</version>
+    <scope>test</scope>
+</dependency>
+<dependency>
+    <groupId>org.powermock</groupId>
+    <artifactId>powermock-core</artifactId>
+    <version>2.0.9</version>
+    <scope>test</scope>
+</dependency>
+
+----------------------------------------------------------------------------------------------------------------------
+
+@Mock                           vs              Mockito.mock()                    vs                  @MockBean
+======================================================================================================================================
+
+Mockito library                                 Mockito library                                   spring-boot-starter-test
+Creates mock of class                           Creates mock of class                             Creates mock of class and replaces the SMB with the mock class
+@ExtendWith(MockitoExtension.class) -> JUnit 5                                                    @SpringBootTest                                              
+ (@RunWith(MockitoJUnitRunner.class) -> JUnit 4)   
+
+ @InjectMocks : mocks the class that is being tested
+
+
+-----------------------------------------------------------------------------------------------------------------------
+
+Controller Test
+=======================
+
+@SpringBootTest
+@TestPropertySource(locations = {"classpath:test.properties"})
+@TestInstance(TestInstance.Lifecycle.PER_CLASS) // added to not make @BeforeAll static
+public class NavigationControllerTest {
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private MockMvc mockMvc;
+
+    @Autowired
+    private WebApplicationContext webApplicationContext;
+
+    @BeforeAll
+    public void init() {
+        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+    }
+
+    @Test
+    public void testGetAllMoviesOfHero() throws Exception {
+
+        String allMoviesPath = "src/test/resources/mockdata/allMoviesOfHeroRequest.json";
+        String allMovies = readFromFile(allMoviesPath);
+        List<Movie> movies = Arrays.asList(objectMapper.readValue(allMovies, Movie[].class));
+
+        Mockito.doReturn(movies)
+                .when(movieService)
+                .getAllMovies();
+
+        MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.get("/orders/v1/getAllMoviesOfHero")
+                                            .contentType(MediaType.APPLICATION_JSON_VALUE))
+                                     .andExpect(MockMvcResultMatchers.status().isOk())
+                                     .andReturn();
+
+        String actualResponse = mvcResult.getResponse().getContentAsString();
+
+        String expectedResponsePath = "src/test/resources/mockdata/allMoviesOfHeroResponse.json";
+        String expectedResponse = readFromFile(expectedResponsePath);
+
+        JSONAssert.assertEquals(expectedResponse, actualResponse, false);
+
+    }
+
+}
+
+----------------------------------------------------------------------------------------
+
+Controller Test with mocks and parameterized test (Refer SpringBootREST2Client)
+=======================================================================================
+
+
+public class MockSettingsBuilder {
+
+    private final MockSettings mockSettings;
+
+    public MockSettingsBuilder(MockSettings mockSettings){
+        this.mockSettings = mockSettings;
+    }
+
+    public static MockSettingsBuilder getInstance(){
+        return new MockSettingsBuilder(new MockSettings());
+    }
+
+    public MockSettings build(){
+        return this.mockSettings;
+    }
+
+    public MockSettingsBuilder withHeroDetailsPath(String heroDetailsPath){
+        mockSettings.heroDetailsPath = heroDetailsPath;
+        return this;
+    }
+
+    public MockSettingsBuilder withListMoviePath(String listMoviePath){
+        mockSettings.listMoviePath = listMoviePath;
+        return this;
+    }
+
+    @Getter
+    public static class MockSettings {
+
+        private String heroDetailsPath;
+
+        private String listMoviePath;
+    }
+}
+
+
+
+@SpringBootTest
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+public class ControllerTest {
+
+    private MockMvc mockMvc;
+
+    private ObjectMapper objectMapper;
+
+    @Autowired
+    private WebApplicationContext webApplicationContext;
+
+    @BeforeAll
+    public void init() {
+        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+    }
+
+    @BeforeEach
+    public void initBeforeEach(){
+        objectMapper = new ObjectMapper();
+    }
+
+    @Mock
+    private RestTemplate restTemplate;
+
+    @ParameterizedTest(name = "{index}==>{0}--{1}")
+    @DisplayName("testGetHeroMovieDetailsController")
+    @CsvSource({"TC1,Feluda,src/test/resources/mockdata/TC1/getHeroDetails.json,src/test/resources/mockdata/TC1/getMoviesOfHero.json,src/test/resources/mockdata/TC1/response.json", "TC2,GupiBagha,src/test/resources/mockdata/TC2/getHeroDetails.json,src/test/resources/mockdata/TC2/getMoviesOfHero.json,src/test/resources/mockdata/TC2/response.json"})
+    @SneakyThrows
+    public void testGetHeroMovieDetailsController(@AggregateWith(TestCaseDataAggregator.class) TestCaseData testCaseData) {
+        String heroName = testCaseData.getHeroName();
+
+        mockData(MockSettingsBuilder.getInstance()
+                .withHeroDetailsPath(testCaseData.getHeroDetailsResponsePath())
+                .withListMoviePath(testCaseData.getHeroMoviesListResponsePath())
+                .build());
+        String response = readFromFile(testCaseData.getResponsePath());
+
+        MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.get("/orders/v1/getHeroMovieDetails/"+heroName)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andReturn();
+
+        String actualResponse = mvcResult.getResponse().getContentAsString();
+
+        JSONAssert.assertEquals(response, actualResponse, false);
+    }
+
+
+
+    private void mockData(MockSettingsBuilder.MockSettings mockSettings) throws IOException {
+        mockData(mockSettings.getHeroDetailsPath(),
+                mockSettings.getListMoviePath());
+    }
+
+    private void mockData(String heroDetailsPath, String listMoviePath) throws IOException {
+        if(StringUtils.isNotBlank(heroDetailsPath)){
+            Mockito.when(restTemplate.getForObject(Mockito.anyString(), Mockito.any()))
+                    .thenReturn(objectMapper.readValue(readFromFile(heroDetailsPath), HeroMovie.class));
+        }
+        if(StringUtils.isNotBlank(listMoviePath)){
+            List<Movie> listMovie = Arrays.asList(objectMapper.readValue(readFromFile(listMoviePath), Movie[].class));
+            Mockito.when(restTemplate.exchange(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(ParameterizedTypeReference.class)))
+                    .thenReturn(ResponseEntity.ok(listMovie));
+        }
+    }
+
+    private String readFromFile(String requestPath) throws IOException {
+        Path path = Paths.get(requestPath);
+        return Files.readString(path);
+    }
+
+}
+
+
+public class TestCaseDataAggregator implements ArgumentsAggregator {
+    @Override
+    public Object aggregateArguments(ArgumentsAccessor argumentsAccessor, ParameterContext parameterContext) throws ArgumentsAggregationException {
+        TestCaseData testCaseData = new TestCaseData();
+        testCaseData.setTestCaseName(argumentsAccessor.getString(0));
+        testCaseData.setHeroName(argumentsAccessor.getString(1));
+        testCaseData.setHeroDetailsResponsePath(argumentsAccessor.getString(2));
+        testCaseData.setHeroMoviesListResponsePath(argumentsAccessor.getString(3));
+        testCaseData.setResponsePath(argumentsAccessor.getString(4));
+        return testCaseData;
+    }
+}
+
+----------------------------------------------------------------------------------------
+
+ParameterizedTest
+============================
+
+<!-- Parameterized Test -->
+<dependency>
+    <groupId>org.junit.jupiter</groupId>
+    <artifactId>junit-jupiter-params</artifactId>
+    <version>5.9.2</version>
+    <scope>test</scope>
+</dependency>
+
+@ParameterizedTest(name = "{index}==>{0}")
+@DisplayName("Test accountUpdate")
+@CsvSource({"DEPOSIT, src/test/resources/mockdata/request1.json, src/test/resources/mockdata/response1.json",
+        "WITHDRAWAL, src/test/resources/mockdata/request2.json, src/test/resources/mockdata/response2.json"})
+@SneakyThrows
+public void testAccountUpdate(@AggregateWith(AccountAggregator.class) AccountTestCaseData accountTestCaseData) {
+    String request = readFromFile(accountTestCaseData.getRequestPath());
+    String response = readFromFile(accountTestCaseData.getResponsePath());
+
+    MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/orders/v1/accountUpdate")
+                                                        .contentType(MediaType.APPLICATION_JSON)
+                                                        .content(request))
+                                  .andExpect(MockMvcResultMatchers.status().isOk())
+                                  .andReturn();
+
+    String actualResponse = mvcResult.getResponse().getContentAsString();
+
+    JSONAssert.assertEquals(response, actualResponse, false);
+}
+
+public class AccountAggregator implements ArgumentsAggregator {
+    @Override
+    public AccountTestCaseData aggregateArguments(ArgumentsAccessor argumentsAccessor, ParameterContext parameterContext) throws ArgumentsAggregationException {
+        AccountTestCaseData accountTestCaseData = new AccountTestCaseData();
+        accountTestCaseData.setMode(argumentsAccessor.getString(0));
+        accountTestCaseData.setRequestPath(argumentsAccessor.getString(1));
+        accountTestCaseData.setResponsePath(argumentsAccessor.getString(2));
+        return accountTestCaseData;
+    }
+}
+
+
+
+@ParameterizedTest(name = "{index}==>{0}")
+@DisplayName("Checking pets test")
+@CsvSource({"Tintin,Snowy", "Asterix,Obelix", "Feluda,Mogojastro", "Sonada,Other"})
+public void testCheckPet(@AggregateWith(TestDataAggregator.class) TestData testData) {
+    String actualResponse = restClientHeroMovieService.getPet(testData.getRequest());
+
+    Assertions.assertEquals(testData.getResponse(), actualResponse);
+}
+
+public class TestDataAggregator implements ArgumentsAggregator {
+    @Override
+    public Object aggregateArguments(ArgumentsAccessor argumentsAccessor, ParameterContext parameterContext) throws ArgumentsAggregationException {
+        TestData testData = new TestData();
+        testData.setRequest(argumentsAccessor.getString(0));
+        testData.setResponse(argumentsAccessor.getString(1));
+        return testData;
+    }
+}
+----------------------------------------------------------------------------------------
+
+Test final, private, void, exception method
+==================================================
+
+@SpringBootTest
+public class TestUtilsTest {
+
+    @InjectMocks
+    @Spy
+    private TestUtils testUtils;
+
+    //test static method
+    @Test
+    @DisplayName("Test static method")
+    public void testStaticMethod() {
+        Mockito.mockStatic(TestUtils.class);
+        Mockito.when(TestUtils.testMethod("aaa")).thenReturn("AAA");
+    }
+
+    //test private method with Reflections
+    @Test
+    public void testPrivateMethodUsingReflection() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        Method method = TestUtils.class.getDeclaredMethod("pvMethod", Integer.class);
+        method.setAccessible(true);
+        String actualResponse = (String) method.invoke(testUtils, 10);
+        Assertions.assertEquals("20", actualResponse);
+    }
+
+    //test private method with Powermock
+    @Test
+    public void testPrivateMethodUsingPowerMock() throws Exception {
+        String actualResponse = (String) Whitebox.invokeMethod(testUtils, "pvMethod", 10);
+        Assertions.assertEquals("20",actualResponse);
+    }
+
+    //test void method
+    @Test
+    public void testCheckPet() {
+        String heroNameInput = "Tintin";
+        Mockito.doCallRealMethod()
+                .when(testUtils)
+                .checkPet(heroNameInput);
+        testUtils.checkPet(heroNameInput);
+        Mockito.verify(testUtils, Mockito.times(1)).checkPet(Mockito.anyString());
+    }
+
+    //test exception from method
+    @Test
+    public void checkPetThrowsException() {
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            testUtils.checkPetThrowsException(Mockito.anyString());
+        });
+    }
+}
+
+
+----------------------------------------------------------------------------------------
+
+JUnit4                              vs                              Junit5
+============================================================================================
+@RunWith(SpringRunner.class)                         @SpringBootTest (contains @ExtendWith(SpringExtension.class))
+
+                                                     @MockBean
+
+@Test (expected = NullPointerException.class)        @Test
+                                                        public void checkPetThrowsException() {
+                                                            Assertions.assertThrows(NullPointerException.class, () -> {
+                                                                testUtils.checkPetThrowsException(Mockito.anyString());
+                                                            });
+                                                        }
+
+                                                    @Before annotation is renamed to @BeforeEach
+                                                    @After annotation is renamed to @AfterEach
+                                                    @BeforeClass annotation is renamed to @BeforeAll
+                                                    @AfterClass annotation is renamed to @AfterAll
+                                                    @Ignore annotation is renamed to @Disabled
+
+Single jar                                          Multiple jars
+Single runner                                       Multiple extensions
+                                                        @ExtendWith({MockitoExtension.class, LogAsserterExtension.class})
+Java 7                                              Java 8+
+
+----------------------------------------------------------------------------------------
+Extensions
+================
+
+JUnit 4 :: @RunWith(SpringRunner.class)
+
+JUnit 5 :: @SpringBootTest
+           - @SpringBootTest contains @ExtendWith(SpringExtension.class)
+           - SpringExtension includes MockitoExtension and other extensions
+
+SpringExtension - SpringExtension integrates the Spring Test Framework into JUnit 5 Jupiter.
+MockitoExtension - MockitoExtension is the JUnit 5 Jupiter equivalent of JUnit4 MockitoJUnitRunner
+
+----------------------------------------------------------------------------------------
+
+JUnit run in fixed order
+-----------------------------
+
+@TestMethodOrder(MethodOrderer.MethodName.class)
+public class NavigationControllerTest {
+}
+
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class NavigationControllerTest {
+}
+
+----------------------------------------------------------------------------------------
