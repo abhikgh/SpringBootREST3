@@ -87,7 +87,7 @@ OAuth2.0 SSL is required for all the communications required to generate the tok
 	     AUTHENTICATION SERVER		  (Authentication)
 	 {username, password, clientId, clientSecret, grantType, audience, scope}	            (Resource Owner Password flow)
 	 {clientId, clientSecret, grantType, audience, scope}     			            (Client Credential flow)
-		     |
+	         |
       	 	 | {JWTToken}
       		 |		                httpHeaders.set("Authorization", "Bearer JWTToken");
 User/Machine    -------> CLIENT  -------------------------------------------------------->       CLOUD DNS             ------------>         RESOURCE SERVER
@@ -106,10 +106,17 @@ User/Machine    -------> CLIENT  -----------------------------------------------
                                     -private key : AUTHENTICATION SERVER uses the private key to sign the JWT
                                     -public key  : RESOURCE SERVER uses the public key to verify the signature of the JWTToken (shared widely)
 
-
  Benefits :
+JWT centralizes authentication & authorization by generating a single shared token that contains user and app-level information
 1. CLIENT does not know user credentials - has only the JWTToken
 2. Granular access to CLIENT
+
+
+API Key flow 
+-----------------------
+Resource-server provides the API Key
+Authorization : apiKey
+Benefits : low overhead
 
 2. Microservices Event driven architecture
 ========================================================
@@ -3400,6 +3407,11 @@ Logging best practices
 JSON Schema Validation
 ========================
 jakarta.validation(prev: javax.validation)
+<dependency>
+    <groupId>jakarta.validation</groupId>
+    <artifactId>jakarta.validation-api</artifactId>
+    <version>3.0.2</version>
+</dependency>
 
 Controller :: public ResponseEntity<ServiceForm> serviceForm(@Valid @RequestBody ServiceForm serviceForm){
 
@@ -3426,12 +3438,14 @@ public class ServiceForm implements Serializable {
     @Schema(description = "orderID of the request", example = "12") //will be mapped to Swagger doc
     @NotNull(message = "Order Id should not be not null")
     @Digits(integer = 3,fraction = 0,message = "Invalid Order ID") //can be both +ve or -ve
+    @Valid
     private Integer orderId;
 
     @JsonProperty(value = "location")
     @Schema(description = "Location of the request", example = "ANT")
     @NotBlank(message = "Location is required")
     @Size(min = 2, max = 20)
+    @Valid
     private String location;
 
     @JsonProperty(value = "invoiceType")
@@ -4915,3 +4929,31 @@ class UserService {
                                                                                 }
 
 ------------------------------------------------------------------------------------------------------------------------------------------
+
+Circular dependency
+------------------------------
+
+@Service
+public class UserService {
+    
+   private final RetryService retryService;
+
+   public UserService(@Lazy RetryService retryService) {  //Used @Lazy here
+        this.retryService = retryService;
+    }
+}
+
+@Service
+public class RetryService {
+
+    private final UserService userService;
+    
+   public RetryService(UserService userService) {
+        userService = userService;
+    }
+}
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
