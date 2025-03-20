@@ -906,16 +906,20 @@ Microservice Optimizations  (for heavy traffic)
 4. Clustering (group multiple servers into a cluster - so that if 1 server fails other can process the request)
 5. Horizontal pod auto-scaling :: adding more servers
 
-6. Reactive Programming
-7. ASync
-8. Caching
-9. Streaming
+6.@JsonInclude(JsonInclude.Include.NON_NULL)
+  @JsonIgnoreProperties(ignoreUnknown = true)
+7. Reactive Programming (Mono / Flux)
+8. ASync
+9. Caching
+10. Streaming
 
-10. Table Indexing
-11. JPA Query
-12. Batch Processing
-13. DTO projection
-14. Lazy Loading
+11. Indexing
+12. Native query
+13. Batch Processing
+14. DTO projection
+15. Lazy Loading
+16. Hikari CP Optimisation
+17. Avoid N+1
    
 -------------------------------------------------------------------------------------------------
 
