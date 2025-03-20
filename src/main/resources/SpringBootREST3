@@ -889,60 +889,34 @@ Anti-Patterns in Spring Boot
 
 ---------------------------------------------------------------------------------------------------------------------------
 
-Microservice Optimizations
-=============================
+Tools
+--------------
+JMeter: For load testing and establishing basic throughput numbers
+Micrometer + Prometheus + Grafana: For real-time monitoring and visualization
+JProfiler: For deep-dive analysis of hotspots in the code
 
-1. Async
-2. Caching (Caffeine -> Redis -> DB)
+---------------------------------------------------------------------------------------------------------------------------
 
-3. Load-Balancing
-----------------------
-Ingress
+Microservice Optimizations  (for heavy traffic)
+=====================================================
 
-4. Clustering
---------------------
-Group multiple servers into a cluster - so that if 1 server fails other can process the request
+1. Load Balancer
+2. Rate Limiting
+3. Circuit Breaker
+4. Clustering (group multiple servers into a cluster - so that if 1 server fails other can process the request)
+5. Horizontal pod auto-scaling :: adding more servers
 
-5. Monitoring
----------------------
-Spring Boot Actuator - health, info, metrics
+6. Reactive Programming
+7. ASync
+8. Caching
+9. Streaming
 
-
-6. Table Indexing
-	@Entity
-        @Table(name = "BOOK", indexes = {@Index(name = "book_index", columnList = "book_id")})
-
-	CREATE INDEX idx_data_field ON data_table (field_name);
-
-7. JPA Query
-
-8. Batch Processing
-        saveAll(list)
-        deleteInBatch(list)
-
-9. Lazy Loading
-        @OneToMany(cascade = CascadeType.MERGE, mappedBy = "author" , fetch = FetchType.LAZY)
-        private List<Book> bookList;
-
-        @ManyToOne(cascade = CascadeType.MERGE, fetch = FetchType.EAGER)
-        @JoinColumn(name = "author_id")
-        private Author author;
-10. @Transactional
-11. DTO projection
-12. N+1
-13. Hikari Connection Pool
-
-14. Streaming
-15. JSON Schema validation
-16. GZIP large request
-17. Resilience4J : Circuit Breaker and Rate Limiter
-
-18. Kafka
-19. Sharding with MongoDB or Cassandra
-	- Each shard holds a portion of the data
-	- Horizontal Scaling
-
-
+10. Table Indexing
+11. JPA Query
+12. Batch Processing
+13. DTO projection
+14. Lazy Loading
+   
 -------------------------------------------------------------------------------------------------
 
 Key Challenges in High-Traffic Systems
@@ -4689,6 +4663,35 @@ Backpressure is the ability of the Subscriber to report to the Publisher that it
 For Spring Webflux , Backpressure is inbuilt - How ?
 When Mono/Flux emits events, it does not directly send it to the Subscriber -
 it waits for the Subscriber to send a signal as to how much data it can consume - and then sends that data.
+
+
+Non-Reactive style
+------------------------------------
+
+@RestController
+public class NonReactiveController {
+
+    @GetMapping("/nonreactive")
+    public ResponseEntity<String> getNonReactive() {
+       return ResponseEntity
+                      .status(HttpStatus.OK)
+                			.body("Hello from Non-Reactive!");
+    }
+}
+
+Reactive style
+------------------------------------
+
+@RestController
+public class ReactiveController {
+
+    @GetMapping("/reactive")
+    public Mono<ResponseEntity<String>> getReactive() {
+        return Mono.just(ResponseEntity
+                                       .status(HttpStatus.OK)
+                                       .body("Hello from Reactive!"));
+    }
+}
 
 ------------------------------------------------------------------------------------------------------------
 
