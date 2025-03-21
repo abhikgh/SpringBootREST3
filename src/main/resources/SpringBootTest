@@ -38,6 +38,83 @@ Creates mock of class                           Creates mock of class           
 -----------------------------------------------------------------------------------------------------------------------
 
 Controller Test
+===========================
+
+@ExtendWith(MockitoExtension.class)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+public class ControllerTest3 {
+
+    private static MockMvc mockMvc;
+
+    @Mock
+    private OrderService orderService;
+    @Mock
+    private MovieService movieService;
+    @Mock
+    private FoodService foodService;
+    @Mock
+    private JWTTokenUtil jwtTokenUtil;
+    @Mock
+    private UserService userService;
+    @Mock
+    private AccountService accountService;
+    @Mock
+    private AuthenticationManager authenticationManager;
+    @Mock
+    private JWTTokenUtils jwtTokenUtils;
+
+    private ObjectMapper objectMapper;
+
+    static Stream<String[]> getTransactionData() {
+        return Stream.of(
+                new String[]{"DEPOSIT", "src/test/resources/mockdata/request1.json", "src/test/resources/mockdata/response1.json"},
+                new String[]{"WITHDRAWAL", "src/test/resources/mockdata/request2.json", "src/test/resources/mockdata/response2.json"}
+        );
+    }
+
+    @BeforeEach
+    public void init() {
+        MockitoAnnotations.openMocks(this);
+        objectMapper = new ObjectMapper();
+        mockMvc = MockMvcBuilders.standaloneSetup(new NavigationController(orderService, movieService, foodService, jwtTokenUtil, userService, accountService, authenticationManager, jwtTokenUtils))
+                .build();
+    }
+
+    @ParameterizedTest(name = "{index}==>{0}")
+    @DisplayName("Test accountUpdate")
+    //@MethodSource("getTransactionData")
+    @CsvSource({"DEPOSIT, src/test/resources/mockdata/request1.json, src/test/resources/mockdata/response1.json",
+            "WITHDRAWAL, src/test/resources/mockdata/request2.json, src/test/resources/mockdata/response2.json"})
+    @SneakyThrows
+    public void testAccountUpdate(@AggregateWith(AccountAggregator.class) AccountTestCaseData accountTestCaseData) {
+        String request = readFromFile(accountTestCaseData.getRequestPath());
+        String response = readFromFile(accountTestCaseData.getResponsePath());
+
+        Mockito.when(accountService.accountUpdate(Mockito.any()))
+                .thenReturn(objectMapper.readValue(response, AccountDetailsResponse.class));
+
+        MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/orders/v1/accountUpdate")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andReturn();
+
+        String actualResponse = mvcResult.getResponse().getContentAsString();
+
+        JSONAssert.assertEquals(response, actualResponse, false);
+    }
+
+
+    private String readFromFile(String requestPath) throws IOException {
+        Path path = Paths.get(requestPath);
+        return Files.readString(path);
+    }
+
+
+}
+
+
+Controller Test
 =======================
 
 @SpringBootTest
