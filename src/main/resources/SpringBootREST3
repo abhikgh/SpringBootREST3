@@ -3085,15 +3085,8 @@ public class SomeCondition implements Condition {
 
 RestTemplate                            vs                      WebClient                           vs                          RestClient              vs                   FeignClient
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-Synchronous HTTP call                                        ASynchronous HTTP call                                           Synchronous HTTP call                         Synchronous HTTP call
+Synchronous HTTP call (Spring Web)                           ASynchronous HTTP call  (Spring WebFlux)                        Synchronous HTTP call                         Synchronous HTTP call
                                                              Fluid API                                                        Fluid API                                     Interface with @FeignClient
-Servlet Stack                                                Reactive Stack                                                   Servlet Stack
-
-RestTemplate                            vs                      WebClient                           vs                          RestClient              vs                   FeignClient
----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-Spring MVC (Spring Web Framework)                            Spring WebFlux (Spring Reactive Web Framework)
-Synchronous HTTP call                                        ASynchronous HTTP call                                           Synchronous HTTP call                          Synchronous HTTP call
-                                                             Fluent API                                                       Fluent API                                     Interface with @FeignClient
 Servlet Stack                                                Reactive Stack                                                   Reactive Stack
 Synchronous, Blocking I/O                                    Event-driven, non-blocking programming which communicates over asynchronous data streams
                                                              High-concurrency scenarios
