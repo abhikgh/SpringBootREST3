@@ -1,5 +1,6 @@
 package com.example.SpringBootREST3.controller;
 
+import com.example.SpringBootREST3.aspect.Logging;
 import com.example.SpringBootREST3.entity.Movie;
 import com.example.SpringBootREST3.entity.MovieNew;
 import com.example.SpringBootREST3.exception.ErrorProperties;
@@ -16,6 +17,7 @@ import com.example.SpringBootREST3.service.UserService;
 import com.example.SpringBootREST3.util.JWTTokenUtil;
 import com.example.SpringBootREST3.util.OrderServiceUtil;
 import io.jaegertracing.internal.JaegerTracer;
+import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -113,10 +115,7 @@ public class NavController {
 
         //Timer metric
         Timer.Sample timer = Timer.start(meterRegistry);
-        Span getHeroDetailsSpan = jaegerTracer.buildSpan("getMoviesOfDirector-Service").asChildOf(span).start();
         List<Movie> movies = movieService.getMoviesOfDirector(director);
-        getHeroDetailsSpan.finish();
-        span.finish();
         timer.stop(Timer.builder("getMoviesOfDirector_Timer").register(meterRegistry));
 
         //Observation API
@@ -189,6 +188,7 @@ public class NavController {
 
     //http://localhost:9100/v3/rest/hello
     @GetMapping(value = "/hello", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Logging
     public ResponseEntity<String> hello() {
 
         Span span = jaegerTracer.buildSpan("helloSpan").start();

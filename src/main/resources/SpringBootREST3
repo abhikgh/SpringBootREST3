@@ -1872,40 +1872,38 @@ Exposes metrics by exposing management endpoints - CPU usage, memory usage, requ
 </dependency>
 
 http://localhost:9100/actuator
+http://localhost:9100/actuator/health
+http://localhost:9100/actuator/metrics/http.server.requests
+http://localhost:9100/actuator/prometheus
+
 //health and info are auto-enabled
+/health ,/info, /metrics, /sessions, /env, /loggers, /httptrace, /startup, /shutdown
 
-/health
-/info
-/metrics
-/sessions
-
-/env
-/loggers
-/httptrace
-
-/startup
-/shutdown
 
 management:
   endpoints:
     web:
       exposure:
-        include: health, prometheus, metrics, info
+        include: ["health","info","metrics","prometheus"]
   endpoint:
     health:
       show-details: always
     metrics:
       enabled: true
     prometheus:
-      enabled: true // Exposes metrics in a format that can be scraped by a Prometheus server.
-    info:
-      java:
-        enabled: true
-      env:
-        enabled: true
+      enabled: true
+  info:
+    java:
+      enabled: true
+    env:
+      enabled: true
   tracing:
-      sampling:
-        probability: 1.0
+    sampling:
+      probability: 1.0
+  otlp:
+    tracing:
+      endpoint: http://localhost:4318/v1/traces
+
 
 
 Micrometer (replaces Spring Cloud Sleuth)
@@ -1931,7 +1929,7 @@ counter.increment();
 Prometheus
 =====================================
 Monitoring tool
-Prometheus needs an endpoint(metrics_path) to scrape Micrometer logs and Micrometer metrics at a configured interval and display them in a Grafana dashboard
+Prometheus needs an endpoint to scrape Micrometer logs and Micrometer metrics at a configured interval and display them in a Grafana dashboard
 
 prometheus.yml
 ------------------
@@ -1944,16 +1942,31 @@ scrape_configs:
         labels:
           application: 'SpringBootREST3'
 
+//Timer metric
+Timer.Sample timer = Timer.start(meterRegistry);
+List<Movie> movies = movieService.getMoviesOfDirector(director);
+timer.stop(Timer.builder("getMoviesOfDirector_Timer").register(meterRegistry));
+
 Hit http://localhost:9100/v3/rest/getMoviesOfDirector/Satyajit Ray a few times
 
 Check in Prometheus ::
             http://localhost:9100/actuator/prometheus
+
+            # HELP getMoviesOfDirector_Timer_seconds_max
+            # TYPE getMoviesOfDirector_Timer_seconds_max gauge
+            getMoviesOfDirector_Timer_seconds_max 0.0158729
+            # HELP getMoviesOfDirector_Timer_seconds
+            # TYPE getMoviesOfDirector_Timer_seconds summary
+            getMoviesOfDirector_Timer_seconds_count 5.0
+            getMoviesOfDirector_Timer_seconds_sum 0.0383499
 
             # TYPE getMoviesOfDirector_total counter
             getMoviesOfDirector_total 7.0
 
 General check in Prometheus UI:
     http://localhost:9090/ -> prometheus_http_requests_total
+
+
 
 How does Prometheus that is running on Docker connect to SpringBoot app that is running on localhost?
 ---------------------------------------------------------------------------------------------------------------
