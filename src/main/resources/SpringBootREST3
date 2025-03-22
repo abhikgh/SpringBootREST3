@@ -1943,22 +1943,25 @@ scrape_configs:
           application: 'SpringBootREST3'
 
 //Timer metric
-Timer.Sample timer = Timer.start(meterRegistry);
-List<Movie> movies = movieService.getMoviesOfDirector(director);
-timer.stop(Timer.builder("getMoviesOfDirector_Timer").register(meterRegistry));
+@Bean
+public TimedAspect timedAspect(MeterRegistry registry) {
+    return new TimedAspect(registry);
+}
+
+@Timed(value = "abcTimer", description = "Time spent saving results")
 
 Hit http://localhost:9100/v3/rest/getMoviesOfDirector/Satyajit Ray a few times
 
 Check in Prometheus ::
             http://localhost:9100/actuator/prometheus
 
-            # HELP getMoviesOfDirector_Timer_seconds_max
-            # TYPE getMoviesOfDirector_Timer_seconds_max gauge
-            getMoviesOfDirector_Timer_seconds_max 0.0158729
-            # HELP getMoviesOfDirector_Timer_seconds
-            # TYPE getMoviesOfDirector_Timer_seconds summary
-            getMoviesOfDirector_Timer_seconds_count 5.0
-            getMoviesOfDirector_Timer_seconds_sum 0.0383499
+            # HELP abcTimer_seconds Time spent saving results
+            # TYPE abcTimer_seconds summary
+            abcTimer_seconds_count{class="com.example.SpringBootREST3.controller.NavController",exception="none",method="getMoviesOfDirector",} 8.0
+            abcTimer_seconds_sum{class="com.example.SpringBootREST3.controller.NavController",exception="none",method="getMoviesOfDirector",} 0.1324428
+            # HELP abcTimer_seconds_max Time spent saving results
+            # TYPE abcTimer_seconds_max gauge
+            abcTimer_seconds_max{class="com.example.SpringBootREST3.controller.NavController",exception="none",method="getMoviesOfDirector",} 0.0363836
 
             # TYPE getMoviesOfDirector_total counter
             getMoviesOfDirector_total 7.0

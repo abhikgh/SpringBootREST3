@@ -102,6 +102,7 @@ public class NavController {
     // Token    -> eyJhbGciOiJIUzUxMiJ9...
     // JWT Token is in the form of Bearer Token
     @GetMapping(value = "/getMoviesOfDirector/{director}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Timed(value = "abcTimer", description = "Time spent saving results")
     public ResponseEntity<List<Movie>> getMoviesOfDirector(
             @PathVariable("director") String director) {
         Span span = jaegerTracer.buildSpan("getMoviesOfDirector").start();
@@ -113,10 +114,7 @@ public class NavController {
                 .register(meterRegistry);
         counter.increment();
 
-        //Timer metric
-        Timer.Sample timer = Timer.start(meterRegistry);
         List<Movie> movies = movieService.getMoviesOfDirector(director);
-        timer.stop(Timer.builder("getMoviesOfDirector_Timer").register(meterRegistry));
 
         //Observation API
         Observation.createNotStarted("getMoviesOfDirector_Count", observationRegistry)
