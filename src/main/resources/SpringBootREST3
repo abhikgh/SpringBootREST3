@@ -2898,9 +2898,12 @@ Pen test
 API penetration testing is a security testing method that simulates hacker attacks to evaluate the security of an API
 - BurpSuite
 
-GHAS / SonarQube
-=====================
-Static code analysis tool
+GHAS      					  vs						SonarQube
+===============================================================================================================================
+Static code analysis tool								Static code analysis tool
+Application Security Tools								Application Security Tools
+Integrated with Github
+security scanning, secret detection, automated alerts
 
 Disaster recovery
 ========================
