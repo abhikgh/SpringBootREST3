@@ -2945,12 +2945,6 @@ Gatling
 Gatling : Performance test by simulation
 Compared to JMeter : Gatling is faster, lightweight, and provides more detailed and colorful reports
 
-simulation service :: E:\Softwares\gatling-charts-highcharts-bundle-3.9.5\user-files\simulations\GatlingSimulations.java
-
-Run gatling :: E:\Softwares\gatling-charts-highcharts-bundle-3.9.5\bin\gatling.bat
-
-Results :: E:\Softwares\gatling-charts-highcharts-bundle-3.9.5\results
-
 <dependency>
     <groupId>io.gatling</groupId>
     <artifactId>gatling-core</artifactId>
@@ -2971,42 +2965,44 @@ Results :: E:\Softwares\gatling-charts-highcharts-bundle-3.9.5\results
 
 Gatling Simulation
 ------------------------------
-
-package com.example.SpringBootREST2.service;
+package com.example.SpringBootREST3;
 
 import static io.gatling.javaapi.core.CoreDsl.*;
-import static io.gatling.javaapi.http.HttpDsl.*;
+import static io.gatling.javaapi.http.HttpDsl.http;
 
-import io.gatling.javaapi.core.*;
-import io.gatling.javaapi.http.*;
+import io.gatling.javaapi.core.ChainBuilder;
+import io.gatling.javaapi.core.ScenarioBuilder;
+import io.gatling.javaapi.core.Simulation;
+import io.gatling.javaapi.http.HttpProtocolBuilder;
 
 public class GatlingSimulation extends Simulation {
 
     HttpProtocolBuilder httpProtocol =
-        http.baseUrl("http://localhost:9050")
-            .acceptHeader("text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
-            .acceptLanguageHeader("en-US,en;q=0.5")
-            .acceptEncodingHeader("gzip, deflate")
-            .userAgentHeader(
-                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:16.0) Gecko/20100101 Firefox/16.0"
-            );
+            http.baseUrl("http://localhost:9100")
+                    .acceptHeader("application/json");
 
-    ChainBuilder read = exec(http("Read Spring Rest Controller").get("/orders/v1/getMoviesOfDirector/Satyajit Ray"));
+    ChainBuilder read = exec(http("Read Spring Rest Controller").get("/v3/rest/home"));
     ScenarioBuilder users = scenario("Users Read").exec(read);
 
     {
         setUp(
-            users.injectOpen(
-                atOnceUsers(1),
-                nothingFor(2),
-                atOnceUsers(4),
-                rampUsers(50).during(10),
-                constantUsersPerSec(20.0).during(20),
-                constantUsersPerSec(30.0).during(30)
-            )
+                users.injectOpen(
+                        atOnceUsers(1),
+                        nothingFor(2),
+                        atOnceUsers(50),
+                        rampUsers(50).during(10),
+                        constantUsersPerSec(100.0).during(20),
+                        constantUsersPerSec(30.0).during(30)
+                )
         ).protocols(httpProtocol);
     }
 }
+
+simulation service :: E:\Softwares\gatling-charts-highcharts-bundle-3.9.5\user-files\simulations\GatlingSimulations.java
+
+Run gatling :: E:\Softwares\gatling-charts-highcharts-bundle-3.9.5\bin\gatling.bat
+
+Results :: E:\Softwares\gatling-charts-highcharts-bundle-3.9.5\results
 
 ----------------------------------------------------------------------------------------------------------------------
 
