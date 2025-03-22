@@ -2901,12 +2901,51 @@ Pen test
 API penetration testing is a security testing method that simulates hacker attacks to evaluate the security of an API
 - BurpSuite
 
-GHAS      					  vs						SonarQube
-===============================================================================================================================
-Static code analysis tool								Static code analysis tool
-Application Security Tools								Application Security Tools
-Integrated with Github
-security scanning, secret detection, automated alerts
+
+SonarQube
+==============
+
+Static code analysis tool
+ - Code quality
+ - Code complexity
+ - Code duplications
+ - Code coverage
+ - Code smells
+ - Detects bugs and vulnerabilities
+
+ - Project status - passed / failed
+ Can integrate with build tools like Maven, Gradle and with CI Tools like Jenkins, Github Actions
+
+<!-- JaCoCo -->
+<dependency>
+    <groupId>org.jacoco</groupId>
+    <artifactId>jacoco-maven-plugin</artifactId>
+    <version>0.8.8</version>
+</dependency>
+
+ JaCoCo allows you to configure rules that can be verified during the build process, stopping it if these rules are not met.
+ JaCoCo will give the unit test coverage
+
+Run Sonar
+------------------
+E:\Softwares\sonarqube-10.2.1.78527\conf\sonar.properties
+        sonar.jdbc.username=postgres
+        sonar.jdbc.password=postgres
+
+E:\Softwares\sonarqube-10.2.1.78527\bin\windows-x86-64\StartSonar.bat
+http://localhost:9000
+
+D:\workspace2\SpringBootREST2 >
+mvn clean verify sonar:sonar -Dsonar.projectKey=SpringBootREST2 -Dsonar.projectName='SpringBootREST2' -Dsonar.host.url=http://localhost:9000 -Dsonar.token=sqp_5b83985ddb470a1350f16fc2363daefbde691605
+
+GitHub Advanced Security
+============================
+Static code analysis tool
+Code security scanning
+Secret detection
+Alerts
+Dependency review
+
 
 Disaster recovery
 ========================
@@ -3003,54 +3042,6 @@ simulation service :: E:\Softwares\gatling-charts-highcharts-bundle-3.9.5\user-f
 Run gatling :: E:\Softwares\gatling-charts-highcharts-bundle-3.9.5\bin\gatling.bat
 
 Results :: E:\Softwares\gatling-charts-highcharts-bundle-3.9.5\results
-
-----------------------------------------------------------------------------------------------------------------------
-
-SonarQube
-==============
-
-Static code analysis tool
- - Code quality
- - Code complexity
- - Code duplications
- - Code coverage
- - Code smells
- - Detects bugs and vulnerabilities
-
- - Project status - passed / failed
- Can integrate with build tools like Maven, Gradle and with CI Tools like Jenkins, Github Actions
-
-<!-- JaCoCo -->
-<dependency>
-    <groupId>org.jacoco</groupId>
-    <artifactId>jacoco-maven-plugin</artifactId>
-    <version>0.8.8</version>
-</dependency>
-
- JaCoCo allows you to configure rules that can be verified during the build process, stopping it if these rules are not met.
- JaCoCo will give the unit test coverage
-
-Run Sonar
-------------------
-E:\Softwares\sonarqube-10.2.1.78527\conf\sonar.properties
-        sonar.jdbc.username=postgres
-        sonar.jdbc.password=postgres
-
-E:\Softwares\sonarqube-10.2.1.78527\bin\windows-x86-64\StartSonar.bat
-http://localhost:9000
-
-D:\workspace2\SpringBootREST2 >
-mvn clean verify sonar:sonar -Dsonar.projectKey=SpringBootREST2 -Dsonar.projectName='SpringBootREST2' -Dsonar.host.url=http://localhost:9000 -Dsonar.token=sqp_5b83985ddb470a1350f16fc2363daefbde691605
-
-----------------------------------------------------------------------------------------------------------------------
-
-GitHub Advanced Security
-============================
-
-Code scanning
-Secret scanning
-Dependency review
-
 
 ----------------------------------------------------------------------------------------------------------------------
 
