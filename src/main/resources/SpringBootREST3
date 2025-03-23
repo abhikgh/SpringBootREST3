@@ -79,10 +79,64 @@ OAuth2.0
 ----------
 OAuth 2.0 is an Open Authorization Protocol that gives Clients limited access to user accounts on an HTTP service without exposing user credentials and get access to Resource
 
-Delegating the user authentication to a AUTHENTICATION SERVER that hosts user credentials
-On successful authentication AUTHENTICATION SERVER returns a JWTToken
-Client takes this token to RESOURCE SERVER and after validation of the token for authentication and authorization access is granted
-OAuth2.0 SSL is required for all the communications required to generate the token
+
+JWT ( Json Web Token ) - based Authentication
+------------------------------------------------
+JWTs are used as authentication tokens to share information between clients and servers
+JWT just verifies that the data inside is correct
+
+JWT = header.payload.signature
+    = Base64urlEncoded(header).Base64urlEncoded(payload).alg(Base64urlEncoded(header).Base64urlEncoded(payload), secret)
+
+secure
+stateless
+compact
+SSO
+
+header:
+    {
+      "typ": "JWT"
+      "alg": "HMACSHA256"
+    }
+
+payload: The payload information is called Claims
+        3 types of claims: Private, Public, Registered
+        -> Private Claims : Base64urlEncoded(payload)
+        -> Public Claims : any claim
+        -> Registered Claims : subject, issuer, scope, audience, expirationTime
+
+signature:
+    HMACSHA256(base64UrlEncode(header).base64UrlEncode(payload), secret)
+
+validates JWTToken
+--------------------------
+The signature is used to verify the sender and that the message wasn’t tampered
+If the payload is tampered then the signatures won't match
+
+secret(key)
+------------------
+AUTHENTICATION SERVER (private key, signature) ----------------> RESOURCE SERVER (public key, verify signature)
+
+Private key
+AUTHENTICATION SERVER uses the private key to sign the JWT.
+The private key is secret to the issuer
+Public key
+The public key can be shared widely so that anyone who consumes the token can verify its integrity.
+RESOURCE SERVER uses the public key to verify the signature of the JWTToken
+
+JSON Web Key Set (JWKS)
+----------------------------
+Public key set used to verify any JWT issued by the authorization
+
+JWT Authentication Flow
+----------------------------
+1. Authentication
+2. Issuing the Token
+3. Sending the Token
+4. Verifying the Token
+    AUTHENTICATION SERVER (private key, signature) ----------------> RESOURCE SERVER (public key, verify signature)
+5. Authorizing the request
+
 
 	     AUTHENTICATION SERVER		  (Authentication)
 	 {username, password, clientId, clientSecret, grantType, audience, scope}	            (Resource Owner Password flow)
@@ -102,14 +156,105 @@ User/Machine    -------> CLIENT  -----------------------------------------------
 			                                                                        |
 			                                                                    WORKLOADS (services)
 
-			     AUTHENTICATION SERVER (private key, signature) ----------------> RESOURCE SERVER (public key, verify signature)
-                                    -private key : AUTHENTICATION SERVER uses the private key to sign the JWT
-                                    -public key  : RESOURCE SERVER uses the public key to verify the signature of the JWTToken (shared widely)
 
  Benefits :
 JWT centralizes authentication & authorization by generating a single shared token that contains user and app-level information
 1. CLIENT does not know user credentials - has only the JWTToken
 2. Granular access to CLIENT
+
+
+
+JWT RefreshToken
+-------------------
+
+Requirement :: When user's token has expired, refresh the token OR provide a new token
+Solution    :: If a user encounters a JWT expired exception, they call RefreshToken API with the expired token.
+	           In response, a new token will be provided to the user.
+
+AUTHENTICATION SERVER after getting the JWT token puts it in Redis - so that subsequent calls from Client will get the token from Redis
+only and do not have to go till AUTHENTICATION SERVER.
+This token in Redis will say for say 10 hours.
+Just before 10 hours a cron job will run that will get the new JWT Token and will replace the old token with the new one.
+ - jwtResponse.setExpiresIn(new Date(System.currentTimeMillis()).getTime() + expirationInMillis);
+
+
+@Scheduled(cron = "59 * * * * *", zone = "UTC")
+public void runEvery1MinuteToRefreshTheJWTInRedis(){
+    System.out.println("Refreshing JWT now...");
+    getJWTRefreshToken();
+    System.out.println("JWT Refreshed...");
+}
+
+
+public String getJWTRefreshToken() {
+    //call auth server and get JWT token
+
+    //caller :: GET  http://localhost:9050/orders/v1/authserver
+    String endPoint = "http://localhost:9050/orders/v1/authserver";
+
+    URI uri = UriComponentsBuilder.fromUriString(endPoint)
+                                .build()
+                                .encode()
+                                .toUri();
+
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+
+    Map<String, Object> claims = new HashMap<>();
+    claims.put("client_id","intellij");
+    claims.put("client_secret","3333");
+    claims.put("subject","devtest");
+    claims.put("scope","user");
+    claims.put("issuer","application");
+
+    HttpEntity httpEntity = new HttpEntity<>(claims, httpHeaders);
+
+    JWTResponse jwtResponse = restTemplate.exchange(uri, HttpMethod.POST, httpEntity, JWTResponse.class).getBody();
+    String accessToken = jwtResponse.getAccessToken();
+    System.out.println("accessToken :: " + accessToken);
+
+    DecodedJWT decodedJWT = JWT.decode(accessToken);
+    String subject = decodedJWT.getClaim("subject").asString();
+    System.out.println("subject ::" +subject);
+
+    //put the token in cache
+    redisTemplate.opsForValue().set(CACHE_KEY_PREFIX, jwtResponse, Duration.ofMinutes(2L));
+
+    return accessToken;
+
+}
+
+//  http://localhost:9050/orders/v1/authserver
+@PostMapping(value = "/authserver", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+public JWTResponse authServer(@RequestBody Map<String, Object> claims){
+        //call auth server and get JWT token
+        return jwtTokenUtils.getJWTToken(claims);
+}
+
+
+@Service
+public class JWTTokenUtils {
+
+    @Value("${jwt.secret}")
+    private String secret;
+
+    @Value("${jwt.expirationInMillis}")
+    private long expirationInMillis;
+
+    @Value("${jwt.refreshTokenExpirationInMillis}")
+    private long refreshTokenExpirationInMillis;
+
+    public JWTResponse getJWTToken(Map<String, Object> claims){
+
+        JWTResponse jwtResponse = new JWTResponse();
+        jwtResponse.setAccessToken(Jwts.builder()
+                                        .setClaims(claims)
+                                        .signWith(SignatureAlgorithm.HS512, secret)
+                                        .compact());
+        jwtResponse.setExpiresIn(new Date(System.currentTimeMillis()).getTime() + expirationInMillis);
+        return jwtResponse;
+    }
+}
 
 
 API Key flow 
