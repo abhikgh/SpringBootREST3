@@ -453,32 +453,7 @@ Spring Boot 3 Secured Endpoint
 @GetMapping(value = "/getMoviesOfDirector/{director}", produces = MediaType.APPLICATION_JSON_VALUE)
 public ResponseEntity<List<Movie>> getMoviesOfDirector(
         @PathVariable("director") String director) {
-    Span span = jaegerTracer.buildSpan("getMoviesOfDirector").start();
-    log.info("Inside getMoviesOfDirector controller... ");
-
-    //Counter metric
-    Counter counter = Counter.builder("getMoviesOfDirector")
-            .description("a number of requests to /getMoviesOfDirector endpoint")
-            .register(meterRegistry);
-    counter.increment();
-
-    //Timer metric
-    Timer.Sample timer = Timer.start(meterRegistry);
-    Span getHeroDetailsSpan = jaegerTracer.buildSpan("getMoviesOfDirector-Service").asChildOf(span).start();
-    List<Movie> movies = movieService.getMoviesOfDirector(director);
-    getHeroDetailsSpan.finish();
-    span.finish();
-    timer.stop(Timer.builder("getMoviesOfDirector_Timer").register(meterRegistry));
-
-    //Observation API
-    Observation.createNotStarted("getMoviesOfDirector_Count", observationRegistry)
-            .lowCardinalityKeyValue("request-uid", String.valueOf(new Random().nextInt(100)))
-            .observe(() -> {
-                List<Movie> movies2 = movieService.getMoviesOfDirector(director);
-                log.debug("Counting getMoviesOfDirector");
-            });
-
-    return ResponseEntity.ok(movies);
+    return ResponseEntity.ok(movieService.getMoviesOfDirector(director));
 }
 
 So to hit this endpoint from Postman, first get the JWT Token from the Auth-Server and pass the JWT token as Bearer token in the endpoint
