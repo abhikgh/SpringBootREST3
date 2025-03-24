@@ -371,6 +371,7 @@ Every request goes through this SecurityFilterChains.
 AuthenticationManager
 -----------------------
 authenticate(UsernamePasswordAuthenticationToken token) - delegates the request to a list of AuthenticationProviders which on successful login returns an Authentication object which is passed to the SecurityContext
+It is the responsibility of the Spring framework to handle the password, the security framework will compare the password entered by the user and the password sent from the service
 
 UserDetailsService
 -----------------------
