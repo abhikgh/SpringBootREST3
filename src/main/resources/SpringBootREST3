@@ -3515,6 +3515,12 @@ jakarta.validation(prev: javax.validation)
     <version>3.0.2</version>
 </dependency>
 
+<dependency>
+    <groupId>com.fasterxml.jackson.datatype</groupId>
+    <artifactId>jackson-datatype-jsr310</artifactId>
+    <version>2.14.2</version>
+</dependency>
+
 Controller :: public ResponseEntity<ServiceForm> serviceForm(@Valid @RequestBody ServiceForm serviceForm){
 
 
