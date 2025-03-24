@@ -415,6 +415,339 @@ return ResponseEntity
 
 ----------------------------------------------------------------------------------------------------------------------
 
+Spring Boot 3 Secured Endpoint
+---------------------------------
+1. pom
+<!-- Web -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-web</artifactId>
+</dependency>
+
+<!-- Spring Security -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-security</artifactId>
+</dependency>
+
+<!-- JWT -->
+<dependency>
+    <groupId>io.jsonwebtoken</groupId>
+    <artifactId>jjwt</artifactId>
+    <version>0.9.1</version>
+</dependency>
+
+<!-- jaxb -->
+<dependency>
+    <groupId>javax.xml.bind</groupId>
+    <artifactId>jaxb-api</artifactId>
+    <version>2.3.0</version>
+</dependency>
+
+//2. Secured endpoint
+// http://localhost:9100/v3/rest/getMoviesOfDirector/Satyajit Ray
+// Authorization
+// Type     -> Bearer Token
+// Token    -> eyJhbGciOiJIUzUxMiJ9...
+// JWT Token is in the form of Bearer Token
+@GetMapping(value = "/getMoviesOfDirector/{director}", produces = MediaType.APPLICATION_JSON_VALUE)
+public ResponseEntity<List<Movie>> getMoviesOfDirector(
+        @PathVariable("director") String director) {
+    Span span = jaegerTracer.buildSpan("getMoviesOfDirector").start();
+    log.info("Inside getMoviesOfDirector controller... ");
+
+    //Counter metric
+    Counter counter = Counter.builder("getMoviesOfDirector")
+            .description("a number of requests to /getMoviesOfDirector endpoint")
+            .register(meterRegistry);
+    counter.increment();
+
+    //Timer metric
+    Timer.Sample timer = Timer.start(meterRegistry);
+    Span getHeroDetailsSpan = jaegerTracer.buildSpan("getMoviesOfDirector-Service").asChildOf(span).start();
+    List<Movie> movies = movieService.getMoviesOfDirector(director);
+    getHeroDetailsSpan.finish();
+    span.finish();
+    timer.stop(Timer.builder("getMoviesOfDirector_Timer").register(meterRegistry));
+
+    //Observation API
+    Observation.createNotStarted("getMoviesOfDirector_Count", observationRegistry)
+            .lowCardinalityKeyValue("request-uid", String.valueOf(new Random().nextInt(100)))
+            .observe(() -> {
+                List<Movie> movies2 = movieService.getMoviesOfDirector(director);
+                log.debug("Counting getMoviesOfDirector");
+            });
+
+    return ResponseEntity.ok(movies);
+}
+
+So to hit this endpoint from Postman, first get the JWT Token from the Auth-Server and pass the JWT token as Bearer token in the endpoint
+
+3. Authentication endpoint
+================================
+//http://localhost:9100/v3/rest/authenticate
+/*
+    {
+    "userId":"eyabhikg",
+    "password":"12345"
+    }
+ */
+//var jsonData = JSON.parse(responseBody);
+//pm.environment.set("SB3_BEARER_TOKEN", jsonData['jwt']);
+@PostMapping("/authenticate")
+public AuthenticationResponse authenticate(@RequestBody Map<String, Object> claims){
+
+    try {
+        log.info("In authenticate method...");
+        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(claims.get("userId"), claims.get("password")));
+    } catch (Exception e) {
+        log.error("Authentication Error.......");
+        throw new OrderException("101", "Invalid username or password", HttpStatus.BAD_REQUEST);
+    }
+
+    UserDetails userDetails = userService.loadUserByUsername(String.valueOf(claims.get("userId")));
+    String jwt = jwtTokenUtil.generateToken(userDetails);
+    return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(new AuthenticationResponse(userDetails.getUsername(), userDetails.getAuthorities().stream().map(String::valueOf).toList().getFirst(), jwt))
+            .getBody();
+
+}
+
+
+4. JWTTokenUtil
+----------------------
+// generate JWT token for user
+public String generateToken(UserDetails userDetails) {
+    Map<String, Object> claims = new HashMap<>();
+
+    claims.put("client_id",userDetails.getUsername());
+    claims.put("client_secret","3333");
+    claims.put("subject","devtest");
+    claims.put("scope","user");
+    claims.put("issuer","application");
+
+    return Jwts.builder()
+            .setClaims(claims)
+            .setSubject(userDetails.getUsername())
+            .setIssuedAt(new Date(System.currentTimeMillis()))
+            .setExpiration(new Date(System.currentTimeMillis()  + expirationInMillis))
+            .signWith(SignatureAlgorithm.HS512, secret)
+        .compact();
+}
+
+5. SecurityConfig
+----------------------
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+   @Value("${application.spring.endpoints.exclude}")
+   private String[] applicationApisToBeExcluded;
+
+    @Value("${service.endpoints.exclude:}")
+    private String[] serviceApisToBeExcluded;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private JWTFilter jwtFilter;
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
+    }
+
+    @Bean
+    public AuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userService);
+        authProvider.setPasswordEncoder(new BCryptPasswordEncoder());
+        return authProvider;
+    }
+
+    private String[] allApisToBeExcluded(){
+        return applicationApisToBeExcluded;
+
+        /* return Stream.of(applicationApisToBeExcluded, serviceApisToBeExcluded)
+                .flatMap(Stream::of)
+                .toArray(String[]::new);*/
+    }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
+        return httpSecurity
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(requests -> requests.requestMatchers(allApisToBeExcluded()).permitAll().anyRequest().authenticated())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .build();
+    }
+}
+
+
+6. JWT Filter
+-----------------------
+
+@Component
+public class JWTFilter extends OncePerRequestFilter {
+
+    @Autowired
+    private JWTTokenUtil jwtTokenUtil;
+
+    @Autowired
+    private UserService userService;
+
+    // Intercept each request ,extract the JWT from the Request header ,validate and put the JWT in the SecurityContext
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+
+        try {
+            //gets the Authorization header
+            String bearerToken = request.getHeader("Authorization");
+            if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
+
+                // JWT Token is in the form of Bearer Token
+                // Authorization  :: Bearer dkdllslsl
+                String jwtToken = bearerToken.substring(7);
+                String username = jwtTokenUtil.getUsernameFromToken(jwtToken);
+
+                if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+
+                    UserDetails userDetails = userService.loadUserByUsername(username);
+                    if (jwtTokenUtil.validateToken(jwtToken, userDetails)) {
+
+                        //UsernamePasswordAuthenticationToken(Object principal, Object credentials, Collection<? extends GrantedAuthority> authorities)
+                        UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
+                                userDetails, null, userDetails.getAuthorities());
+                        usernamePasswordAuthenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+                    }
+                }
+
+            }
+        }catch (ExpiredJwtException ex){
+
+        }
+        filterChain.doFilter(request, response);
+    }
+
+
+}
+
+
+7. Service  (implementing UserDetailsService)
+----------------------------------------------
+
+@Service
+public class UserService implements UserDetailsService {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private AccountRepository accountRepository;
+
+    @Override
+    public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException {
+        UserMaster userMaster = userRepository.findByUserId(userId);
+
+        if (userMaster == null) {
+            System.out.println("User not found");
+            throw new UsernameNotFoundException("User not found");
+        }
+
+        return
+                User
+                    .builder()
+                    .username(userMaster.getUserId())
+                    .password(userMaster.getPassword())
+                    .roles(userMaster.getRoleCode())
+                    .build();
+
+    }
+
+}
+
+----------------------------------------------------------------------------------------------------------------------
+Spring Boot 3 Secured Endpoint client
+-------------------------------------------
+
+@Configuration
+public class RestClientConfig {
+
+    @Bean(name = "restClient1")
+    public RestClient restClient() {
+        return RestClient
+                .builder()
+                .baseUrl("http://localhost:9100/v3/rest")
+                .defaultHeader(HttpHeaders.CONTENT_ENCODING,"gzip")
+                .defaultHeader(HttpHeaders.ACCEPT_ENCODING,"gzip")
+                .build();
+    }
+
+}
+
+@Autowired
+@Qualifier("restClient1")
+private RestClient restClient;
+
+public List<Movie> getMoviesOfDirectorClient(String director) {
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.set("Authorization","Bearer " + getJWTToken());
+    return
+            restClient
+                .get()
+                .uri("/getMoviesOfDirector/" + director)
+                .headers(headers -> headers.addAll(httpHeaders))
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() {});
+}
+
+private String getJWTToken() {
+    Map<String, Object> claims = new HashMap<>();
+    claims.put("userId","eyabhikg");
+    claims.put("password", "12345");
+
+    String jwt =
+            Objects.requireNonNull(restClient
+                                    .post()
+                                    .uri("/authenticate")
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .accept(MediaType.APPLICATION_JSON)
+                                    .body(claims)
+                                    .retrieve()
+                                    .body(AuthenticationResponse.class))
+                    .getJwt();
+
+    System.out.println("jwt - " + jwt);
+    return jwt;
+}
+
+--------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------
+
+Security in Architecture
+==========================================
+
+RESTT APIs are protected by OAuth2.0 Authentication protocol by JWT token with Client Credentials flow
+sonar / GHAS -  Code scanning for security vulnerabilities, secret scanning, Dependency review
+trivy : image scan for security vulnerabilities + dependency updates
+Renovate :  automates dependency management 
+GCP Security Command center : for Threats and vulnerabilities
+AKAMAI (IP whitelisting)  
+KONG (Api Gateway)     
+CLOUD ARMOUR (firewall) <- CLOUD FUNCTION (WAF rules to support that CA only accepts IPs passed through Akamai)
+@JsonIgnoreProperties(ignoreUnknown = true)
+Pen test - API penetration testing is a security testing method that simulates hacker attacks to evaluate the security of an API
+
+
+----------------------------------------------------------------------------------------------------------------------
+
 Spring Boot Design Patterns
 =======================================
 
@@ -1008,22 +1341,6 @@ Controller \    processBooking (DB)             processPayment (DB)             
 
 -------------------------------------------------------------------------------------------------
 
-Security in Architecture
-==========================================
-
-RESTT APIs are protected by OAuth2.0 Authentication protocol by JWT token with Client Credentials flow
-sonar / GHAS -  Code scanning for security vulnerabilities, secret scanning, Dependency review
-trivy : image scan for security vulnerabilities + dependency updates
-Renovate :  automates dependency management 
-GCP Security Command center : for Threats and vulnerabilities
-AKAMAI (IP whitelisting)  
-KONG (Api Gateway)     
-CLOUD ARMOUR (firewall) <- CLOUD FUNCTION (WAF rules to support that CA only accepts IPs passed through Akamai)
-@JsonIgnoreProperties(ignoreUnknown = true)
-Pen test - API penetration testing is a security testing method that simulates hacker attacks to evaluate the security of an API
-
--------------------------------------------------------------------------------------------------
-
 Anti-Patterns in Spring Boot
 ===========================================
 
@@ -1163,319 +1480,6 @@ public class ApplicationConfig {
     }
 }
 ---------------------------------------------------------------------------------------------------------
-Spring Boot 3 Secured Endpoint
----------------------------------
-1. pom
-<!-- Web -->
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-web</artifactId>
-</dependency>
-
-<!-- Spring Security -->
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-security</artifactId>
-</dependency>
-
-<!-- JWT -->
-<dependency>
-    <groupId>io.jsonwebtoken</groupId>
-    <artifactId>jjwt</artifactId>
-    <version>0.9.1</version>
-</dependency>
-
-<!-- jaxb -->
-<dependency>
-    <groupId>javax.xml.bind</groupId>
-    <artifactId>jaxb-api</artifactId>
-    <version>2.3.0</version>
-</dependency>
-
-//2. Secured endpoint
-// http://localhost:9100/v3/rest/getMoviesOfDirector/Satyajit Ray
-// Authorization
-// Type     -> Bearer Token
-// Token    -> eyJhbGciOiJIUzUxMiJ9...
-// JWT Token is in the form of Bearer Token
-@GetMapping(value = "/getMoviesOfDirector/{director}", produces = MediaType.APPLICATION_JSON_VALUE)
-public ResponseEntity<List<Movie>> getMoviesOfDirector(
-        @PathVariable("director") String director) {
-    Span span = jaegerTracer.buildSpan("getMoviesOfDirector").start();
-    log.info("Inside getMoviesOfDirector controller... ");
-
-    //Counter metric
-    Counter counter = Counter.builder("getMoviesOfDirector")
-            .description("a number of requests to /getMoviesOfDirector endpoint")
-            .register(meterRegistry);
-    counter.increment();
-
-    //Timer metric
-    Timer.Sample timer = Timer.start(meterRegistry);
-    Span getHeroDetailsSpan = jaegerTracer.buildSpan("getMoviesOfDirector-Service").asChildOf(span).start();
-    List<Movie> movies = movieService.getMoviesOfDirector(director);
-    getHeroDetailsSpan.finish();
-    span.finish();
-    timer.stop(Timer.builder("getMoviesOfDirector_Timer").register(meterRegistry));
-
-    //Observation API
-    Observation.createNotStarted("getMoviesOfDirector_Count", observationRegistry)
-            .lowCardinalityKeyValue("request-uid", String.valueOf(new Random().nextInt(100)))
-            .observe(() -> {
-                List<Movie> movies2 = movieService.getMoviesOfDirector(director);
-                log.debug("Counting getMoviesOfDirector");
-            });
-
-    return ResponseEntity.ok(movies);
-}
-
-So to hit this endpoint from Postman, first get the JWT Token from the Auth-Server and pass the JWT token as Bearer token in the endpoint
-
-3. Authentication endpoint
-================================
-//http://localhost:9100/v3/rest/authenticate
-/*
-    {
-    "userId":"eyabhikg",
-    "password":"12345"
-    }
- */
-//var jsonData = JSON.parse(responseBody);
-//pm.environment.set("SB3_BEARER_TOKEN", jsonData['jwt']);
-@PostMapping("/authenticate")
-public AuthenticationResponse authenticate(@RequestBody Map<String, Object> claims){
-
-    try {
-        log.info("In authenticate method...");
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(claims.get("userId"), claims.get("password")));
-    } catch (Exception e) {
-        log.error("Authentication Error.......");
-        throw new OrderException("101", "Invalid username or password", HttpStatus.BAD_REQUEST);
-    }
-
-    UserDetails userDetails = userService.loadUserByUsername(String.valueOf(claims.get("userId")));
-    String jwt = jwtTokenUtil.generateToken(userDetails);
-    return ResponseEntity
-            .status(HttpStatus.OK)
-            .body(new AuthenticationResponse(userDetails.getUsername(), userDetails.getAuthorities().stream().map(String::valueOf).toList().getFirst(), jwt))
-            .getBody();
-
-}
-
-
-4. JWTTokenUtil
-----------------------
-// generate JWT token for user
-public String generateToken(UserDetails userDetails) {
-    Map<String, Object> claims = new HashMap<>();
-
-    claims.put("client_id",userDetails.getUsername());
-    claims.put("client_secret","3333");
-    claims.put("subject","devtest");
-    claims.put("scope","user");
-    claims.put("issuer","application");
-
-    return Jwts.builder()
-            .setClaims(claims)
-            .setSubject(userDetails.getUsername())
-            .setIssuedAt(new Date(System.currentTimeMillis()))
-            .setExpiration(new Date(System.currentTimeMillis()  + expirationInMillis))
-            .signWith(SignatureAlgorithm.HS512, secret)
-        .compact();
-}
-
-5. SecurityConfig
-----------------------
-
-@Configuration
-@EnableWebSecurity
-public class SecurityConfig {
-
-   @Value("${application.spring.endpoints.exclude}")
-   private String[] applicationApisToBeExcluded;
-
-    @Value("${service.endpoints.exclude:}")
-    private String[] serviceApisToBeExcluded;
-
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private JWTFilter jwtFilter;
-
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
-    }
-
-    @Bean
-    public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userService);
-        authProvider.setPasswordEncoder(new BCryptPasswordEncoder());
-        return authProvider;
-    }
-
-    private String[] allApisToBeExcluded(){
-        return applicationApisToBeExcluded;
-
-        /* return Stream.of(applicationApisToBeExcluded, serviceApisToBeExcluded)
-                .flatMap(Stream::of)
-                .toArray(String[]::new);*/
-    }
-
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
-        return httpSecurity
-                .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(requests -> requests.requestMatchers(allApisToBeExcluded()).permitAll().anyRequest().authenticated())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
-                .build();
-    }
-}
-
-
-6. JWT Filter
------------------------
-
-@Component
-public class JWTFilter extends OncePerRequestFilter {
-
-    @Autowired
-    private JWTTokenUtil jwtTokenUtil;
-
-    @Autowired
-    private UserService userService;
-
-    // Intercept each request ,extract the JWT from the Request header ,validate and put the JWT in the SecurityContext
-    @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-
-        try {
-            //gets the Authorization header
-            String bearerToken = request.getHeader("Authorization");
-            if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
-
-                // JWT Token is in the form of Bearer Token
-                // Authorization  :: Bearer dkdllslsl
-                String jwtToken = bearerToken.substring(7);
-                String username = jwtTokenUtil.getUsernameFromToken(jwtToken);
-
-                if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-
-                    UserDetails userDetails = userService.loadUserByUsername(username);
-                    if (jwtTokenUtil.validateToken(jwtToken, userDetails)) {
-
-                        //UsernamePasswordAuthenticationToken(Object principal, Object credentials, Collection<? extends GrantedAuthority> authorities)
-                        UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
-                                userDetails, null, userDetails.getAuthorities());
-                        usernamePasswordAuthenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                        SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
-                    }
-                }
-
-            }
-        }catch (ExpiredJwtException ex){
-
-        }
-        filterChain.doFilter(request, response);
-    }
-
-
-}
-
-
-7. Service  (implementing UserDetailsService)
-----------------------------------------------
-
-@Service
-public class UserService implements UserDetailsService {
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private AccountRepository accountRepository;
-
-    @Override
-    public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException {
-        UserMaster userMaster = userRepository.findByUserId(userId);
-
-        if (userMaster == null) {
-            System.out.println("User not found");
-            throw new UsernameNotFoundException("User not found");
-        }
-
-        return
-                User
-                    .builder()
-                    .username(userMaster.getUserId())
-                    .password(userMaster.getPassword())
-                    .roles(userMaster.getRoleCode())
-                    .build();
-
-    }
-
-}
-
-----------------------------------------------------------------------------------------------------------------------
-Spring Boot 3 Secured Endpoint client
--------------------------------------------
-
-@Configuration
-public class RestClientConfig {
-
-    @Bean(name = "restClient1")
-    public RestClient restClient() {
-        return RestClient
-                .builder()
-                .baseUrl("http://localhost:9100/v3/rest")
-                .defaultHeader(HttpHeaders.CONTENT_ENCODING,"gzip")
-                .defaultHeader(HttpHeaders.ACCEPT_ENCODING,"gzip")
-                .build();
-    }
-
-}
-
-@Autowired
-@Qualifier("restClient1")
-private RestClient restClient;
-
-public List<Movie> getMoviesOfDirectorClient(String director) {
-    HttpHeaders httpHeaders = new HttpHeaders();
-    httpHeaders.set("Authorization","Bearer " + getJWTToken());
-    return
-            restClient
-                .get()
-                .uri("/getMoviesOfDirector/" + director)
-                .headers(headers -> headers.addAll(httpHeaders))
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .body(new ParameterizedTypeReference<>() {});
-}
-
-private String getJWTToken() {
-    Map<String, Object> claims = new HashMap<>();
-    claims.put("userId","eyabhikg");
-    claims.put("password", "12345");
-
-    String jwt =
-            Objects.requireNonNull(restClient
-                                    .post()
-                                    .uri("/authenticate")
-                                    .contentType(MediaType.APPLICATION_JSON)
-                                    .accept(MediaType.APPLICATION_JSON)
-                                    .body(claims)
-                                    .retrieve()
-                                    .body(AuthenticationResponse.class))
-                    .getJwt();
-
-    System.out.println("jwt - " + jwt);
-    return jwt;
-}
-
---------------------------------------------------------------------------------------------------------
 
 ASync client
 -------------------------------------------
