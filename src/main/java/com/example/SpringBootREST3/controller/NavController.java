@@ -32,6 +32,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.convention.MatchingStrategies;
 import org.slf4j.Logger;
@@ -61,6 +62,7 @@ import java.util.Random;
 @RestController
 @RequestMapping("/v3/rest")
 @Tag(name = "someTag", description = "someDescription", externalDocs = @ExternalDocumentation(description = "Google", url = "https://www.google.com/"))
+@Slf4j
 public class NavController {
 
     @Autowired
@@ -93,7 +95,7 @@ public class NavController {
     @Autowired
     private ErrorProperties errorProperties;
 
-    Logger log = LoggerFactory.getLogger(NavController.class);
+
 
     //Secured
     // http://localhost:9100/v3/rest/getMoviesOfDirector/Satyajit Ray
@@ -175,12 +177,9 @@ public class NavController {
                 .description("A current number of users in the system")
                 .register(meterRegistry);
 
-        //Timer metric
-        Timer.Sample timer = Timer.start(meterRegistry);
-
         List<Movie> movies = movieService.findByDirectorAndGenre(director, genre);
 
-        timer.stop(Timer.builder("getMoviesByDirectorAndGenre_Timer").register(meterRegistry));
+        log.info("Response found for director {} and genre {}", director, genre);
         return ResponseEntity.ok(movies);
     }
 

@@ -3496,6 +3496,12 @@ logger.info(requestJSON);
     </root>
 </configuration>
 
+SLF4J Logging
+--------------------
+@Slf4J
+log.info("Response found for director {} and genre {}", director, genre);
+2025-03-25 11:37:09.411 [] INFO  c.e.S.controller.NavController - Response found for director Satyajit Ray and genre Comedy
+
 MDC (Mapped Diagnostic Context)
 ====================================
 - To transfer value within service
