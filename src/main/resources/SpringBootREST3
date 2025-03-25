@@ -3103,7 +3103,7 @@ compares 2 versions to check which version is more performant/appeals more
 
 Trivy
 ======
-Image Scanning for vulnerabilities
+image scan for Security scanning + dependency review
 
 Blackduck
 ==========
