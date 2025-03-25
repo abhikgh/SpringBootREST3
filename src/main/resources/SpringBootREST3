@@ -708,17 +708,28 @@ private String getJWTToken() {
 Security in Architecture
 ==========================================
 
-RESTT APIs are protected by OAuth2.0 Authentication protocol by JWT token with Client Credentials flow
-sonar / GHAS -  Code scanning for security vulnerabilities, secret scanning, Dependency review
-trivy : image scan for security vulnerabilities + dependency updates
-Renovate :  automates dependency management 
-GCP Security Command center : for Threats and vulnerabilities
-AKAMAI (IP whitelisting)  
-KONG (Api Gateway)     
-CLOUD ARMOUR (firewall) <- CLOUD FUNCTION (WAF rules to support that CA only accepts IPs passed through Akamai)
-@JsonIgnoreProperties(ignoreUnknown = true)
-Pen test - API penetration testing is a security testing method that simulates hacker attacks to evaluate the security of an API
+1. OAuth2.0 Protocol
 
+2. GCP Architecture
+AKAMAI (CDN) (IP whitelisting)                 
+	 |                                   
+      KONG (Api Gateway)                    
+	 |
+  CLOUD ARMOUR (firewall)     <---------- CLOUD FUNCTION (policies to support that CA only accepts IPs passed through Akamai)
+	 |
+    INGRESS (Load Balancer)
+	|
+    WORKLOADS (services)
+
+3. GCP Security Command center : for Threats and vulnerabilities
+
+4. Static Code Analysis
+
+sonar / GHAS -  Security scanning, secret detection, alerts, dependency review
+trivy : image scan for Security scanning + dependency review
+Renovate :  automates dependency management 
+
+5. @JsonIgnoreProperties(ignoreUnknown = true)
 
 ----------------------------------------------------------------------------------------------------------------------
 
