@@ -4131,6 +4131,10 @@ default values
 
 private String topic;
 
+//default empty list
+@Value("${CURRENCY_LIST:}")
+
+
 @EnableConfigurationProperties(class)
 ---------------------------------------
 
