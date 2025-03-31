@@ -3083,14 +3083,13 @@ Dependency review
 
 Disaster recovery
 ========================
-Terraform - IaaC -> define your infrastructure, so it can be recreated quickly in case of disaster
-Auto-Scaling
+Terraform -> IaaC -> define your infrastructure, so it can be recreated quickly in case of disaster
+Horizontal Pod Autoscaling
 Failover
-Multi-region
-
         Hot Failover: Backup systems run simultaneously with the primary systems. Failover happens automatically and almost instantaneously.
-        Cold Failover: Backup systems remain offline and only come online when a failure occurs. The recovery process takes time as services and systems need to be started manually.
         Warm Failover: Backup systems are running with minimal services enabled, and they are prepared to take over quickly with some manual intervention.
+        Cold Failover: Backup systems remain offline and only come online when a failure occurs. The recovery process takes time as services and systems need to be started manually.
+Multi-region deployments
 
 Performance Testing
 ====================
