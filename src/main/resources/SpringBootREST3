@@ -1344,7 +1344,7 @@ JProfiler: For deep-dive analysis of hotspots in the code
 
 ---------------------------------------------------------------------------------------------------------------------------
 
-Microservice Optimizations  (for heavy traffic)
+Microservice Optimizations for improved Performance
 =====================================================
 
 1. Load Balancer
@@ -1355,18 +1355,19 @@ Microservice Optimizations  (for heavy traffic)
 
 6.@JsonInclude(JsonInclude.Include.NON_NULL)
   @JsonIgnoreProperties(ignoreUnknown = true)
-7. Reactive Programming (Mono / Flux)
-8. ASync
-9. Caching
-10. Streaming
+7. ASync
+8. Caching
+9. Streaming
+10. Reactive Programming (Mono / Flux)
+11. Response Compression with GZip
 
-11. Indexing
-12. Native query
-13. Batch Processing
-14. DTO projection
-15. Lazy Loading
-16. Hikari CP Optimisation
-17. Avoid N+1
+12. Indexing
+13. Native query
+14. Batch Processing
+15. DTO projection
+16. Lazy Loading
+17. Hikari CP Optimisation
+18. Avoid N+1
    
 -------------------------------------------------------------------------------------------------
 
@@ -4936,7 +4937,7 @@ The three main components of a ServletContainer are the Filter, Servlet, Interce
 
 ------------------------------------------------------------------------------------------------------------
 
-Request Compression with GZip
+Response Compression with GZip
 ====================================
 Zips the JSON response from server so lesser bandwidth and lesser latency
 (P) - CPU Overhead
