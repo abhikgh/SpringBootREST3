@@ -1137,6 +1137,19 @@ Separates Commands(write to Database) from Queries(reading from Database) into s
     <version>2.0.2</version>
 </dependency>
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+  endpoint:
+    health:
+      show-details: always
+  health:
+    circuitbreakers:
+      enabled: true
+
+http://localhost:9101/actuator/health
 
 resilience4j:
   circuitbreaker:
@@ -1323,6 +1336,68 @@ Controller  ----> processBooking (DB)             processPayment (DB)           
 Controller \    processBooking (DB)             processPayment (DB)             (a+b) ? Confirm booking : Cancel booking
             \            |        \               /       |                       /
                 O   R   C   H   E   S   T   R   A   T   O   R   (Kafka Listener)
+
+
+21. Spring Retry
+---------------------------------------------------------------------------
+
+<!-- Actuator -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-actuator</artifactId>
+</dependency>
+<!-- AOP -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-aop</artifactId>
+</dependency>
+<!-- spring-retry -->
+<dependency>
+    <groupId>org.springframework.retry</groupId>
+    <artifactId>spring-retry</artifactId>
+    <version>1.3.2</version>
+</dependency>
+
+
+@EnableRetry
+
+@SneakyThrows
+@Retryable(value = Exception.class, maxAttempts = 3, backoff = @Backoff(delay = 1000, multiplier = 3))
+public HeroDetailsResponse getHeroDetailsASync(HeroDetailsRequest heroDetailsRequest) {
+    HeroDetailsResponse heroDetailsResponse = new HeroDetailsResponse();
+    List<Hero> heroList = new ArrayList<>();
+    List<CompletableFuture<Hero>> cfs = heroDetailsRequest.getHeroNames().stream().map(this::getHeroDetails).toList();
+    //join all the CFs
+    CompletableFuture.allOf(cfs.toArray(new CompletableFuture[0])).join();
+    //get the results from each of the CF
+    for(CompletableFuture<Hero> completableFuture : cfs){
+        if(completableFuture.isDone()){
+            heroList.add(completableFuture.get());
+        }
+    }
+    heroDetailsResponse.setHeroList(heroList);
+    return heroDetailsResponse;
+}
+
+@Async(value = "threadPoolTaskExecutor")
+private CompletableFuture<Hero> getHeroDetails(String heroName) {
+    if (Objects.nonNull(RetrySynchronizationManager.getContext()) && RetrySynchronizationManager.getContext().getRetryCount() > 0) {
+        System.out.println(String.format("Retry count %d for service %s", RetrySynchronizationManager.getContext().getRetryCount(), "getHeroDetails"));
+    }
+    Hero hero = restClient2
+                .get()
+                .uri("/getHeroDetails/"+heroName)
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .body(Hero.class);
+    return CompletableFuture.completedFuture(hero);
+}
+
+@Recover
+public HeroDetailsResponse defaultGetHeroDetails(Exception exception){
+    return new HeroDetailsResponse();
+}
+
 
 -------------------------------------------------------------------------------------------------
 
@@ -1513,160 +1588,8 @@ private CompletableFuture<Hero> getHeroDetails(String heroName) {
     return CompletableFuture.completedFuture(hero);
 }
 
-External services but may experience intermittent failures or downtime
-------------------------------------------------------------------------------
-
-Retry / Circuit-Breaker
-
-Retry is when the failure is expected to be short-lived
-Circuit-Breaker is when the failure is expected to be long-lived as the connection will be broken
-
 ---------------------------------------------------------------------------------------------------
 
-Spring Retry
-======================
-
-<!-- Actuator -->
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-actuator</artifactId>
-</dependency>
-<!-- AOP -->
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-aop</artifactId>
-</dependency>
-<!-- spring-retry -->
-<dependency>
-    <groupId>org.springframework.retry</groupId>
-    <artifactId>spring-retry</artifactId>
-    <version>1.3.2</version>
-</dependency>
-
-
-@EnableRetry
-
-@SneakyThrows
-@Retryable(value = Exception.class, maxAttempts = 3, backoff = @Backoff(delay = 1000, multiplier = 3))
-public HeroDetailsResponse getHeroDetailsASync(HeroDetailsRequest heroDetailsRequest) {
-    HeroDetailsResponse heroDetailsResponse = new HeroDetailsResponse();
-    List<Hero> heroList = new ArrayList<>();
-    List<CompletableFuture<Hero>> cfs = heroDetailsRequest.getHeroNames().stream().map(this::getHeroDetails).toList();
-    //join all the CFs
-    CompletableFuture.allOf(cfs.toArray(new CompletableFuture[0])).join();
-    //get the results from each of the CF
-    for(CompletableFuture<Hero> completableFuture : cfs){
-        if(completableFuture.isDone()){
-            heroList.add(completableFuture.get());
-        }
-    }
-    heroDetailsResponse.setHeroList(heroList);
-    return heroDetailsResponse;
-}
-
-@Async(value = "threadPoolTaskExecutor")
-private CompletableFuture<Hero> getHeroDetails(String heroName) {
-    if (Objects.nonNull(RetrySynchronizationManager.getContext()) && RetrySynchronizationManager.getContext().getRetryCount() > 0) {
-        System.out.println(String.format("Retry count %d for service %s", RetrySynchronizationManager.getContext().getRetryCount(), "getHeroDetails"));
-    }
-    Hero hero = restClient2
-                .get()
-                .uri("/getHeroDetails/"+heroName)
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .body(Hero.class);
-    return CompletableFuture.completedFuture(hero);
-}
-
-@Recover
-public HeroDetailsResponse defaultGetHeroDetails(Exception exception){
-    return new HeroDetailsResponse();
-}
-
----------------------------------------------------------------------------------------------------
-
-Circuit-Breaker
---------------------
-
-<!-- Actuator -->
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-actuator</artifactId>
-</dependency>
-<!-- AOP -->
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-aop</artifactId>
-</dependency>
-<!-- Resilience -->
-<dependency>
-    <groupId>io.github.resilience4j</groupId>
-    <artifactId>resilience4j-spring-boot3</artifactId>
-    <version>2.0.2</version>
-</dependency>
-
-
-resilience4j:
-  circuitbreaker:
-    instances:
-      getHeroDetails_CB:
-        register-health-indicator: true
-        sliding-window-type: count_based
-        sliding-window-size: 10
-        failure-rate-threshold: 70 #Circuitbreaker will open if 70% of the last 10 calls failed
-        slow-call-rate-threshold: 40
-        slow-call-duration-threshold: 2s
-        permitted-number-of-calls-in-half-open-state: 1
-        max-wait-duration-in-half-open-state: 10s
-        wait-duration-in-open-state: 10s
-        writable-stack-trace-enabled: true
-        automatic-transition-from-open-to-half-open-enabled: true
-
-
-@SneakyThrows
-//@Retryable(value = Exception.class, maxAttempts = 3, backoff = @Backoff(delay = 1000, multiplier = 3))
-@CircuitBreaker(name = "getHeroDetails_CB", fallbackMethod = "getDummyMethod")
-public HeroDetailsResponse getHeroDetailsASync(HeroDetailsRequest heroDetailsRequest) {
-    HeroDetailsResponse heroDetailsResponse = new HeroDetailsResponse();
-    List<Hero> heroList = new ArrayList<>();
-    List<CompletableFuture<Hero>> cfs = heroDetailsRequest.getHeroNames().stream().map(this::getHeroDetails).toList();
-    //join all the CFs
-    CompletableFuture.allOf(cfs.toArray(new CompletableFuture[0])).join();
-    //get the results from each of the CF
-    for(CompletableFuture<Hero> completableFuture : cfs){
-        if(completableFuture.isDone()){
-            heroList.add(completableFuture.get());
-        }
-    }
-    heroDetailsResponse.setHeroList(heroList);
-    return heroDetailsResponse;
-}
-
-@Recover
-public HeroDetailsResponse defaultGetHeroDetails(Exception exception){
-    return new HeroDetailsResponse();
-}
-
-public HeroDetailsResponse getDummyMethod(Exception exception){
-    System.out.println("In circuit-breaker fallback...");
-    return new HeroDetailsResponse();
-}
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: '*'
-  endpoint:
-    health:
-      show-details: always
-  health:
-    circuitbreakers:
-      enabled: true
-
-http://localhost:9101/actuator/health
-
---------------------------------------------------------------------------------------------------------
 Exception Handler
 ---------------------
 
@@ -1853,78 +1776,6 @@ if(!orderServiceUtil.allowedItems.contains(item)) {
     errorProperties.throwSPEException(ErrorProperties.ErrorCode.INVALID_ITEM, List.of(item));
 }
 
---------------------------------------------------------------------------------------------------------
-
-
-Rate-limiter
-------------------
-
-resilience4j:
-  ratelimiter:
-      instances:
-        getHeroDetails_RL:
-          limitForPeriod: 2
-          limitRefreshPeriod: 1s # 2RPS
-          timeoutDuration: 10s     #time to acquire permission from RateLimiter before erroring out.
-
-@SneakyThrows
-//@Retryable(value = Exception.class, maxAttempts = 3, backoff = @Backoff(delay = 1000, multiplier = 3))
-@CircuitBreaker(name = "getHeroDetails_CB", fallbackMethod = "getDummyMethod")
-@RateLimiter(name = "getHeroDetails_RL")
-public HeroDetailsResponse getHeroDetailsASync(HeroDetailsRequest heroDetailsRequest) {
-    HeroDetailsResponse heroDetailsResponse = new HeroDetailsResponse();
-    List<Hero> heroList = new ArrayList<>();
-    List<CompletableFuture<Hero>> cfs = heroDetailsRequest.getHeroNames().stream().map(this::getHeroDetails).toList();
-    //join all the CFs
-    CompletableFuture.allOf(cfs.toArray(new CompletableFuture[0])).join();
-    //get the results from each of the CF
-    for(CompletableFuture<Hero> completableFuture : cfs){
-        if(completableFuture.isDone()){
-            heroList.add(completableFuture.get());
-        }
-    }
-    heroDetailsResponse.setHeroList(heroList);
-    return heroDetailsResponse;
-}
-
-//429 Too Many Requests response
-//Throttling allows to prioritize certain requests or users, ensuring a smoother experience for critical operations. 
-   Rate limiting enforces uniform limits across all requests
-
---------------------------------------------------------------------------------------------------------
-
-Latency in one service should not migrate to the whole system - check max concurrent calls
-----------------------------------------------------------------------------------------------
-
-Bulkhead pattern
----------------
-
-resilience4j:
- bulkhead:
-   instances:
-     getHeroDetails_BH:
-       maxConcurrentCalls: 1
-
-@SneakyThrows
-//@Retryable(value = Exception.class, maxAttempts = 3, backoff = @Backoff(delay = 1000, multiplier = 3))
-@CircuitBreaker(name = "getHeroDetails_CB", fallbackMethod = "getDummyMethod")
-@RateLimiter(name = "getHeroDetails_RL")
-@Bulkhead(name = "getHeroDetails_BH", fallbackMethod = "getDummyMethod")
-public HeroDetailsResponse getHeroDetailsASync(HeroDetailsRequest heroDetailsRequest) {
-    HeroDetailsResponse heroDetailsResponse = new HeroDetailsResponse();
-    List<Hero> heroList = new ArrayList<>();
-    List<CompletableFuture<Hero>> cfs = heroDetailsRequest.getHeroNames().stream().map(this::getHeroDetails).toList();
-    //join all the CFs
-    CompletableFuture.allOf(cfs.toArray(new CompletableFuture[0])).join();
-    //get the results from each of the CF
-    for(CompletableFuture<Hero> completableFuture : cfs){
-        if(completableFuture.isDone()){
-            heroList.add(completableFuture.get());
-        }
-    }
-    heroDetailsResponse.setHeroList(heroList);
-    return heroDetailsResponse;
-}
 
 --------------------------------------------------------------------------------------------------------
 
