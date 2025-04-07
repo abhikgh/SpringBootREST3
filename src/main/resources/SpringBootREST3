@@ -1263,82 +1263,8 @@ public List<Movie> getDummyValue(Exception exception){
     return list;
 }
 
-17. Event Sourcing
----------------------------------------------------------------------------
-Event logs
-- auditing
-- analytics
 
-
-18. Strangler pattern
----------------------------------------------------------------------------
-Design pattern that incrementally transforms the monolithic application to microservice by replacing a particular functionality with a new service.
-Once the new functionality is ready, the old component is decommissioned.
-Candidate for Test-Driven Development
-
-
-19. 2-phase commit (2PC)
------------------------------------------------
-Immediate Transactions
-Commit or rollback entire transaction
-
-Phase1 : Prepare
-                                   Service 1
-                                    | C?  |
-                                    |      | Y/N        C?
-          Client   --------------> Controller   ----------->        Service 2
-                                    |     |     <-----------
-                                 C? |     | Y/N            Y/N
-                                  Service 3
-
-Phase2 : Commit
-
-                         Service 1
-                                  | C/R  |
-                                  |      | +/-        C/R
-        Client   --------------> Controller   ----------->        Service 2
-                                  |     |     <-----------
-                               C/R|     | +/-           +/-
-                                Service 3
-
-
-20. Saga
----------------------------------------------------------------------------
-Data consistency in Distributed Transactions
-Every transaction has a corresponding Rollback action
-This design pattern splits a large transaction into a series of smaller, isolated operations.
- - Resiliency
- - Eventually consistent
-
-CHOREOGRAPHY
-----------------------
-
-    Order service ----------> Payment service -------> Catering service  ---------> Delivery service
-                <--------------------->
-                <--------------------------------------------->
-                <-------------------------------------------------------------------------->
-
-
-ORCHESTRATION
-----------------------
-
-        Order service               Payment service       Catering service      Delivery service
-            \   \ (4)           /         /               /               /       /           /
-             \   \           /         /            /               /       /           /
-              \   \         /         /         /           /           /           /
-               Orchestrator
-
-Controller  ----> processBooking (DB)             processPayment (DB)             (a+b) ? Confirm booking : Cancel booking
-                        |                       /       |                       /
-                O   R   C   H   E   S   T   R   A   T   O   R   (Kafka Listener)
-
-
-Controller \    processBooking (DB)             processPayment (DB)             (a+b) ? Confirm booking : Cancel booking
-            \            |        \               /       |                       /
-                O   R   C   H   E   S   T   R   A   T   O   R   (Kafka Listener)
-
-
-21. Spring Retry (Fault Tolerance)
+17. Spring Retry (Fault Tolerance)
 ---------------------------------------------------------------------------
 
 <!-- Actuator -->
@@ -1397,6 +1323,81 @@ private CompletableFuture<Hero> getHeroDetails(String heroName) {
 public HeroDetailsResponse defaultGetHeroDetails(Exception exception){
     return new HeroDetailsResponse();
 }
+
+
+18. Event Sourcing
+---------------------------------------------------------------------------
+Event logs
+- auditing
+- analytics
+
+
+19. Strangler pattern
+---------------------------------------------------------------------------
+Design pattern that incrementally transforms the monolithic application to microservice by replacing a particular functionality with a new service.
+Once the new functionality is ready, the old component is decommissioned.
+Candidate for Test-Driven Development
+
+
+20. 2-phase commit (2PC)
+-----------------------------------------------
+Immediate Transactions
+Commit or rollback entire transaction
+
+Phase1 : Prepare
+                                   Service 1
+                                    | C?  |
+                                    |      | Y/N        C?
+          Client   --------------> Controller   ----------->        Service 2
+                                    |     |     <-----------
+                                 C? |     | Y/N            Y/N
+                                  Service 3
+
+Phase2 : Commit
+
+                         Service 1
+                                  | C/R  |
+                                  |      | +/-        C/R
+        Client   --------------> Controller   ----------->        Service 2
+                                  |     |     <-----------
+                               C/R|     | +/-           +/-
+                                Service 3
+
+
+21. Saga
+---------------------------------------------------------------------------
+Data consistency in Distributed Transactions
+Every transaction has a corresponding Rollback action
+This design pattern splits a large transaction into a series of smaller, isolated operations.
+ - Resiliency
+ - Eventually consistent
+
+CHOREOGRAPHY
+----------------------
+
+    Order service ----------> Payment service -------> Catering service  ---------> Delivery service
+                <--------------------->
+                <--------------------------------------------->
+                <-------------------------------------------------------------------------->
+
+
+ORCHESTRATION
+----------------------
+
+        Order service               Payment service       Catering service      Delivery service
+            \   \ (4)           /         /               /               /       /           /
+             \   \           /         /            /               /       /           /
+              \   \         /         /         /           /           /           /
+               Orchestrator
+
+Controller  ----> processBooking (DB)             processPayment (DB)             (a+b) ? Confirm booking : Cancel booking
+                        |                       /       |                       /
+                O   R   C   H   E   S   T   R   A   T   O   R   (Kafka Listener)
+
+
+Controller \    processBooking (DB)             processPayment (DB)             (a+b) ? Confirm booking : Cancel booking
+            \            |        \               /       |                       /
+                O   R   C   H   E   S   T   R   A   T   O   R   (Kafka Listener)
 
 
 -------------------------------------------------------------------------------------------------
