@@ -1108,7 +1108,7 @@ Separates Commands(write to Database) from Queries(reading from Database) into s
 -scalable
 
 
-14. Circuit Breaker
+14. Circuit Breaker (Fault Tolerance)
 ---------------------------------------------------------------------------
 
 
@@ -1199,7 +1199,7 @@ Benefits
     Improves Resilience
     Fault Tolerance
 
-15. Rate-limiter
+15. Rate-limiter (Fault Tolerance)
 ---------------------------------------------------------------------------
 
 resilience4j:
@@ -1227,7 +1227,7 @@ public List<Movie> getMoviesOfDirector(
     return restClientService.getMoviesOfDirector(uri, director);
 }
 
-16. Bulkhead
+16. Bulkhead (Fault Tolerance)
 ---------------------------------------------------------------------------
 Latency in one service should not migrate to the whole system
 
@@ -1338,7 +1338,7 @@ Controller \    processBooking (DB)             processPayment (DB)             
                 O   R   C   H   E   S   T   R   A   T   O   R   (Kafka Listener)
 
 
-21. Spring Retry
+21. Spring Retry (Fault Tolerance)
 ---------------------------------------------------------------------------
 
 <!-- Actuator -->
