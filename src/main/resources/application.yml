@@ -68,3 +68,5 @@ jwt:
   expirationInMillis: 180000
   secret: abcdefghijklmnopqrstuvwxyz
   refreshTokenExpirationInMillis: 180000
+
+BUSINESS_UNIT_LIST: CA,NA,LQ

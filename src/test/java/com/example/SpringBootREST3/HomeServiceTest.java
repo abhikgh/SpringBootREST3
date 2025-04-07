@@ -19,7 +19,7 @@ class HomeServiceTest {
 
     @BeforeEach
     public void init() {
-        //set private field
+        //set private field / variables
         ReflectionTestUtils.setField(homeService, "value123", "123");
     }
 

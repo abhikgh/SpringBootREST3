@@ -1,5 +1,7 @@
 package com.example.SpringBootREST3.service;
 
+import com.example.SpringBootREST3.model.OrderRequestForm;
+import com.example.SpringBootREST3.model.OrderResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,6 +13,10 @@ import java.util.concurrent.TimeUnit;
 public class HomeService {
 
     private static final Logger logger  = LoggerFactory.getLogger(HomeService.class);
+
+    @Value("${BUSINESS_UNIT_LIST}")
+    private String businessUnit;
+
 
     @Value("${value123}")
     private String value123;
@@ -35,5 +41,18 @@ public class HomeService {
             logger.error( e.getMessage());
         }
         return "Current Thread Name: " + Thread.currentThread().toString();
+    }
+
+    public OrderResponse getOrderResponse(OrderResponse orderResponse, OrderRequestForm orderRequestForm, String parmAudienceType, String parmRequestSource, String month, String actor) {
+        orderResponse.setOrderId(orderRequestForm.getOrderId());
+        orderResponse.setItem(orderRequestForm.getItem());
+        orderResponse.setItemType(orderRequestForm.getItemType());
+        orderResponse.setInvoiceType(orderRequestForm.getInvoiceType());
+        orderResponse.setParmRequestSource(parmRequestSource);
+        orderResponse.setParmAudienceType(parmAudienceType);
+        orderResponse.setMonth(month);
+        orderResponse.setActor(actor);
+        orderResponse.setBusinessUnit(businessUnit);
+        return orderResponse;
     }
 }

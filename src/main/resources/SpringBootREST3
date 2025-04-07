@@ -726,8 +726,8 @@ AKAMAI (CDN) (IP whitelisting)
 4. Static Code Analysis
 
 sonar / GHAS -  Security scanning, secret detection, alerts, dependency review
-trivy : image scan for Security scanning + dependency review
-Renovate :  scans dependency management and automates PR
+Trivy : scans images for security + dependency review
+Renovate :  scans and automates PR for dependency management
 
 5. @JsonIgnoreProperties(ignoreUnknown = true)
 

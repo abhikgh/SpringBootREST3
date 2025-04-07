@@ -29,5 +29,7 @@ public class OrderResponse {
 	private String month;
 	@JsonProperty
 	private String actor;
+	@JsonProperty
+	private String businessUnit;
 
 }

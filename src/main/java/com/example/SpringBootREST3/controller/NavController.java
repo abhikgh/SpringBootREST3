@@ -21,7 +21,6 @@ import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Timer;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import io.opentracing.Span;
@@ -35,9 +34,8 @@ import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.convention.MatchingStrategies;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -53,7 +51,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -94,7 +91,6 @@ public class NavController {
 
     @Autowired
     private ErrorProperties errorProperties;
-
 
 
     //Secured
@@ -139,7 +135,7 @@ public class NavController {
     //var jsonData = JSON.parse(responseBody);
     //pm.environment.set("SB3_BEARER_TOKEN", jsonData['jwt']);
     @PostMapping("/authenticate")
-    public AuthenticationResponse authenticate(@RequestBody Map<String, Object> claims){
+    public AuthenticationResponse authenticate(@RequestBody Map<String, Object> claims) {
 
         try {
             log.info("In authenticate method...");
@@ -157,7 +153,6 @@ public class NavController {
                 .getBody();
 
     }
-
 
 
     // http://localhost:9100/v3/rest/getMoviesByDirectorAndGenre/Satyajit Ray/Comedy
@@ -220,13 +215,13 @@ public class NavController {
     }
 
     @GetMapping("/home")
-    public String getResponse(){
+    public String getResponse() {
         return homeService.getResponse();
     }
 
     // http://localhost:9100/v3/rest/addMovie
     @PostMapping(value = "/addMovie", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public MovieNew addMovie(@Valid @RequestBody MovieModel movieModel){
+    public MovieNew addMovie(@Valid @RequestBody MovieModel movieModel) {
         ModelMapper modelMapper = new ModelMapper();
         modelMapper.getConfiguration().setDeepCopyEnabled(Boolean.TRUE);
         modelMapper.getConfiguration().setAmbiguityIgnored(Boolean.TRUE);
@@ -237,51 +232,6 @@ public class NavController {
 
     }
 
-    //http://localhost:9100/v3/rest/getOrder3/Feb/red?parmRequestSource=web&parmAudienceType=external
-    //Header - Actor = Microservice
-    /*
-        {
-            "orderId": 100,
-            "item": "iPhone",
-            "itemType": "Phone",
-            "invoiceType": 2
-        }
-     */
-    @PostMapping(value = "/getOrder3/{month}/{colour}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<OrderResponse> getOrder3(
-            @PathVariable(value = "month") String month,
-            @PathVariable(value = "colour") String colour,
-            @RequestParam(value = "parmRequestSource") String parmRequestSource,
-            @RequestParam(required = false, value = "parmAudienceType") String parmAudienceType,
-            @RequestHeader(value = "Actor") String actor,
-            @RequestBody OrderRequestForm orderRequestForm) {
-
-        OrderResponse orderResponse = new OrderResponse();
 
 
-
-            String item = orderRequestForm.getItem();
-            String itemType = orderRequestForm.getItemType();
-            Integer invoiceType = orderRequestForm.getInvoiceType();
-
-            if(!orderServiceUtil.allowedItems.contains(item)) {
-                errorProperties.throwSPEException(ErrorProperties.ErrorCode.INVALID_ITEM, List.of(item));
-            }
-            else {
-                orderResponse.setOrderId(orderRequestForm.getOrderId());
-                orderResponse.setItem(orderRequestForm.getItem());
-                orderResponse.setItemType(orderRequestForm.getItemType());
-                orderResponse.setInvoiceType(orderRequestForm.getInvoiceType());
-                orderResponse.setParmRequestSource(parmRequestSource);
-                orderResponse.setParmAudienceType(parmAudienceType);
-                orderResponse.setMonth(month);
-                orderResponse.setActor(actor);
-            }
-
-
-        return ResponseEntity.status(HttpStatus.OK)
-                .header("test", "test")
-                .body(orderResponse);
-
-    }
 }
