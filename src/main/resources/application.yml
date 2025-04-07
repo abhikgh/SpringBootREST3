@@ -58,7 +58,7 @@ management:
 application:
   spring:
     endpoints:
-      exclude: /v3/rest/hello, /v3/rest/helloPost, /error, /v3/restClient/helloPostClient, /v3/rest/home, /actuator/**, /v3/rest/getMoviesByDirectorAndGenre/**, /actuator/metrics/http.server.requests, /v3/rest/authenticate, /v3/api-docs, /v3/api-docs.yaml, /v3/rest/addMovie, /v3/rest/getOrder3/**
+      exclude: /v3/rest/hello, /v3/rest/helloPost, /error, /v3/restClient/helloPostClient, /v3/rest/home, /actuator/**, /v3/rest/getMoviesByDirectorAndGenre/**, /actuator/metrics/http.server.requests, /v3/rest/authenticate, /v3/api-docs, /v3/api-docs.yaml, /v3/rest/addMovie, /v3/rest/getOrder3/**, /v3/rest/getOrder4/**
 
 opentracing:
   jaeger:
