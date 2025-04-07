@@ -870,7 +870,7 @@ public class NavigationController {
 
 }
 
-6. Pub/Sub (Asynchronous Communication)
+6. Pub/Sub (Asynchronous Communication) ((Fault Tolerance)
 -----------------------------------------
 Decouples message producers and consumers, improves scalability and flexibility.
 
@@ -1450,10 +1450,20 @@ Microservice Optimizations for improved Performance
 Key Challenges in High-Traffic Systems
 ===========================================================
 
-Scalability:
-Latency :
-Fault Tolerance: handling partial failures.
-Data Consistency:
+Scalability
+Latency
+Fault Tolerance
+Resilience
+Data Consistency
+
+Fault Tolerance   				vs 				Resilience
+------------------------------------------------------------------------------------------------------------
+How system can handle faults						How many faults the system can handle
+
+Circuit Breaker
+Rate limiter
+Bulkhead
+Retry
 
 Horizontal Scaling vs Vertical Scaling
 -----------------------------------------------
