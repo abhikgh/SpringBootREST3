@@ -1464,6 +1464,7 @@ Circuit Breaker
 Rate limiter
 Bulkhead
 Retry
+Asynchronous
 
 Horizontal Scaling vs Vertical Scaling
 -----------------------------------------------
