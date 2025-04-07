@@ -870,7 +870,7 @@ public class NavigationController {
 
 }
 
-6. Pub/Sub (Asynchronous Communication)
+6. Pub/Sub (Asynchronous Communication) ((Fault Tolerance)
 -----------------------------------------
 Decouples message producers and consumers, improves scalability and flexibility.
 
@@ -1108,7 +1108,7 @@ Separates Commands(write to Database) from Queries(reading from Database) into s
 -scalable
 
 
-14. Circuit Breaker
+14. Circuit Breaker (Fault Tolerance)
 ---------------------------------------------------------------------------
 
 
@@ -1199,7 +1199,7 @@ Benefits
     Improves Resilience
     Fault Tolerance
 
-15. Rate-limiter
+15. Rate-limiter (Fault Tolerance)
 ---------------------------------------------------------------------------
 
 resilience4j:
@@ -1227,7 +1227,7 @@ public List<Movie> getMoviesOfDirector(
     return restClientService.getMoviesOfDirector(uri, director);
 }
 
-16. Bulkhead
+16. Bulkhead (Fault Tolerance)
 ---------------------------------------------------------------------------
 Latency in one service should not migrate to the whole system
 
@@ -1263,82 +1263,8 @@ public List<Movie> getDummyValue(Exception exception){
     return list;
 }
 
-17. Event Sourcing
----------------------------------------------------------------------------
-Event logs
-- auditing
-- analytics
 
-
-18. Strangler pattern
----------------------------------------------------------------------------
-Design pattern that incrementally transforms the monolithic application to microservice by replacing a particular functionality with a new service.
-Once the new functionality is ready, the old component is decommissioned.
-Candidate for Test-Driven Development
-
-
-19. 2-phase commit (2PC)
------------------------------------------------
-Immediate Transactions
-Commit or rollback entire transaction
-
-Phase1 : Prepare
-                                   Service 1
-                                    | C?  |
-                                    |      | Y/N        C?
-          Client   --------------> Controller   ----------->        Service 2
-                                    |     |     <-----------
-                                 C? |     | Y/N            Y/N
-                                  Service 3
-
-Phase2 : Commit
-
-                         Service 1
-                                  | C/R  |
-                                  |      | +/-        C/R
-        Client   --------------> Controller   ----------->        Service 2
-                                  |     |     <-----------
-                               C/R|     | +/-           +/-
-                                Service 3
-
-
-20. Saga
----------------------------------------------------------------------------
-Data consistency in Distributed Transactions
-Every transaction has a corresponding Rollback action
-This design pattern splits a large transaction into a series of smaller, isolated operations.
- - Resiliency
- - Eventually consistent
-
-CHOREOGRAPHY
-----------------------
-
-    Order service ----------> Payment service -------> Catering service  ---------> Delivery service
-                <--------------------->
-                <--------------------------------------------->
-                <-------------------------------------------------------------------------->
-
-
-ORCHESTRATION
-----------------------
-
-        Order service               Payment service       Catering service      Delivery service
-            \   \ (4)           /         /               /               /       /           /
-             \   \           /         /            /               /       /           /
-              \   \         /         /         /           /           /           /
-               Orchestrator
-
-Controller  ----> processBooking (DB)             processPayment (DB)             (a+b) ? Confirm booking : Cancel booking
-                        |                       /       |                       /
-                O   R   C   H   E   S   T   R   A   T   O   R   (Kafka Listener)
-
-
-Controller \    processBooking (DB)             processPayment (DB)             (a+b) ? Confirm booking : Cancel booking
-            \            |        \               /       |                       /
-                O   R   C   H   E   S   T   R   A   T   O   R   (Kafka Listener)
-
-
-21. Spring Retry
+17. Spring Retry (Fault Tolerance)
 ---------------------------------------------------------------------------
 
 <!-- Actuator -->
@@ -1399,6 +1325,81 @@ public HeroDetailsResponse defaultGetHeroDetails(Exception exception){
 }
 
 
+18. Event Sourcing
+---------------------------------------------------------------------------
+Event logs
+- auditing
+- analytics
+
+
+19. Strangler pattern
+---------------------------------------------------------------------------
+Design pattern that incrementally transforms the monolithic application to microservice by replacing a particular functionality with a new service.
+Once the new functionality is ready, the old component is decommissioned.
+Candidate for Test-Driven Development
+
+
+20. 2-phase commit (2PC)
+-----------------------------------------------
+Immediate Transactions
+Commit or rollback entire transaction
+
+Phase1 : Prepare
+                                   Service 1
+                                    | C?  |
+                                    |      | Y/N        C?
+          Client   --------------> Controller   ----------->        Service 2
+                                    |     |     <-----------
+                                 C? |     | Y/N            Y/N
+                                  Service 3
+
+Phase2 : Commit
+
+                         Service 1
+                                  | C/R  |
+                                  |      | +/-        C/R
+        Client   --------------> Controller   ----------->        Service 2
+                                  |     |     <-----------
+                               C/R|     | +/-           +/-
+                                Service 3
+
+
+21. Saga
+---------------------------------------------------------------------------
+Data consistency in Distributed Transactions
+Every transaction has a corresponding Rollback action
+This design pattern splits a large transaction into a series of smaller, isolated operations.
+ - Resiliency
+ - Eventually consistent
+
+CHOREOGRAPHY
+----------------------
+
+    Order service ----------> Payment service -------> Catering service  ---------> Delivery service
+                <--------------------->
+                <--------------------------------------------->
+                <-------------------------------------------------------------------------->
+
+
+ORCHESTRATION
+----------------------
+
+        Order service               Payment service       Catering service      Delivery service
+            \   \ (4)           /         /               /               /       /           /
+             \   \           /         /            /               /       /           /
+              \   \         /         /         /           /           /           /
+               Orchestrator
+
+Controller  ----> processBooking (DB)             processPayment (DB)             (a+b) ? Confirm booking : Cancel booking
+                        |                       /       |                       /
+                O   R   C   H   E   S   T   R   A   T   O   R   (Kafka Listener)
+
+
+Controller \    processBooking (DB)             processPayment (DB)             (a+b) ? Confirm booking : Cancel booking
+            \            |        \               /       |                       /
+                O   R   C   H   E   S   T   R   A   T   O   R   (Kafka Listener)
+
+
 -------------------------------------------------------------------------------------------------
 
 Anti-Patterns in Spring Boot
@@ -1449,10 +1450,21 @@ Microservice Optimizations for improved Performance
 Key Challenges in High-Traffic Systems
 ===========================================================
 
-Scalability:
-Latency :
-Fault Tolerance: handling partial failures.
-Data Consistency:
+Scalability
+Latency
+Fault Tolerance
+Resilience
+Data Consistency
+
+Fault Tolerance   				vs 				Resilience
+------------------------------------------------------------------------------------------------------------
+How system can handle faults						How many faults the system can handle
+
+Circuit Breaker
+Rate limiter
+Bulkhead
+Retry
+Asynchronous
 
 Horizontal Scaling vs Vertical Scaling
 -----------------------------------------------
