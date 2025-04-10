@@ -2698,15 +2698,6 @@ public Bucode getBuCode(String buCode, String buType, String countryCode) {
     return bucode;
 }
 
-Service (Option 2)
----------------------
-
-@Autowired
-private CaffeineCacheManager caffeineCacheManager;
-
-Cache.ValueWrapper valueWrapper = caffeineCacheManager.getCache(CaffeineConfig.HELLO_WORLD_CACHE).get(redisKey);
-List<Movie> movies = (List<Movie>) Optional.ofNullable(valueWrapper).map(Cache.ValueWrapper::get).orElse(null);
-
 ---------------------------------------------------------------------------------------------
 
 Redis
@@ -2934,7 +2925,7 @@ E:\Softwares\sonarqube-10.2.1.78527\bin\windows-x86-64\StartSonar.bat
 http://localhost:9000
 
 D:\workspace2\SpringBootREST2 >
-mvn clean verify sonar:sonar -Dsonar.projectKey=SpringBootREST2 -Dsonar.projectName='SpringBootREST2' -Dsonar.host.url=http://localhost:9000 -Dsonar.token=sqp_5b83985ddb470a1350f16fc2363daefbde691605
+mvn clean verify sonar:sonar -Dsonar.projectKey=SpringBootREST2 -Dsonar.projectName='SpringBootREST2' -Dsonar.host.url=http://localhost:9000 -Dsonar.token=xy
 
 GitHub Advanced Security
 ============================
@@ -4395,9 +4386,7 @@ spring:
           default-label: master # now default branch name of GitHub is "main", but Spring Cloud Config still looks for "master" as a label name
 
 http://localhost:8888/SpringBootCloudConfigClient/development
-    {"name":"SpringBootCloudConfigClient","profiles":["development"],"label":null,"version":"e74117163b5a0891486a02293c78856f8da5a5cd","state":null,"propertySources":[{"name":"D:\\\\workspace2\\\\configRepo\\\\production/SpringBootCloudConfigClient.yml","source":{"ibm.mq.queueManager":"ABHIKTESTQM","ibm.mq.channel":"CLOUD.ADMIN.SVRCONN","ibm.mq.connName":"abhiktestqm-ff9e.qm.eu-gb.mq.appdomain.cloud(32503)","ibm.mq.user":"ghosha24","ibm.mq.password":"pceI1ObgLP4EzuDWfkPJG7z09WOeD1zh7KX_oV59R1hx","ibm.mq.timeout":60000,"ibm.mq.maxAttempts":3,"ibm.mq.receiveTimeout":5000,"ibm.mq.userAuthentication":true,"ibm.mq.transportType":1,"ibm.mq.appRequestQueue":"APP.REQUEST.Q","ibm.mq.appResponseQueue":"APP.RESPONSE.Q","test.data":"this is NEW PROD data","spring.password":"p0Fhr1SxkogmSZGid8hkuQ==","jasypt.encryptor.password":"Sdmjsj23#2"}}]}
 http://localhost:8888/SpringBootCloudConfigClient/production
-    {"name":"SpringBootCloudConfigClient","profiles":["production"],"label":null,"version":"e74117163b5a0891486a02293c78856f8da5a5cd","state":null,"propertySources":[{"name":"D:\\\\workspace2\\\\configRepo\\\\production/SpringBootCloudConfigClient.yml","source":{"ibm.mq.queueManager":"ABHIKTESTQM","ibm.mq.channel":"CLOUD.ADMIN.SVRCONN","ibm.mq.connName":"abhiktestqm-ff9e.qm.eu-gb.mq.appdomain.cloud(32503)","ibm.mq.user":"ghosha24","ibm.mq.password":"pceI1ObgLP4EzuDWfkPJG7z09WOeD1zh7KX_oV59R1hx","ibm.mq.timeout":60000,"ibm.mq.maxAttempts":3,"ibm.mq.receiveTimeout":5000,"ibm.mq.userAuthentication":true,"ibm.mq.transportType":1,"ibm.mq.appRequestQueue":"APP.REQUEST.Q","ibm.mq.appResponseQueue":"APP.RESPONSE.Q","test.data":"this is NEW PROD data","spring.password":"p0Fhr1SxkogmSZGid8hkuQ==","jasypt.encryptor.password":"Sdmjsj23#2"}}]}
 
 
 Config Client
