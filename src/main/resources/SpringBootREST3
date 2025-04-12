@@ -875,6 +875,70 @@ public class NavigationController {
 Decouples message producers and consumers, improves scalability and flexibility.
 
 
+		Base Load Topics
+		------------------------
+		spe-prod-RetailItemSalesPrice-base	
+			spe-prod-RetailItemSalesPrice-dead-letter-base
+				
+		Base Load process :: We have to set content version as -1 for the item which has issue in item_price_t table, and share the topic name to erix , and ask to resync. If any issue in fees, then we have to set in fee table, and then set content version as -1, and share fee topic name to erix team to resync	
+			
+		Delta Subscription : spe-prod-RetailItemSalesPrice-live-push-new
+		
+					Topic : projects/ingka-rrm-erix-prod/topics/INGKA-range-eRIX-RetailItemSalesPriceUpdated-production
+					
+					Push Endpoint: 
+					(Cloud Run service)
+					https://spe-erix-price-event-new-wivl3ihu6q-ez.a.run.app/erix-price/erix-price-data
+					
+					Dead Letter Topic : projects/ikea-dt-spe-prod/topics/spe-prod-RetailItemSalesPrice-dead-letter-live
+					
+		Delta DLT subscription : spe-prod-RetailItemSalesPrice-dead-letter-live-push-new		
+		
+					Topic : projects/ikea-dt-spe-prod/topics/spe-prod-RetailItemSalesPrice-dead-letter-live
+					
+					Push Endpoint: 
+					https://dummy.spe.ingka.com/
+			
+		Fee ::
+		
+		Base Load Topics
+		------------------------
+		spe-prod-RetailItemFee-base
+			spe-prod-RetailItemFee-dead-letter-base
+				
+		Delta Subscription : spe-prod-RetailItemFee-live-push-new
+		
+					Topic : projects/ingka-rrm-erix-prod/topics/INGKA-range-eRIX-RetailItemFeeUpdated-production
+					
+					Push Endpoint: 
+					(Cloud Run service)
+					https://spe-erix-price-event-new-wivl3ihu6q-ez.a.run.app/erix-price/erix-fee-data
+					
+					Dead Letter Topic : projects/ikea-dt-spe-prod/topics/spe-prod-RetailItemFee-dead-letter-live
+					
+		Delta DLT subscription : spe-prod-RetailItemFee-dead-letter-live-push-new	
+		
+					Topic : projects/ikea-dt-spe-prod/topics/spe-prod-RetailItemFee-dead-letter-live
+					
+					Push Endpoint: 
+					https://dummy.spe.ingka.com/
+					
+		Cloud Run :	spe-erix-price-event-new
+					
+					2 endpoints : 
+					/erix-price-data
+					/erix-fee-data
+					
+					
+					Image : gcr.io/ikea-dt-spe-prod/sales-price-execution/spe-erix-price-event@sha256:9e8fe3b46f1631f9dc36dc04a57b53f24b1c19772db6adbad8ae5ab1d77b98a3
+					
+		2 Base Topics
+		
+		2 Delta Subscriptions
+		2 Delta DLT Subscriptions
+		1 Cloud Run -> 2 Endpoints 
+
+
 
 
 7. Dependency Injection
