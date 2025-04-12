@@ -1456,37 +1456,79 @@ Fault Tolerance
 Resilience
 Data Consistency
 
-Fault Tolerance   				vs 				Resilience
-------------------------------------------------------------------------------------------------------------
-How system can handle faults						How many faults the system can handle
+Fault Tolerance in Microservices
+--------------------------------------
+How system can handle faults
 
-Circuit Breaker
-Rate limiter
-Bulkhead
-Retry
-Asynchronous
+1. Clustering and Replication
+
+    - No single point of failure
+    - multiple instances of each service running on different nodes and clusters
+
+        Clusters :2
+            spe-prod-cluster
+            spe-prod-cluster-apac
+
+        Workloads: 						Pods
+        salesprice
+            spe-prod-cluster			12/12
+            spe-prod-cluster-apac		4/4
+        Node-Pod-Container has 1:1:1 relation
+
+2. Load balancing
+
+            AKAMAI CDN (IP whitelisting)
+        	 |
+            KONG (Api Gateway)
+        	 |
+           CLOUD ARMOUR (firewall)     <---------- CLOUD FUNCTION (policies to support that CA only accepts IPs passed through Akamai)
+        	 |
+           INGRESS (Load Balancer)
+        	|
+            WORKLOADS (services)
+
+3. Autoscaling
+
+        Horizontal scaling :: adding more servers
+        	AutoScaling happens depending on the Pod - Resource metrics - like CPU usage, memory usage, request count
+        	--- HPA (Horizontal Pod Autoscaler) ---
+        	kubectl autoscale deployment endpoints --cpu-percent=50 --min=1 --max=10
+        Vertical Scaling   :: adding more resources to existing server , like more CPU, RAM, Network, Storage
+
+4. Monitoring
+
+        Health endpoint
+
+                @Autowired
+                private HealthEndpoint healthEndpoint;
+
+                @Scheduled(fixedRate = 20000, initialDelay = 1000)
+                public void healthCheck(){
+                    logger.info("Liveness status :: {} ", healthEndpoint.health().getStatus());
+                }
+
+                @Scheduled(fixedRateString = "${healthCheck.rate}", initialDelay = 1000)
+                public void healthCheck() {
+                    logger.info("Liveness status :: {} ", healthEndpoint.health().getStatus());
+                }
+
+        GCP - Liveliness and Readiness probes to facilitate automatic recovery actions (HTTP Probes)
 
 
-GCP Architecture
-----------------------
-Clusters :2 
-	spe-prod-cluster
-	spe-prod-cluster-apac
-	
-Workloads: 						Pods
-salesprice	
-    spe-prod-cluster			12/12
-	spe-prod-cluster-apac		4/4
-Node-Pod-Container has 1:1:1 relation 
+4. Circuit Breaker
+5. Rate limiter
+6. Bulkhead
+7. Retry
+8. Asynchronous
+9. Caching
 
-Horizontal Scaling vs Vertical Scaling
------------------------------------------------
+Resilience
+--------------------------
+How many faults the system can handle
 
-Horizontal scaling :: adding more servers
-	AutoScaling happens depending on the Pod - Resource metrics - like CPU usage, memory usage, request count
-	--- HPA (Horizontal Pod Autoscaler) ---
-	kubectl autoscale deployment endpoints --cpu-percent=50 --min=1 --max=10
-Vertical Scaling   :: adding more resources to existing server , like more CPU, RAM, Network, Storage
+
+
+
 
 
 ------------------------------------------------------------------------------------------------------------------------
