@@ -870,9 +870,11 @@ public class NavigationController {
 
 }
 
-6. Pub/Sub (Asynchronous Communication) ((Fault Tolerance)
+6. ASynchronous (Cloud Run) (Fault Tolerance)
 -----------------------------------------
 Decouples message producers and consumers, improves scalability and flexibility.
+
+
 
 
 7. Dependency Injection
