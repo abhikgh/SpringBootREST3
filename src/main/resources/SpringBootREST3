@@ -1466,6 +1466,19 @@ Bulkhead
 Retry
 Asynchronous
 
+
+GCP Architecture
+----------------------
+Clusters :2 
+	spe-prod-cluster
+	spe-prod-cluster-apac
+	
+Workloads: 						Pods
+salesprice	
+    spe-prod-cluster			12/12
+	spe-prod-cluster-apac		4/4
+Node-Pod-Container has 1:1:1 relation 
+
 Horizontal Scaling vs Vertical Scaling
 -----------------------------------------------
 
