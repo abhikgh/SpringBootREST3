@@ -979,7 +979,6 @@ Decouples message producers and consumers, improves scalability and flexibility.
                 }
             }
 
-
 8. Singleton
 ------------------
         -  1 instance in the ApplicationContext
