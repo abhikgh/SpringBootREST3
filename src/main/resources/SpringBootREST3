@@ -1470,10 +1470,12 @@ Controller \    processBooking (DB)             processPayment (DB)             
 Anti-Patterns in Spring Boot
 ===========================================
 
-1. Choose Constructor Injection over Field and Setter Injection
+1. Constructor Injection over Field and Setter Injection
 2. Avoid 1 Controller if too many endpoints
-3. Constants should be in class, not in Interface
-4. Don’t integrate Spring to Core Business Logic
+3. Avoid God Class
+4. Avoid Spaghetti Code
+5. Avoid Lava code (unused code)
+6. Constants should be in class, not in Interface
 
 ---------------------------------------------------------------------------------------------------------------------------
 
