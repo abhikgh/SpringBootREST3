@@ -2034,9 +2034,9 @@ configures Spring Boot applications to expose metrics in a format that Prometheu
 Micrometer metrics::
 -----------------------
 Timer                                 measuring short-duration latencies, and the frequency of such events.
-Counter				                  count
+Counter				      count
 Gauge	                              current value
-DistributionSummary	                  total amount of all recorded events
+DistributionSummary	              total amount of all recorded events
 Micrometer Observation API            lightweight library for application metrics
 
 //Counter metric
@@ -2187,16 +2187,31 @@ Check in Grafana ::
 
 Spring OpenTelemetry (replaces OpenTracing)
 ================================================
-Observability framework for application monitoring by collecting Logs, Traces and Metrics 
-vendor-agnostic
+Distributed Request Tracing by collecting Logs, Traces and Metrics 
+OpenTelemetry is an Observability framework to create and manage telemetry data such as Logs, Traces and Metrics
 
-OTLP
--------
-OpenTelemetry Protocol is a telemetry data transfer protocol that we can leverage to export the telemetry data to an observability backend.
-
-        		  (exposes Metrics)  (collects + makes + ships Metrics)  (LTM  :: collection and shipment)
+        	(exposes Metrics)  (collects + makes + ships Metrics)  (LTM  :: collection and shipment)
 SpringBoot ------> Actuator  ---->   Micrometer    ----------------------->   OTel Collector       ------->           Jaeger (Observability Backend)
-                                    (Monitoring tool)               micrometer-tracing-bridge-otel                  opentelemetry-exporter-otlp
+                                    (Monitoring tool)                (micrometer-tracing-bridge-otel)                  (opentelemetry-exporter-otlp)
+									   (Opentelemetry)
+									
+									OTLP (OpenTelemetry Protocol)
+				telemetery data -----------------------------------------------------------------------> Observability Backend
+
+Micrometer (replaces Spring Cloud Sleuth)
+---------------------------------------------
+Monitoring tool that collects + makes + ships Metrics
+Micrometer Tracing provides a simple facade for the most popular tracer libraries (eg OpneTelemetry) without vendor lock-in
+Spring Boot Actuator provides auto-configuration for Micrometer Tracing
+
+Micrometer metrics::
+-----------------------
+Timer                                 measuring short-duration latencies, and the frequency of such events.
+Counter				      count
+Gauge	                              current value
+DistributionSummary	              total amount of all recorded events
+Micrometer Observation API            lightweight library for application metrics
+
 pom.xml
 -----------
 <artifactId>spring-boot-starter-parent</artifactId>
