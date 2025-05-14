@@ -2201,7 +2201,7 @@ SpringBoot ------> Actuator  ---->   Micrometer    ----------------------->   OT
 Micrometer (replaces Spring Cloud Sleuth)
 ---------------------------------------------
 Monitoring tool that collects + makes + ships Metrics
-Micrometer Tracing provides a simple facade for the most popular tracer libraries (eg OpneTelemetry) without vendor lock-in
+Micrometer Tracing provides a simple facade for the most popular tracer libraries (eg OpenTelemetry) without vendor lock-in
 Spring Boot Actuator provides auto-configuration for Micrometer Tracing
 
 Micrometer metrics::
