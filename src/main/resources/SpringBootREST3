@@ -1481,7 +1481,7 @@ Anti-Patterns in Spring Boot
 
 Tools
 --------------
-JMeter: For load testing and establishing basic throughput numbers
+Gatling: For load testing and establishing basic throughput numbers
 Micrometer + Prometheus + Grafana: For real-time monitoring and visualization
 JProfiler: For deep-dive analysis of hotspots in the code
 
