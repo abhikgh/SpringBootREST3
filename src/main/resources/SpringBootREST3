@@ -1490,27 +1490,40 @@ JProfiler: For deep-dive analysis of hotspots in the code
 Microservice Optimizations for improved Performance
 =====================================================
 
-1. Load Balancer
-2. Rate Limiting
-3. Circuit Breaker
+1. Load Balancer (INGRESS)
+2. Rate Limiting (Resilience4J)
+3. Circuit Breaker (Resilience4J)
 4. Clustering (group multiple servers into a cluster - so that if 1 server fails other can process the request)
-5. Horizontal pod auto-scaling :: adding more servers
+5. Horizontal Pod Auto-scaling (adding more servers)
 
-6.@JsonInclude(JsonInclude.Include.NON_NULL)
+6.JVM Tuning (-XX:+UseG1GC)
+7.@JsonInclude(JsonInclude.Include.NON_NULL)
   @JsonIgnoreProperties(ignoreUnknown = true)
-7. ASync
-8. Caching
-9. Streaming
-10. Reactive Programming (Mono / Flux)
-11. Response Compression with GZip
+8. ASync
+9. Caching
+10. Streaming
+11. Reactive Programming (Mono / Flux)
+12. Response Compression with GZip
+        server:
+          compression:
+            enabled: true
+            mime-types: application/json
 
-12. Indexing
-13. Native query
-14. Batch Processing
-15. DTO projection
-16. Lazy Loading
-17. Hikari CP Optimisation
-18. Avoid N+1
+13. Indexing
+14. Native query
+15. Batch Processing
+16. DTO projection
+17. Lazy Loading
+18. Hikari CP Optimisation
+        spring:
+          datasource:
+            hikari:
+              connection-timeout: 5000
+              maximum-pool-size: 5
+19. Avoid N+1
+
+20. Actuator + Prometheus + Grafana
+21. Gatling
    
 -------------------------------------------------------------------------------------------------
 
