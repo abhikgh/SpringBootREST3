@@ -1542,6 +1542,24 @@ How system can handle faults
 
 1. Clustering and Replication
 
+
+Kubernetes Architecture
+============================                                                                                         Internet
+                                      Scheduler                                                                         |
+kubectl                                                                                                                 |
+        ---> API    ----------------> API Server     ----------------------------------> Kubelet  ---------------  Kube-Proxy					    |							||						|
+UI                                                                                                                     						        |					        ||						|
+                            etcd       CCM                                                                             					     	    |						    ||						|
+                                                                                         Pod1           Pod2 										|						    ||
+                                                                                      (Container1)  (Container2)							        |							||						|
+
+                                     CONTROL PLANE                                        NODE 1                                        NODE 2
+
+                                                                                KUBERNETES CLUSTER 1 / Zone 1									KUBERNETES CLUSTER 1 / Zone 2				 KUBERNETES CLUSTER 2 / Zone 1		      KUBERNETES CLUSTER 2 / Zone 2
+
+
+						<----------   																				 R  E  G  I  O  N   									---------->
+
     - No single point of failure
     - multiple instances of each service running on different nodes and clusters
 
