@@ -1808,6 +1808,8 @@ public class SpringBootRest3Application {
 
 }
 
+errorMessages_en.properties
+--------------------------------
 error.message.validation.itemMismatch = Item does not match
 error.message.validation.itemTypeMismatch = Item Type does not match
 error.message.dataConnection.itemAndItemTypeMismatch = Item and Item type mismatch
