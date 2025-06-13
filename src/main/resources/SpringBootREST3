@@ -760,13 +760,9 @@ Problems
 
 Example : Orchis APIGW , Kong GW
 
-APIGW has different subscription plans for each consumer that dictates the allowed RPS(Request per second) and the BL (Burst Load).
+APIGW has different subscription plans for each consumer that dictates the allowed RPS(Request per second) and the BL (Burst Load)
 
-3. Load Balancing
----------------------------------------
-Distributes incoming requests across multiple servers to improve performance, reliability, and availability
-
-4. Service Discovery
+3. Service Discovery
 -----------------------------
 @SpringBootApplication
 @EnableEurekaServer
@@ -815,6 +811,11 @@ class WebClientConfig {
                 .retrieve()
                 .bodyToMono(String.class);
 
+
+4. Load Balancing
+---------------------------------------
+Distributes incoming requests across multiple servers to improve performance, reliability, and availability
+
 5. Client-side Load Balancing
 ----------------------------------
 SpringCloud LoadBalancer :: calling EurekaClient in a Load-Balanced manner
@@ -845,7 +846,6 @@ class WebClientConfig {
         }
 
 }
-
 
 
 @RestController
@@ -1494,24 +1494,24 @@ Microservice Optimizations for improved Performance
 1. Load Balancer (INGRESS)
 2. Rate Limiting (Resilience4J)
 3. Circuit Breaker (Resilience4J)
-4. Clustering (group multiple servers into a cluster - so that if 1 server fails other can process the request)
-5. Horizontal Pod Auto-scaling (adding more servers)
+4. Multi-Clustering (group multiple servers into a cluster - so that if 1 server fails other can process the request)
+5. Multi-Regional
+6. Horizontal Pod Auto-scaling (adding more servers)
 
-6.JVM Tuning (-XX:+UseG1GC)
-7.@JsonInclude(JsonInclude.Include.NON_NULL)
+7.JVM Tuning (-XX:+UseG1GC)
+8.@JsonInclude(JsonInclude.Include.NON_NULL)
   @JsonIgnoreProperties(ignoreUnknown = true)
-8. ASync
-9. Caching
-10. Streaming
-11. Reactive Programming (Mono / Flux)
-12. Response Compression with GZip
+9. ASync
+10. Caching
+11. Streaming
+12. Reactive Programming (Mono / Flux)
+13. Response Compression with GZip
         server:
           compression:
             enabled: true
             mime-types: application/json
 
-13. Indexing
-14. Native query
+14. DB Indexing
 15. Batch Processing
 16. DTO projection
 17. Lazy Loading
@@ -3312,6 +3312,9 @@ Client -> Proxy -> Internet -> Server
  time for the request to come back with a response (time to resolve the hostname + open the TCP connection + perform the TLS handshake etc)
                                         time to read data                   time to open the TCP connection
 
+Fault tolerance 		vs 						Resiliency
+-----------------------------------------------------------------------------------------------------------
+ability to continue functioning even in the presence of failures		ability of a system to recover from failures and disruptions
 
 ---------------------------------------------------------------------------------------------------------------------------
 
