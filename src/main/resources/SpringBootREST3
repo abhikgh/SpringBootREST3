@@ -819,6 +819,8 @@ class WebClientConfig {
 ----------------------------------
 SpringCloud LoadBalancer :: calling EurekaClient in a Load-Balanced manner
 
+SpringConversionFactorClient
+------------------------
 @Configuration
 public class ServiceInstanceConfig {
 
