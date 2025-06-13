@@ -1408,8 +1408,7 @@ Candidate for Test-Driven Development
 
 20. 2-phase commit (2PC)
 -----------------------------------------------
-Immediate Transactions
-Commit or rollback entire transaction
+Prepare and Commit
 
 Phase1 : Prepare
                                    Service 1
@@ -1433,7 +1432,7 @@ Phase2 : Commit
 
 21. Saga
 ---------------------------------------------------------------------------
-Data consistency in Distributed Transactions
+Distributed Transactions
 Every transaction has a corresponding Rollback action
 This design pattern splits a large transaction into a series of smaller, isolated operations.
  - Resiliency
