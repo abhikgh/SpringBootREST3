@@ -2424,8 +2424,6 @@ public class JaegerConfig {
                 .getTracer();
     }
 
-
-
 }
 
 @RestController
@@ -2478,6 +2476,31 @@ public class NavController {
     }
 
 }
+
+Jaeger
+========================================
+Observability backend
+Components:
+            Collector—collects trace data, validates and passes to storage service  (port :16686)
+            Storage —Cassandra, ElasticSearch
+            Web UI— view the trace data
+            Search — on trace data
+
+           [TraceId:SpanId:ParentSpanId:Flags]
+
+Span reported: 4c5f29d379ea625e:3d177b55c210dffb:4c5f29d379ea625e:1 - PARENT
+
+Span reported: 4c5f29d379ea625e:c1b1e7351ce66ca9:1d134091d2c206e7:1 - getHeroDetails            - CHILD
+Span reported: 4c5f29d379ea625e:1d134091d2c206e7:7c1877ceb2c65cfa:1 - getMoviesOfHero
+Span reported: 4c5f29d379ea625e:7c1877ceb2c65cfa:3d177b55c210dffb:1 - getMoviesOfHero   (PARENT SPAN ID = SPAN ID OF CALLER SERVICE)
+
+
+Jaeger              vs                                Grafana                       vs              Zipkin
+-------------------------------------------------------------------------------------------------------------------
+Performance, Scalability, Reliability
+part of the CNCF(Cloud Native Computing Foundation), so deployed in Kubernetes.
+can be deployed in parts
+Storage - ElasticSearch, Cassandra,Kafka            Local storage
 
 logback.xml
 ---------------------
@@ -2535,33 +2558,6 @@ calculates delta                                                               c
 Observation API for LTM and transform them into a single language
 
 -------------------------------------------------------------------------------------------------
-
-Jaeger
-========================================
-Observability backend
-Components:
-            Collector—collects trace data, validates and passes to storage service  (port :16686)
-            Storage —Cassandra, ElasticSearch
-            Web UI— view the trace data
-            Search — on trace data
-
-           [TraceId:SpanId:ParentSpanId:Flags]
-
-Span reported: 4c5f29d379ea625e:3d177b55c210dffb:4c5f29d379ea625e:1 - PARENT
-
-Span reported: 4c5f29d379ea625e:c1b1e7351ce66ca9:1d134091d2c206e7:1 - getHeroDetails            - CHILD
-Span reported: 4c5f29d379ea625e:1d134091d2c206e7:7c1877ceb2c65cfa:1 - getMoviesOfHero
-Span reported: 4c5f29d379ea625e:7c1877ceb2c65cfa:3d177b55c210dffb:1 - getMoviesOfHero   (PARENT SPAN ID = SPAN ID OF CALLER SERVICE)
-
-
-Jaeger              vs                                Grafana                       vs              Zipkin
--------------------------------------------------------------------------------------------------------------------
-Performance, Scalability, Reliability
-part of the CNCF(Cloud Native Computing Foundation), so deployed in Kubernetes.
-can be deployed in parts
-Storage - ElasticSearch, Cassandra,Kafka            Local storage
-
-------------------------------------------------------------------------------------------------------------------------------
 
 OpenAPI Specification (OAS) { previously Swagger specification)
 ===========================================================================
