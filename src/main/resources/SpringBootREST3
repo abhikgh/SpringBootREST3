@@ -1969,17 +1969,13 @@ mvn -Pnative spring-boot:build-image    ---> Docker image
 
 Spring Observability
 ===============================================================================
-Observability is the ability to measure the internal state of a system only by checking its outputs (logs, traces, metrics)
-define our own metrics using Micrometer
-gather them using Prometheus
-display them on a Grafana dashboard
-
+Observability is the ability to measure the state of a system only by checking its logs, traces, metrics
 
 		    (exposes Metrics)    (collects + makes + ships Metrics)   (scrape Metrics)         (query Prometheus)
-SpringBoot ------> Actuator  ---->   Micrometer   --------------->     Prometheus     ------>    Grafana
+SpringBoot ------> Actuator  ---->   Micrometer   --------------->             Prometheus     ------>    Grafana
 									  (Monitoring tool)         (Observability backend)
 
-                                 (Prometheus to scrape Micrometer logs and Micrometer metrics at a configured interval from and endpoint and display them in a Grafana dashboard)
+        (Prometheus to scrape Micrometer logs and Micrometer metrics at a configured interval from and endpoint and display them in a Grafana dashboard)
 
 
 <!-- Web -->
