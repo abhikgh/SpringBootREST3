@@ -1594,9 +1594,7 @@ UI                                                                              
         	kubectl autoscale deployment endpoints --cpu-percent=50 --min=1 --max=10
         Vertical Scaling   :: adding more resources to existing server , like more CPU, RAM, Network, Storage
 
-4. Monitoring
-
-        Health endpoint
+4. Monitoring (Health check)
 
                 @Autowired
                 private HealthEndpoint healthEndpoint;
@@ -1610,6 +1608,16 @@ UI                                                                              
                 public void healthCheck() {
                     logger.info("Liveness status :: {} ", healthEndpoint.health().getStatus());
                 }
+
+		{
+		"@timestamp": "2024-08-29T22:31:00.785+05:30",
+		"@version": "1",
+		"message": "Liveness status :: UP ",
+		"logger_name": "com.example.SpringRESTClient2.controller.ClientController",
+		"thread_name": "scheduling-1",
+		"level": "INFO",
+		"level_value": 20000
+		}
 
         GCP - Liveliness and Readiness probes to facilitate automatic recovery actions (HTTP Probes)
 
@@ -4225,35 +4233,6 @@ SpringBoot ------>   Logstash   ----------------------------->  Elasticsearch   
 Logstash: accepts data from multiple sources and sends processed data to ElasticSearch
 Elasticsearch : distributed search engine that stores indexed data
 Kibana : web-ui for data search and analysis
-
----------------------------------------------------------------------------------------------
-
-Health check
------------------
-
-@Autowired
-private HealthEndpoint healthEndpoint;
-
-@Scheduled(fixedRate = 20000, initialDelay = 1000)
-public void healthCheck(){
-    logger.info("Liveness status :: {} ", healthEndpoint.health().getStatus());
-}
-
-@Scheduled(fixedRateString = "${healthCheck.rate}", initialDelay = 1000)
-public void healthCheck() {
-    logger.info("Liveness status :: {} ", healthEndpoint.health().getStatus());
-}
-
-
-{
-	"@timestamp": "2024-08-29T22:31:00.785+05:30",
-	"@version": "1",
-	"message": "Liveness status :: UP ",
-	"logger_name": "com.example.SpringRESTClient2.controller.ClientController",
-	"thread_name": "scheduling-1",
-	"level": "INFO",
-	"level_value": 20000
-}
 
 ---------------------------------------------------------------------------------------------
 
