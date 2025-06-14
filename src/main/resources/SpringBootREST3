@@ -3261,8 +3261,8 @@ Servlet -> Thread model                                      Servlet->Thread Poo
 
 Client-side Load Balancing                  vs                                         Server-side Load-balancing
 ----------------------------------------------------------------------------------------------------------------------
-Spring Cloud Load Balancer	                                                             Single point of failure
-EurekaServer                                                                             INGRESS
+Spring Cloud Load Balancer	                                                             INGRESS
+                                                                                        Single point of failure
 
 
 Object-Oriented Programming             vs              Functional Programming             vs              Reactive Programming
