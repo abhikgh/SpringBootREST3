@@ -3868,8 +3868,6 @@ public OrderResponse callOrderService(String month, String parmRequestSource, St
     //HttpEntity
     HttpEntity<String> httpEntity = new HttpEntity<>(requestJson, httpHeaders);
 
-
-
     if (Objects.nonNull(RetrySynchronizationManager.getContext()) && RetrySynchronizationManager.getContext().getRetryCount() > 0) {
         log.info("Retry count {} for service {}", RetrySynchronizationManager.getContext().getRetryCount(), "callOrderService");
     }
