@@ -4269,6 +4269,7 @@ Spring Cloud
 =======================
 Spring Cloud is a family of libraries that integrates common patterns in the Spring application.
 
+Spring Cloud Config Server
 Spring Cloud EurekaServer
 Spring Cloud EurekaClient
 Spring Cloud LoadBalancer
