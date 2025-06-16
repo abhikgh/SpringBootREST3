@@ -1506,10 +1506,13 @@ Microservice Optimizations for improved Performance
 11. Streaming
 12. Reactive Programming (Mono / Flux)
 13. Response Compression with GZip
+      (Zips the JSON response from server so lesser bandwidth and lesser latency
+       (P) - CPU Overhead)
         server:
           compression:
             enabled: true
             mime-types: application/json
+            min-response-size: 2048 #This will compress responses larger than 2KB for the specified MIME types.
 
 14. DB Indexing
 15. Batch Processing
@@ -4847,7 +4850,7 @@ Proxy can be achieved in 2 ways : Interceptor / Proxy service
 
 Spring Interceptor
 ========================
-http request -------> Filter ---------> DispatcherServlet  ------------- > HandlerInterceptor  ----------> Controller/Handler
+http request -------> Filter ---------> DispatcherServlet  ------------- > Interceptor  ----------> Controller
 
                       Filter                                                                Interceptor
                       -------------                                                         -------------
@@ -4856,8 +4859,10 @@ http request -------> Filter ---------> DispatcherServlet  ------------- > Handl
                       Image and data compression
                       Any functionality we want to be decoupled from Spring MVC
 
-preHandle() – Executed before the target handler is called
-postHandle() – Executed after the target handler but before DispatcherServlet
+HandlerInterceptor interface
+----------------------------------
+preHandle() – Before Controller is called
+postHandle() – After Controller but before DispatcherServlet in return journey
 afterCompletion() – Callback after completion of request
 
 @Configuration
@@ -4896,7 +4901,7 @@ public class RequestInterceptor implements HandlerInterceptor {
 
 Proxy Service
 ====================
-http request -------> Filter ---------> DispatcherServlet  ------------- >   ----------> Controller/Handler  --------> proxy service -----------> Service
+http request -------> Filter ---------> DispatcherServlet  ------------- > Interceptor  ----------> Controller  --------> proxy service -----------> Service
 
 
 ------------------------------------------------------------------------------------------------------------
@@ -4925,20 +4930,6 @@ ServletContainer
 ======================
 Servlets run in a ServletContainer which handles the networking side(parsing, connection handling) - Tomcat
 The three main components of a ServletContainer are the Filter, Servlet, Interceptor and Listener
-
-------------------------------------------------------------------------------------------------------------
-
-Response Compression with GZip
-====================================
-Zips the JSON response from server so lesser bandwidth and lesser latency
-(P) - CPU Overhead
-
-server:
-  port: 9050
-  compression:
-    enabled: true
-    min-response-size: 2048 #This will compress responses larger than 2KB for the specified MIME types.
-    mime-types: application/json,application/xml
 
 ------------------------------------------------------------------------------------------------------------
 
