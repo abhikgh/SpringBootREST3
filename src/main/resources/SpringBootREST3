@@ -4047,14 +4047,14 @@ private WebClient webClient;
 @ConfigurationProperties, @EnableConfigurationProperties, @EncryptablePropertySources
 =========================================================================================
 
-Read properties (using ConfigurationProperties)
+Read properties (as String / List / Map)
 -----------------------------------------------------------
 
 statistics:
   gather: Yes
   platforms: Linux | Windows | FreeBSD | SunOS | Mac | AIX
   browsers: Firefox | Netscape | Opera | Safari | Gecko | MSIE
-  systems : API | MicroServices | BlockChain
+  systems : API|MicroServices|BlockChain
 
 @Configuration
 @ConfigurationProperties(prefix = "statistics")
@@ -4075,11 +4075,8 @@ private StatisticsConfig statisticsConfig;
 System.out.println(statisticsConfig.getGather());
 System.out.println(statisticsConfig.getPlatforms());
 System.out.println(statisticsConfig.getBrowsers());
-System.out.println(statisticsConfig.getSystems());
+List<String> systemsList = Arrays.asList(statisticsConfig.getSystems().split("\\|"));
 
-
-Read properties as list (using ConfigurationProperties)
------------------------------------------------------------
 
 order2:
   statuses:
@@ -4100,8 +4097,7 @@ private PropsListConfig propsListConfig;
 
 System.out.println(propsListConfig.getStatuses().get(0));
 
-Read properties as map (using ConfigurationProperties)
------------------------------------------------------------
+
 
 application:
   applicationMap:
@@ -4203,7 +4199,7 @@ public class RedisConfig {
 
 }
 
-EncryptablePropertySource
+@EncryptablePropertySource
 -----------------------------------
 
 infoMessages_en.properties
