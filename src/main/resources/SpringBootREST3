@@ -5000,3 +5000,8 @@ public class RetryService {
 
 ------------------------------------------------------------------------------------------------------------------------------------------
 
+Protobuf
+----------------
+
+var currencyInputData = new ObjectMapper().readValue(new String(Base64.getDecoder().decode(currencyInput.getData())), CurrencyInput.class);
+ https://www.base64decode.org/
