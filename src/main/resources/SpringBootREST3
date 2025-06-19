@@ -1513,21 +1513,26 @@ Microservice Optimizations for improved Performance
             enabled: true
             mime-types: application/json
             min-response-size: 2048 #This will compress responses larger than 2KB for the specified MIME types.
+15. Protobuf
+        Protocol Buffer
+        Base 64 encoded structured data
+        CurrencyInput currencyInputData = new ObjectMapper().readValue(new String(Base64.getDecoder().decode(currencyInput.getData())), CurrencyInput.class);
+        Speed and compact size
 
-14. DB Indexing
-15. Batch Processing
-16. DTO projection
-17. Lazy Loading
-18. Hikari CP Optimisation
+15. DB Indexing
+16. Batch Processing
+17. DTO projection
+18. Lazy Loading
+19. Hikari CP Optimisation
         spring:
           datasource:
             hikari:
               connection-timeout: 5000
               maximum-pool-size: 5
-19. Avoid N+1
+20. Avoid N+1
 
-20. Actuator + Prometheus + Grafana
-21. Gatling
+21. Actuator + Prometheus + Grafana
+22. Gatling
    
 -------------------------------------------------------------------------------------------------
 
@@ -5000,8 +5005,4 @@ public class RetryService {
 
 ------------------------------------------------------------------------------------------------------------------------------------------
 
-Protobuf
-----------------
 
-var currencyInputData = new ObjectMapper().readValue(new String(Base64.getDecoder().decode(currencyInput.getData())), CurrencyInput.class);
- https://www.base64decode.org/
