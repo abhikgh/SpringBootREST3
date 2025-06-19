@@ -1494,8 +1494,9 @@ Microservice Optimizations for improved Performance
 1. Load Balancer (INGRESS)
 2. Rate Limiting (Resilience4J)
 3. Circuit Breaker (Resilience4J)
-4. Multi-Clustering (group multiple servers into a cluster - so that if 1 server fails other can process the request)
-5. Multi-Regional
+4. Multi-zones
+4. Multi-Clusters (group multiple servers into a cluster - so that if 1 server fails other can process the request)
+5. Multi-Regions
 6. Horizontal Pod Auto-scaling (adding more servers)
 
 7.JVM Tuning (-XX:+UseG1GC)
