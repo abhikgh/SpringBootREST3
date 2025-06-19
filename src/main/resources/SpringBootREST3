@@ -1514,12 +1514,8 @@ Microservice Optimizations for improved Performance
             enabled: true
             mime-types: application/json
             min-response-size: 2048 #This will compress responses larger than 2KB for the specified MIME types.
-15. Protobuf
-        Protocol Buffer
-        Base 64 encoded structured data
-        CurrencyInput currencyInputData = new ObjectMapper().readValue(new String(Base64.getDecoder().decode(currencyInput.getData())), CurrencyInput.class);
-        Speed and compact size
-
+14. Protobuf
+        
 15. DB Indexing
 16. Batch Processing
 17. DTO projection
@@ -1536,6 +1532,11 @@ Microservice Optimizations for improved Performance
 22. Gatling
    
 -------------------------------------------------------------------------------------------------
+
+Base64 encoded request
+-------------------------
+CurrencyInput currencyInputData = new ObjectMapper().readValue(new String(Base64.getDecoder().decode(currencyInput.getData())), CurrencyInput.class);
+       
 
 Key Challenges in High-Traffic Systems
 ===========================================================
