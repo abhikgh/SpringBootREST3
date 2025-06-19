@@ -5007,4 +5007,10 @@ public class RetryService {
 
 ------------------------------------------------------------------------------------------------------------------------------------------
 
+ProtoBuf
+--------------
+ public String convertProtoToJson(MessageOrBuilder messageOrBuilder) throws InvalidProtocolBufferException {
+        return JsonFormat.printer().print(messageOrBuilder);
+    }
+objectMapper.readValue(convertProtoToJson(retailItemSalesPriceProto), RetailItemSalesPriceDetails.class);
 
