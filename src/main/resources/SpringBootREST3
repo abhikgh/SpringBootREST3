@@ -1677,7 +1677,7 @@ SpringBoot3 changes
 	    <groupId>jakarta.xml.bind</groupId>
             <artifactId>jakarta.xml.bind-api</artifactId>
 
-8. Swagger -> 
+8. Swagger -> OpenAPI
 
 	    <dependency>
             <groupId>org.springdoc</groupId>
