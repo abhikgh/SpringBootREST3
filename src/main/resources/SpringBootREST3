@@ -3721,6 +3721,19 @@ public class OrderExceptionHandler {
     }
 
 }
+
+	-------------------------------------
+
+private final Validator validator;
+Set<ConstraintViolation<MinOrderValueData>> violations = validator.validate(movData);
+if (!violations.isEmpty()) {
+	ConstraintViolation<MinOrderValueData> violation = violations.iterator().next();
+	String errorMessage = violation.getPropertyPath() + ": " + violation.getMessage();
+	throw new SPERuntimeException(ErrorConstants.Group.VALIDATION_ERROR, ErrorConstants.Type.SCHEMA_ERROR.name(),
+			ErrorConstants.Code.SCHEMA_VALIDATION_ERROR.name(), SYSTEM_NAME, errorMessage, ErrorConstants.Severity.LOW,
+			Timestamp.valueOf(eventsHelper.getCurrentUTCTime()), HttpStatus.BAD_REQUEST);
+}
+
 ------------------------------------------------------------------------------------------------------------------------
 
 To route all requests through this path :
