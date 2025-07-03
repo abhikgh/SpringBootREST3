@@ -3734,6 +3734,7 @@ if (!violations.isEmpty()) {
 			Timestamp.valueOf(eventsHelper.getCurrentUTCTime()), HttpStatus.BAD_REQUEST);
 }
 
+//test :    validator = jakarta.validation.Validation.buildDefaultValidatorFactory().getValidator();
 ------------------------------------------------------------------------------------------------------------------------
 
 To route all requests through this path :
