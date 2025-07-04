@@ -31,6 +31,7 @@ public class OrderRequestForm {
     @JsonProperty("orderId")
     @NotNull(message = "Order Id should not be not null") //for Integer
     @Digits(integer = 3, fraction = 0, message = "Invalid Order ID")
+    @Positive
     private Integer orderId;
 
     @JsonProperty("item")

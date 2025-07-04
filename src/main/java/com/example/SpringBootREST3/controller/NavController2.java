@@ -9,6 +9,7 @@ import com.example.SpringBootREST3.util.OrderServiceUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.ExternalDocumentation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -61,7 +62,7 @@ public class NavController2 {
             @RequestParam(value = "parmRequestSource") String parmRequestSource,
             @RequestParam(required = false, value = "parmAudienceType") String parmAudienceType,
             @RequestHeader(value = "Actor") String actor,
-            @RequestBody OrderRequestForm orderRequestForm) {
+            @RequestBody @Valid OrderRequestForm orderRequestForm) {
 
         OrderResponse orderResponse = new OrderResponse();
         String item = orderRequestForm.getItem();
