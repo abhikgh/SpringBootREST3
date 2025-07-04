@@ -20,7 +20,7 @@ public class Person {
     @JsonProperty
     @NotBlank
     @Size(min = 5, message = "First name must have at-least 5 chars")
-    @Schema(description = "First name", example = "John")
+    @Schema(description = "First name", example = "Johny")
     private String firstName;
 
     @JsonProperty

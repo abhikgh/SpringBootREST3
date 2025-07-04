@@ -3724,15 +3724,14 @@ public class OrderExceptionHandler {
 
 	-------------------------------------
 
-private final Validator validator;
-Set<ConstraintViolation<MinOrderValueData>> violations = validator.validate(movData);
-if (!violations.isEmpty()) {
-	ConstraintViolation<MinOrderValueData> violation = violations.iterator().next();
-	String errorMessage = violation.getPropertyPath() + ": " + violation.getMessage();
-	throw new SPERuntimeException(ErrorConstants.Group.VALIDATION_ERROR, ErrorConstants.Type.SCHEMA_ERROR.name(),
-			ErrorConstants.Code.SCHEMA_VALIDATION_ERROR.name(), SYSTEM_NAME, errorMessage, ErrorConstants.Severity.LOW,
-			Timestamp.valueOf(eventsHelper.getCurrentUTCTime()), HttpStatus.BAD_REQUEST);
+Set<ConstraintViolation<Person>> validationErrors = validator.validate(person);
+if (!validationErrors.isEmpty()) {
+    ConstraintViolation<Person> violation = validationErrors.iterator().next();
+    String errorMessage = violation.getPropertyPath() + ": " + violation.getMessage();
+    System.out.println(errorMessage);
+    errorProperties.throwSPEException(ErrorProperties.ErrorCode.INVALID_ITEM, List.of(item));
 }
+
 
 //test :    validator = jakarta.validation.Validation.buildDefaultValidatorFactory().getValidator();
 ------------------------------------------------------------------------------------------------------------------------

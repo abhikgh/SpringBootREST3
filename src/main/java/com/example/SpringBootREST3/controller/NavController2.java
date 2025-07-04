@@ -3,13 +3,16 @@ package com.example.SpringBootREST3.controller;
 import com.example.SpringBootREST3.exception.ErrorProperties;
 import com.example.SpringBootREST3.model.OrderRequestForm;
 import com.example.SpringBootREST3.model.OrderResponse;
+import com.example.SpringBootREST3.model.Person;
 import com.example.SpringBootREST3.model.PushMessageBody;
 import com.example.SpringBootREST3.service.HomeService;
 import com.example.SpringBootREST3.util.OrderServiceUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.ExternalDocumentation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Valid;
+import jakarta.validation.Validator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -25,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/v3/rest")
@@ -38,10 +42,13 @@ public class NavController2 {
 
     private final ErrorProperties errorProperties;
 
-    public NavController2(HomeService homeService, OrderServiceUtil orderServiceUtil, ErrorProperties errorProperties) {
+    private final Validator validator;
+
+    public NavController2(HomeService homeService, OrderServiceUtil orderServiceUtil, ErrorProperties errorProperties, Validator validator) {
         this.homeService = homeService;
         this.orderServiceUtil = orderServiceUtil;
         this.errorProperties = errorProperties;
+        this.validator = validator;
     }
 
 
@@ -66,6 +73,14 @@ public class NavController2 {
 
         OrderResponse orderResponse = new OrderResponse();
         String item = orderRequestForm.getItem();
+        Person person = new Person("aaaaa", "bbb");
+        Set<ConstraintViolation<Person>> validationErrors = validator.validate(person);
+        if (!validationErrors.isEmpty()) {
+            ConstraintViolation<Person> violation = validationErrors.iterator().next();
+            String errorMessage = violation.getPropertyPath() + ": " + violation.getMessage();
+            System.out.println(errorMessage);
+            errorProperties.throwSPEException(ErrorProperties.ErrorCode.INVALID_ITEM, List.of(item));
+        }
 
         if (!orderServiceUtil.allowedItems.contains(item)) {
             errorProperties.throwSPEException(ErrorProperties.ErrorCode.INVALID_ITEM, List.of(item));
