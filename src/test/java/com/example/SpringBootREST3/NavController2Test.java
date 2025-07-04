@@ -7,6 +7,7 @@ import com.example.SpringBootREST3.exception.ErrorProperties;
 import com.example.SpringBootREST3.repository.MovieRepository;
 import com.example.SpringBootREST3.service.HomeService;
 import com.example.SpringBootREST3.util.OrderServiceUtil;
+import jakarta.validation.Validator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,6 +46,8 @@ public class NavController2Test {
 
     private ErrorInfoMessageProperties errorInfoMessageProperties;
 
+    private Validator validator;
+
     private MockMvc mockMvc;
 
     @BeforeEach
@@ -55,7 +58,8 @@ public class NavController2Test {
         errorMessageProperties = new ErrorMessageProperties();
         errorInfoMessageProperties = new ErrorInfoMessageProperties();
         errorProperties = new ErrorProperties(errorMessageProperties, errorInfoMessageProperties);
-        mockMvc = MockMvcBuilders.standaloneSetup(new NavController2(homeService, orderServiceUtil, errorProperties)).build();
+        validator = jakarta.validation.Validation.buildDefaultValidatorFactory().getValidator();
+        mockMvc = MockMvcBuilders.standaloneSetup(new NavController2(homeService, orderServiceUtil, errorProperties, validator)).build();
         ReflectionTestUtils.setField(homeService, "businessUnit", "CA,NA,LQ");
     }
 
