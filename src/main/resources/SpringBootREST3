@@ -1514,12 +1514,8 @@ Microservice Optimizations for improved Performance
             enabled: true
             mime-types: application/json
             min-response-size: 2048 #This will compress responses larger than 2KB for the specified MIME types.
-15. Protobuf
-        Protocol Buffer
-        Base 64 encoded structured data
-        CurrencyInput currencyInputData = new ObjectMapper().readValue(new String(Base64.getDecoder().decode(currencyInput.getData())), CurrencyInput.class);
-        Speed and compact size
-
+14. Protobuf
+        
 15. DB Indexing
 16. Batch Processing
 17. DTO projection
@@ -1536,6 +1532,11 @@ Microservice Optimizations for improved Performance
 22. Gatling
    
 -------------------------------------------------------------------------------------------------
+
+Base64 encoded request
+-------------------------
+CurrencyInput currencyInputData = new ObjectMapper().readValue(new String(Base64.getDecoder().decode(currencyInput.getData())), CurrencyInput.class);
+       
 
 Key Challenges in High-Traffic Systems
 ===========================================================
@@ -1676,7 +1677,7 @@ SpringBoot3 changes
 	    <groupId>jakarta.xml.bind</groupId>
             <artifactId>jakarta.xml.bind-api</artifactId>
 
-8. Swagger -> 
+8. Swagger -> OpenAPI
 
 	    <dependency>
             <groupId>org.springdoc</groupId>
@@ -3720,6 +3721,20 @@ public class OrderExceptionHandler {
     }
 
 }
+
+	-------------------------------------
+
+private final Validator validator;
+Set<ConstraintViolation<MinOrderValueData>> violations = validator.validate(movData);
+if (!violations.isEmpty()) {
+	ConstraintViolation<MinOrderValueData> violation = violations.iterator().next();
+	String errorMessage = violation.getPropertyPath() + ": " + violation.getMessage();
+	throw new SPERuntimeException(ErrorConstants.Group.VALIDATION_ERROR, ErrorConstants.Type.SCHEMA_ERROR.name(),
+			ErrorConstants.Code.SCHEMA_VALIDATION_ERROR.name(), SYSTEM_NAME, errorMessage, ErrorConstants.Severity.LOW,
+			Timestamp.valueOf(eventsHelper.getCurrentUTCTime()), HttpStatus.BAD_REQUEST);
+}
+
+//test :    validator = jakarta.validation.Validation.buildDefaultValidatorFactory().getValidator();
 ------------------------------------------------------------------------------------------------------------------------
 
 To route all requests through this path :
@@ -5006,4 +5021,10 @@ public class RetryService {
 
 ------------------------------------------------------------------------------------------------------------------------------------------
 
+ProtoBuf
+--------------
+ public String convertProtoToJson(MessageOrBuilder messageOrBuilder) throws InvalidProtocolBufferException {
+        return JsonFormat.printer().print(messageOrBuilder);
+    }
+objectMapper.readValue(convertProtoToJson(retailItemSalesPriceProto), RetailItemSalesPriceDetails.class);
 
