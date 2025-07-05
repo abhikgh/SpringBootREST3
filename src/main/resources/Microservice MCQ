@@ -23,7 +23,7 @@ How does service discovery handle the dynamic scaling of services in microservic
 - Client-based Discovery
 
 In a case where a Microservices application needs to handle unexpected spikes in traffic, which fault tolerance technique would be most beneficial?
-- Load Shedding
+- Bulkhead
 
 In microservices, how does health check integration in load balancing improve service reliability?
 - Dynamic Routing Decisions
@@ -61,3 +61,33 @@ In Microservices, how does eventual consistency differ from immediate consistenc
 
  In the context of Microservices, what does fault tolerance primarily ensure?
  - Graceful Degradation (Fault tolerance in Microservices primarily ensures graceful degradation. This means that even in the face of failures, the system can still provide a reasonable level of service without a complete collapse.)
+
+What role does a Retry mechanism play in a resilient Microservices architecture?
+- Enhancing Fault Tolerance
+
+In a microservices environment, load balancing is essential for managing what aspect of service requests?
+- Traffic Distribution
+
+What role does a Message Broker play in maintaining data consistency in Microservices?
+- It facilitates communication and event-driven architecture by enabling asynchronous messaging.
+
+The _________ pattern in caching helps in reducing database load in a Microservices system.
+- Cache-Aside
+
+What is a critical factor to consider when implementing cache invalidation in a Microservices architecture?
+- Consistency
+
+What is the primary purpose of performance monitoring in a Microservices architecture?
+- Optimizing Service Efficiency
+
+What role does a service registry play in service discovery within microservices?
+- Service Registration and Discovery
+
+For enhancing fault tolerance, Microservices architectures often implement _________ to ensure system stability during peak loads.
+- Redundancy
+
+In complex transaction scenarios, Microservices use the _________ strategy to ensure data integrity across services.
+- Two-Phase Commit
+
+For capacity planning in Microservices, monitoring ________ is essential.
+- Resource Utilization

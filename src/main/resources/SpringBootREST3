@@ -1552,7 +1552,7 @@ Fault Tolerance and Resiliency in Microservices
 How system can handle faults / how to recover quickly from faults
 Fault tolerance in Microservices primarily ensures graceful degradation. This means that even in the face of failures, the system can still provide a reasonable level of service without a complete collapse.
 
-1. Replication
+1. Replication (/Redundancy)
 
 
 Kubernetes Architecture
