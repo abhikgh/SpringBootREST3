@@ -91,3 +91,20 @@ In complex transaction scenarios, Microservices use the _________ strategy to en
 
 For capacity planning in Microservices, monitoring ________ is essential.
 - Resource Utilization
+
+How does a global server load balancing (GSLB) technique enhance the performance of microservices distributed across multiple data centers?
+- Efficient Traffic Distribution
+
+What advantage does a least connections load balancing technique provide in microservices?
+- Reduces server overloads
+(The least connections load balancing technique in Microservices helps reduce server overloads by directing traffic to services with the fewest active connections, ensuring better resource utilization)
+
+To diagnose inter-service communication issues, ________ is an essential metric to monitor.
+- Tracing
+
+For fault tolerance in service discovery, the _________ pattern is often utilized to handle service failures.
+- Circuit Breaker
+
+What role does a service mesh play in monitoring and metrics in a Microservices environment?
+- Inter-Service Communication
+(A service mesh facilitates inter-service communication in a Microservices environment, enabling monitoring and metrics collection for better visibility and control)
