@@ -1544,18 +1544,21 @@ Key Challenges in High-Traffic Systems
 Scalability
 Latency
 Fault Tolerance
-Resilience
+Resiliency
 Data Consistency
 
-Fault Tolerance in Microservices
---------------------------------------
-How system can handle faults
+Fault Tolerance and Resiliency in Microservices
+-------------------------------------------------
+How system can handle faults / how to recover quickly from faults
 
-1. Clustering and Replication
+1. Replication
 
 
 Kubernetes Architecture
-============================                                                                                         Internet
+============================
+Region - Cluster - Zone - Node - Pod - Container
+
+                                                                                                                     Internet
                                       Scheduler                                                                         |
 kubectl                                                                                                                 |
         ---> API    ----------------> API Server     ----------------------------------> Kubelet  ---------------  Kube-Proxy					    |							||						|
@@ -1639,9 +1642,6 @@ UI                                                                              
 8. Asynchronous
 9. Caching
 
-Resilience
---------------------------
-How many faults the system can handle
 
 ------------------------------------------------------------------------------------------------------------------------
 
@@ -3322,7 +3322,7 @@ Client -> Proxy -> Internet -> Server
  time for the request to come back with a response (time to resolve the hostname + open the TCP connection + perform the TLS handshake etc)
                                         time to read data                   time to open the TCP connection
 
-Fault tolerance 		vs 						Resiliency
+Fault tolerance 		vs 						                            Resiliency
 -----------------------------------------------------------------------------------------------------------
 ability to continue functioning even in the presence of failures		ability of a system to recover from failures and disruptions
 
