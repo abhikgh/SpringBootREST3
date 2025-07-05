@@ -108,3 +108,21 @@ For fault tolerance in service discovery, the _________ pattern is often utilize
 What role does a service mesh play in monitoring and metrics in a Microservices environment?
 - Inter-Service Communication
 (A service mesh facilitates inter-service communication in a Microservices environment, enabling monitoring and metrics collection for better visibility and control)
+
+In a scenario where a Microservice needs to handle high read demand, which caching strategy would be most effective?
+- Read-Through Caching
+
+How does client-side service discovery differ from server-side service discovery in microservices?
+- Clients query a registry directly
+
+How does the Outbox pattern address data consistency challenges in a Microservices environment?
+- Buffers Outgoing Messages
+
+Consider a situation where cache consistency is critical across multiple Microservices. Which approach would be most suitable?
+- Cache Invalidation
+
+In a scenario where a microservices application experiences variable traffic, which load balancing technique ensures optimal resource utilization and reduced latency?
+- Weighted Round Robin Load Balancing
+
+In microservices, which load balancing strategy is best for handling sessions and user-specific data?
+- Sticky Sessions (directs requests from the same client to the same service instance)

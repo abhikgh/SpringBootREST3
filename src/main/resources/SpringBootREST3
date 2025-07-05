@@ -1530,6 +1530,7 @@ Microservice Optimizations for improved Performance
 
 21. Actuator + Prometheus + Grafana
 22. Gatling
+
    
 -------------------------------------------------------------------------------------------------
 
@@ -3061,6 +3062,15 @@ Symmetric Encryption                                            vs              
 Single key is used for encryption and decryption                                    Two different keys are used — Private Key and Public Key
 - AES (Advanced Encryption Standard) , DES (Data Encryption Standard)               -RSA
 
+
+
+Client side service discovery               vs                              Server side service discovery
+------------------------------------------------------------------------------------------------------------
+The client calls a service registry (like Consul or Eureka) to get a list of available service instances.
+It then selects one (often using a load balancing algorithm) and directly sends requests to it.
+
+                                                         Client sends requests to a load balancer
+                                                         The load balancer queries the service registry and forwards the request to a healthy service instance.
 
 Pen test
 ==============
