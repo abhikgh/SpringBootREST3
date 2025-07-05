@@ -32,3 +32,32 @@ The process of dynamically updating the service registry in response to changes 
 - Service Refresh
 
 What is the primary goal of implementing resilience in a Microservices architecture?
+- Minimizing Downtime
+
+How do Idempotent operations aid in maintaining data consistency in Microservices?
+- At-Most-Once Delivery
+
+How does the Bulkhead pattern prevent failures in one part of a system from cascading to other parts in Microservices?
+- Isolating components into independent pools
+
+In Microservices, what is the significance of tracking the number of requests per second?
+- Assessing Service Scalability
+
+The use of ________ tools enables real-time monitoring and alerts in a Microservices architecture.
+- APM (Application Performance Monitoring)
+
+In microservices, the _________ pattern is often used to automate the process of service discovery.
+- Registry-Based Discovery
+
+In Microservices, how does eventual consistency differ from immediate consistency?
+- Eventual consistency allows for temporary inconsistencies
+ (Eventual consistency in Microservices allows for temporary inconsistencies that are resolved over time. It acknowledges that achieving real-time consistency in a distributed system may be challenging.)
+
+ _________ is a key feature of service discovery that helps in managing service instances across multiple nodes.
+ - Load Balancing
+
+ In Microservices, what is a common challenge when implementing distributed caching?
+ - Consistency of Cached Data
+
+ In the context of Microservices, what does fault tolerance primarily ensure?
+ - Graceful Degradation (Fault tolerance in Microservices primarily ensures graceful degradation. This means that even in the face of failures, the system can still provide a reasonable level of service without a complete collapse.)
