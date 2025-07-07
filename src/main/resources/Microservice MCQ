@@ -138,3 +138,12 @@ In a Microservices architecture, which pattern helps in synchronizing data acros
 
 Imagine a situation where a service must maintain functionality despite external service failures. Which resilience strategy would be appropriate?
 - Circuit Breaker
+
+What is the primary purpose of load balancing in a microservices architecture?
+- Improve Performance, Enhance Scalability
+
+Which type of load balancing algorithm distributes traffic based on a fixed set of rules defined by the user?
+- Static Load balancing
+
+For microservices dealing with real-time data, _________ load balancing ensures minimal latency and efficient resource utilization.
+- Least Latency
