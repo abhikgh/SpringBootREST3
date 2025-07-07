@@ -126,3 +126,15 @@ In a scenario where a microservices application experiences variable traffic, wh
 
 In microservices, which load balancing strategy is best for handling sessions and user-specific data?
 - Sticky Sessions (directs requests from the same client to the same service instance)
+
+How does a round-robin load balancer operate in a microservices architecture?
+- Distributes incoming requests equally
+
+What is the primary purpose of service discovery in a microservices architecture?
+- Dynamic Service Location
+
+In a Microservices architecture, which pattern helps in synchronizing data across multiple services?
+- Event Sourcing
+
+Imagine a situation where a service must maintain functionality despite external service failures. Which resilience strategy would be appropriate?
+- Circuit Breaker
