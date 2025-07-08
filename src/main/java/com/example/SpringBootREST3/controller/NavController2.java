@@ -4,6 +4,7 @@ import com.example.SpringBootREST3.exception.ErrorProperties;
 import com.example.SpringBootREST3.model.OrderRequestForm;
 import com.example.SpringBootREST3.model.OrderResponse;
 import com.example.SpringBootREST3.model.Person;
+import com.example.SpringBootREST3.model.PersonAddress;
 import com.example.SpringBootREST3.model.PushMessageBody;
 import com.example.SpringBootREST3.service.HomeService;
 import com.example.SpringBootREST3.util.OrderServiceUtil;
@@ -27,7 +28,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @RestController
@@ -70,10 +73,17 @@ public class NavController2 {
             @RequestParam(required = false, value = "parmAudienceType") String parmAudienceType,
             @RequestHeader(value = "Actor") String actor,
             @RequestBody @Valid OrderRequestForm orderRequestForm) {
-
+        System.out.println("In getOrder3...................");
         OrderResponse orderResponse = new OrderResponse();
         String item = orderRequestForm.getItem();
-        Person person = new Person("aaaaa", "bbb");
+        Person person = new Person();
+        person.setFirstName("aaaaa");
+        person.setLastName("bbbbb");
+        PersonAddress personAddress = new PersonAddress();
+        Map<String, String> addressMap = new HashMap<>();
+        addressMap.put("aa","bb");
+        personAddress.setAddressMap(addressMap);
+        person.setPersonAddress(personAddress);
         Set<ConstraintViolation<Person>> validationErrors = validator.validate(person);
         if (!validationErrors.isEmpty()) {
             ConstraintViolation<Person> violation = validationErrors.iterator().next();

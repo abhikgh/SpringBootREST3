@@ -3735,6 +3735,47 @@ public class OrderExceptionHandler {
 
 	-------------------------------------
 
+
+@Getter
+@Setter
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class Person {
+
+    @JsonProperty
+    @NotBlank
+    @Size(min = 5, message = "First name must have at-least 5 chars")
+    @Schema(description = "First name", example = "Johny")
+    @Valid
+    private String firstName;
+
+    @JsonProperty
+    @Schema(description = "Last name", example = "Doe")
+    @Size(min = 5, message = "Last name must have at-least 5 chars")
+    @Valid
+    private String lastName;
+
+    @NotNull
+    @Valid
+    private PersonAddress personAddress;
+}
+
+@Data
+public class PersonAddress {
+
+    @Valid
+    @NotEmpty
+    private Map<String, String> addressMap = new HashMap<>();
+}
+
+Person person = new Person();
+person.setFirstName("aaaaa");
+person.setLastName("bbbbb");
+PersonAddress personAddress = new PersonAddress();
+Map<String, String> addressMap = new HashMap<>();
+addressMap.put("aa","bb");
+personAddress.setAddressMap(addressMap);
+person.setPersonAddress(personAddress);
 Set<ConstraintViolation<Person>> validationErrors = validator.validate(person);
 if (!validationErrors.isEmpty()) {
     ConstraintViolation<Person> violation = validationErrors.iterator().next();
@@ -3742,7 +3783,6 @@ if (!validationErrors.isEmpty()) {
     System.out.println(errorMessage);
     errorProperties.throwSPEException(ErrorProperties.ErrorCode.INVALID_ITEM, List.of(item));
 }
-
 
 //test :    validator = jakarta.validation.Validation.buildDefaultValidatorFactory().getValidator();
 ------------------------------------------------------------------------------------------------------------------------
