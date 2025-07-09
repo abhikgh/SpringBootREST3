@@ -5071,10 +5071,59 @@ public class RetryService {
 
 ------------------------------------------------------------------------------------------------------------------------------------------
 
-ProtoBuf
---------------
+ProtoBuf (Google Protocol Buffer)
+-----------------------------------
+Language-agnostic binary data format. We can define a file in protobuf and using that file can generate code in languages like Java, C++, C#, Go, or Python.
+
+ <dependency>
+     <groupId>com.google.protobuf</groupId>
+     <artifactId>protobuf-java</artifactId>
+     <version>${protobuf.version}</version>
+ </dependency>
+
+ <properties>
+     <protobuf.version>3.2.0</protobuf.version>
+ </properties>
+
+ //JSON to protobuf
+ <dependency>
+     <groupId>com.google.protobuf</groupId>
+     <artifactId>protobuf-java-util</artifactId>
+     <version>3.25.3</version>
+ </dependency>
+
+proto file
+-----------------
+ package protobuf;
+
+ option java_package = "com.src.java.model.proto";
+ option java_outer_classname = "AddressBookProtos";
+
+ message Person {
+     required string name = 1;
+     required int32 id = 2;
+     optional string email = 3;
+
+     repeated string numbers = 4;
+ }
+
+ message AddressBook {
+     repeated Person people = 1;
+ }
+
+JSON to proto
+---------------------
+public static Message fromJson(String json) throws IOException {
+    Builder structBuilder = Struct.newBuilder();
+    JsonFormat.parser().ignoringUnknownFields().merge(json, structBuilder);
+    return structBuilder.build();
+}
+
+proto to JSON
+-----------------
  public String convertProtoToJson(MessageOrBuilder messageOrBuilder) throws InvalidProtocolBufferException {
         return JsonFormat.printer().print(messageOrBuilder);
     }
 objectMapper.readValue(convertProtoToJson(retailItemSalesPriceProto), RetailItemSalesPriceDetails.class);
 
+------------------------------------------------------------------------------------------------------------------------------------------
