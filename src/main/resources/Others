@@ -5,9 +5,10 @@ Path = ;C:\Program Files\apache-maven-3.6.1\bin
 
 mvn commands
 =====================
-mvn clean install -DskipTests
+mvn clean install -DskipTests=true
 mvn clean install -U
 mvn clean install -U -DskipTests
+mvn clean install -Dmaven.javadoc.skip=true
 mvn -version
 mvn verify (runs integration test)
 mvn spring-boot:run
