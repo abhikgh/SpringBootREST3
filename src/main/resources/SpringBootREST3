@@ -1537,7 +1537,7 @@ Microservice Optimizations for improved Performance
 Base64 encoded request
 -------------------------
 CurrencyInput currencyInputData = new ObjectMapper().readValue(new String(Base64.getDecoder().decode(currencyInput.getData())), CurrencyInput.class);
-       
+       return Base64.getEncoder().encodeToString(sellingRangePushMessageRequest.getBytes());
 
 Key Challenges in High-Traffic Systems
 ===========================================================
