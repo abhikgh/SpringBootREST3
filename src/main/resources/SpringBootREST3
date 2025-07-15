@@ -5127,3 +5127,26 @@ proto to JSON
 objectMapper.readValue(convertProtoToJson(retailItemSalesPriceProto), RetailItemSalesPriceDetails.class);
 
 ------------------------------------------------------------------------------------------------------------------------------------------
+
+JavaDoc
+-----------------
+
+Ignore JavaDoc : 
+	<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>attach-javadocs</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<additionalOptions>
+						<additionalOption>-Xdoclint:none</additionalOption>
+					</additionalOptions>
+				</configuration>
+			</plugin>
+mvn clean install -Dmaven.javadoc.skip=true
