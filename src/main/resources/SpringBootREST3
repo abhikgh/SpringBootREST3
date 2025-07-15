@@ -5092,6 +5092,42 @@ Language-agnostic binary data format. We can define a file in protobuf and using
      <version>3.25.3</version>
  </dependency>
 
+<!--Proto to java conversion-->
+      <plugin>
+        <groupId>com.github.os72</groupId>
+        <!--protocol Buffers protobuf maven plugin - performs protobuf code generation using protoc-jar multi-platform executable protoc JAR. Available on Maven Central-->
+        <artifactId>protoc-jar-maven-plugin</artifactId>
+        <version>${protoc-jar-maven-plugin.version}</version>
+        <executions>
+          <execution>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <protocVersion>${protobuf.version}</protocVersion>
+          <!--Specifies whether to add the source .proto files found in inputDirectories/includeDirectories to the generated jar file. Options: "all" (add all), "inputs" (add only from inputDirectories), "none" (default: "none")-->
+          <addProtoSources>none</addProtoSources>
+          <!--If "true", extract the included Google.protobuf standard types and add them to protoc import path-->
+          <includeStdTypes>true</includeStdTypes>
+          <protocArtifact>com.google.protobuf:protoc:${protobuf.version}</protocArtifact>
+          <includeDirectories>
+            <directory>${protodir}</directory>
+          </includeDirectories>
+          <!--The proto files from this directory will be used to generate java files-->
+          <inputDirectories>
+            <!--Input directories that have *.proto files (or the configured extension). If none specified then-->
+            <directory>${protodir}/ikea/ingka/erix/common</directory>
+            <directory>${protodir}/ikea/ingka/erix/range</directory>
+            <directory>${protodir}/ingka/sr/common/v1</directory>
+          </inputDirectories>
+          <!--The java files will be generated from proto files in this directory-->
+          <outputDirectory>${project.basedir}/src/main/java</outputDirectory>
+        </configuration>
+      </plugin>
+
 proto file
 -----------------
  package protobuf;
