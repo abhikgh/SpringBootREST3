@@ -882,8 +882,13 @@ Decouples message producers and consumers, improves scalability and flexibility.
 		spe-prod-RetailItemSalesPrice-base	
 			spe-prod-RetailItemSalesPrice-dead-letter-base
 				
-		Base Load process :: We have to set content version as -1 for the item which has issue in item_price_t table, and share the topic name to erix , and ask to resync. If any issue in fees, then we have to set in fee table, and then set content version as -1, and share fee topic name to erix team to resync	
+		Base Load process ::
+			Set content version as -1 for the item which has issue in item_price_t table, and share the topic name to erix , and ask to resync. If any issue in fees, then we have to set in fee table, and then set content version as -1, and share fee topic name to erix team to resync	
+			A baseload will be provided to the consumer's Pub/Sub topic. eCBD will publish baseload directly to consumer's topic. Regular updates(delta) will be published on the main topic			
+					Create Pub/Sub Topic to Receive Baseload.
+					Grant Pub/Sub Publisher Role to eCBD’s Service Account
 			
+
 		Delta Subscription : spe-prod-RetailItemSalesPrice-live-push-new
 		
 					Topic : projects/ingka-rrm-erix-prod/topics/INGKA-range-eRIX-RetailItemSalesPriceUpdated-production
@@ -5187,9 +5192,3 @@ Ignore JavaDoc :
 			</plugin>
 mvn clean install -Dmaven.javadoc.skip=true
 
-Baseload
-------------------
-A baseload will be provided to the consumer's Pub/Sub topic. This process ensures that the Pub/Sub infrastructure is set up correctly and that the eCBD team has the necessary permissions to publish data.
-
-Create Pub/Sub Topic to Receive Baseload.
-Grant Pub/Sub Publisher Role to eCBD’s Service Account.
