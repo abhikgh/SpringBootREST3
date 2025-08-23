@@ -3640,7 +3640,9 @@ public class ServiceForm implements Serializable {
 
     @JsonProperty(value = "customerType")
     @Schema(description = "customerType of the request", example = "Business")
-    private CustomerType customerType;
+    @Pattern(regexp = "(?i)Private|Business", message = "customerType must be either 'Private' or 'Business' (case insensitive)")
+    private String customerType;
+    //private CustomerType customerType;
 
     @JsonProperty(value = "validForDate")
     @Schema(description = "validForDate of the request", example = "2012-03-20T21:22:33Z", pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
