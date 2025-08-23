@@ -16,9 +16,13 @@ mvn spring-boot:run
 git commands
 ===================
 git checkout -b <branch_name>
-git pull
+git pull origin <branchname>
 git merge development
 git branch -m <old_name> <new_name>
+
+git stash 
+git stash pop (removes from stash) / git stash apply (keeps in stash)
+
 
 You have not concluded your merge (MERGE_HEAD exists). Please, commit your changes before you merge
 -------------------------------------------------------------------------------------------------------
@@ -26,8 +30,6 @@ git merge --abort
 git reset --merge
 Pull the branch and resolve the conflicts
 
-git stash 
-git stash pop (removes from stash) / git stash apply (keeps in stash)
 
 
 Port check
