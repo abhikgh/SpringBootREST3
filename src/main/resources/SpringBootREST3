@@ -710,6 +710,14 @@ Security in Architecture
 
 1. OAuth2.0 Protocol
 
+Our REST endpoints are accessible only to internal business services within the company and not externally.
+Access to our REST endpoints require a JSON security token, which must be presented with each request.
+This security token along with the client id is validated before processing the request.
+We have throttling and rate-limiting enforced at the load balancer and Cloud armor level to prevent abuse.
+The response is not rendered in browsers, so the risk of Cross-Site Scripting (XSS) attacks is very low.
+Because of these controls, the chances of XSS injection attacks on our REST service endpoint are minimal.
+We believe that heavy input validation against XSS is not necessary and minimizing validation helps keep latency low, which is critical for our service consumers.
+
 2. GCP Architecture
 AKAMAI (CDN) (IP whitelisting)                 
 	 |                                   
