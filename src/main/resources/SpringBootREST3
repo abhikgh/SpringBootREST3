@@ -3609,8 +3609,9 @@ Controller :: public ResponseEntity<ServiceForm> serviceForm(@Valid @RequestBody
 })
 public class ServiceForm implements Serializable {
 
-    //@NotNull - Integer
-    //@NotBlank - String
+    //@NotNull - not null / blanks are allowed
+    //@NotEmpty - must be not null, and the trimmed length can be zero (blanks are allowed)
+    //@NotBlank - must be not null, and the trimmed length must be greater than zero (blanks are NOT allowed)
     //@NotEmpty - List
 
     //@Nonnull - preventing null-related issues at the development stage, doesn’t trigger any runtime validation
