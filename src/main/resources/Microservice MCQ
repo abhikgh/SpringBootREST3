@@ -147,3 +147,26 @@ Which type of load balancing algorithm distributes traffic based on a fixed set 
 
 For microservices dealing with real-time data, _________ load balancing ensures minimal latency and efficient resource utilization.
 - Least Latency
+
+
+What is the Sofyware architeture and what are the responsibility of Software Architect?
+Are yu familier with cocept of Integration Architeture like API bansed integration, file based integration, event based intagration?
+Do you have experience in SOA(Service Oriented Architecture) and Microservices?
+What is life cycle of SOA and microservice?what is the diffrence between SOA and Microservies?
+Do you know Api Design pattern like RESTful, GraphQL, SOAP, RPC, Versioning, rate limiting, Caching?
+What is API life cycle?
+Are you familiar with UML(Unified modeling Language)?
+Do you know different data transfer methods like http, https, FTP?
+Do you how implemnt resiliencey in rest api call?
+Are you familer with event based Publish-subscribe architecture? Do know any tool/technolgy to implement event based integration?
+Are you familer with falie based intagration? Are you aware of any file gateway application/tool?
+Do you know swagger standard  for api design?
+Do you know OpenAPi 3.0 standard for api design?
+Do you know what are the diffrent authentication that can be implemented for RestFul apis? Like oauth 2.0, SAML, JWT etc?
+Are you aware of any tool to desing swagger or open api 3.0 specification?
+Are you familier with any API gateway?
+Why API gateway are used and what are the advantages?
+What are NFR(Non functional requirement) for an API design?
+What are different types api?like interanly consumed api, externally consumed api, Monetized api?
+What is rate limiting and why it is important for api design?
+Are you aware of Agile parctices?
