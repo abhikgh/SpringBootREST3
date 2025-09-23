@@ -84,7 +84,8 @@ which the client then uses to make requests to the resource server on the user's
 
 JWT ( Json Web Token ) - based Authentication
 ------------------------------------------------
-JWTs are used as authentication tokens to share information between clients and servers
+access token = JWT 
+JWTs are used as authentication tokens to share information between Client and Authorization Server / Resource Server
 JWT just verifies that the data inside is correct
 
 JWT = header.payload.signature
@@ -108,14 +109,12 @@ payload: The payload information is called Claims
         -> Registered Claims : subject, issuer, scope, audience, expirationTime
 
 signature:
-    HMACSHA256(base64UrlEncode(header).base64UrlEncode(payload), secret)
+    HMACSHA256(Base64urlEncoded(header).Base64urlEncoded(payload), secret)
 
-validates JWTToken
---------------------------
-The signature is used to verify the sender and that the message wasn’t tampered
-If the payload is tampered then the signatures won't match
+    validates JWTToken : The signature is used to verify the sender and that the message wasn’t tampered
+    If the payload is tampered then the signatures won't match
 
-secret(key)
+secret(=key)
 ------------------
 AUTHENTICATION SERVER (private key, signature) ----------------> RESOURCE SERVER (public key, verify signature)
 
@@ -143,27 +142,28 @@ JWT Authentication Flow
 	     AUTHENTICATION SERVER		  (Authentication)
 	 {username, password, clientId, clientSecret, grantType, audience, scope}	            (Resource Owner Password flow)
 	 {clientId, clientSecret, grantType, audience, scope}     			            (Client Credential flow)
-	         |
-      	 	 | {JWTToken}
-      		 |		                httpHeaders.set("Authorization", "Bearer JWTToken");
+	         		 |
+						{ REDIS }
+		      	 	 
+					 | {JWTToken}
+		      		 |		     httpHeaders.set("Authorization", "Bearer JWTToken");
 User/Machine    -------> CLIENT  -------------------------------------------------------->       CLOUD DNS             ------------>         RESOURCE SERVER
-			                                                                         |
-			                                                                AKAMAI (CDN) (IP whitelisting)                   -> validates JWTToken
-			                                                                         |                                       -> validates Role from the JWTToken
-			                                                                      KONG (Api Gateway)                         -> returns the secure resource to the client
-			                                                                         |
-			                                                                  CLOUD ARMOUR (firewall)     <---------- CLOUD FUNCTION (policies to support that CA only accepts IPs passed through Akamai)
-			                                                                         |
-			                                                                    INGRESS (Load Balancer)
-			                                                                        |
-			                                                                    WORKLOADS (services)
+							                                                                         |
+			                                                       				         AKAMAI (CDN) (IP whitelisting)                   -> validates JWTToken
+			                                                                   					     |                                    -> validates Role from the JWTToken
+			                                                                     			 KONG (Api Gateway)                         -> returns the secure resource to the client
+			                                                                       					 |
+			                                                                				  CLOUD ARMOUR (firewall)     <---------- CLOUD FUNCTION (policies to support that CA only accepts IPs passed through Akamai)
+			                                                                       					 |
+			                                                                			    INGRESS (Load Balancer)
+			                                                                      					 |
+			                                                                 				   WORKLOADS (services)
 
 
  Benefits :
 JWT centralizes authentication & authorization by generating a single shared token that contains user and app-level information
 1. CLIENT does not know user credentials - has only the JWTToken
 2. Granular access to CLIENT
-
 
 
 JWT RefreshToken
