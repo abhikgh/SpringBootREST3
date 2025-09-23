@@ -888,9 +888,19 @@ Cloud Run service :: The serverless architecture of GCP is an event-driven model
 that supports any programming language or binary capable of running in a container, while it automatically scales.
 Decouples message producers and consumers, improves scalability and flexibility.
 
+‘Serverless’ essentially means that developers don’t need to handle server management, allowing them to focus solely on building and deploying applications.
+
+The Serverless framework generally falls into two categories: Backend-as-a-Service (BaaS) and Function-as-a-service (FaaS).
+The most common serverless computing model used is FaaS. 
+Code = event-driven function and run them in containers managed by cloud service providers.
+Each function is triggered by specific events or HTTP requests, and the cloud provider executes them on a running or new server.
+This entire execution process is invisible to developers, and hence serverless computing.
+
 Push Endpoint: 
 					(Cloud Run service)
 					https://spe-erix-price-event-new-wivl3ihu6q-ez.a.run.app/erix-price/erix-price-data
+
+
 
 
 
