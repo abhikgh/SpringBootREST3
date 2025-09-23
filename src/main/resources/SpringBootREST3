@@ -896,15 +896,11 @@ Code = event-driven function and run them in containers managed by cloud service
 Each function is triggered by specific events or HTTP requests, and the cloud provider executes them on a running or new server.
 This entire execution process is invisible to developers, and hence serverless computing.
 
-Push Endpoint: 
-					(Cloud Run service)
-					https://spe-erix-price-event-new-wivl3ihu6q-ez.a.run.app/erix-price/erix-price-data
-
-
-
-
-
-
+Subscription :
+	Topic : projects/ingka-rrm-erix-prod/topics/INGKA-range-eRIX-RetailItemSalesPriceUpdated-production
+        Push Endpoint: 
+           Cloud Run service + Endpoint
+					
 
 		Base Load Topics
 		------------------------
