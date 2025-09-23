@@ -77,8 +77,10 @@ SpringBoot Architectures
 
 OAuth2.0
 ----------
-OAuth 2.0 is an Open Authorization Protocol that gives Clients limited access to user accounts on an HTTP service without exposing user credentials and get access to Resource
-
+OAuth 2.0 is an industry-standard Authorization framework that allows a user to grant a third-party application (the "client") limited access to their protected resources
+on another service (the "resource server") without sharing their actual credentials.
+It works by enabling the client to receive an "access token" from an "authorization server" after the user approves the access, 
+which the client then uses to make requests to the resource server on the user's behalf. 
 
 JWT ( Json Web Token ) - based Authentication
 ------------------------------------------------
