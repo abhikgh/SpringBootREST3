@@ -884,7 +884,16 @@ public class NavigationController {
 
 6. ASynchronous (Cloud Run) (Fault Tolerance)
 -----------------------------------------
+Cloud Run service :: The serverless architecture of GCP is an event-driven model, whereby Cloud Run is a container-based platform 
+that supports any programming language or binary capable of running in a container, while it automatically scales.
 Decouples message producers and consumers, improves scalability and flexibility.
+
+Push Endpoint: 
+					(Cloud Run service)
+					https://spe-erix-price-event-new-wivl3ihu6q-ez.a.run.app/erix-price/erix-price-data
+
+
+
 
 
 		Base Load Topics
