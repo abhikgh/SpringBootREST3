@@ -3024,6 +3024,28 @@ if (CollectionUtils.isEmpty(movies)) {
 	    //List<String> cacheKeys = getCacheKeys();
         //List<String> responseItems = redisTemplate.multiGet(cacheKeys);
 
+// Use SCAN instead of KEYS to avoid blocking Redis
+Set<String> keys = circularCacheTemplate.keys("test");
+
+
+Set<String> matchingKeys = priceCacheTemplate.execute((RedisCallback<Set<String>>) connection -> {
+	Set<String> foundKeys = new HashSet<>();
+	org.springframework.data.redis.core.ScanOptions options =
+		org.springframework.data.redis.core.ScanOptions.scanOptions()
+			.match(pattern)
+			.count(1000L)
+			.build();
+
+	try (org.springframework.data.redis.core.Cursor<byte[]> cursor = connection.keyCommands().scan(options)) {
+		while (cursor.hasNext()) {
+			foundKeys.add(new String(cursor.next()));
+		}
+	} catch (Exception e) {
+		logger.severe("Error during SCAN operation for pattern : '" + pattern + "': " + e.getMessage());
+	}
+	return foundKeys;
+});
+
 
     } else {
         caffeineCacheManager.getCache(CaffeineConfig.HELLO_WORLD_CACHE).put(redisKey, movies);
