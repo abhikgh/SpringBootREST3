@@ -707,6 +707,15 @@ private String getJWTToken() {
 
 --------------------------------------------------------------------------------------------------------
 
+SOA vs Microservices
+==========================================
+
+Microservices are an evolution of Service-Oriented Architecture (SOA), differing primarily in scope: SOA services are full business capabilities with enterprise scope, 
+while microservices are fine-grained, single-task components with an application scope, enabling greater agility, independent deployment, and scalability. 
+Key distinctions include service size (large vs. small), governance (centralized in SOA, decentralized in microservices),
+data management (shared in SOA, independent in microservices), and communication (often via an enterprise service bus in SOA, more direct and lightweight in microservices). 
+
+--------------------------------------------------------------------------------------------------------
 Security in Architecture
 ==========================================
 
