@@ -719,6 +719,19 @@ The core difference in the lifecycles of Service-Oriented Architecture (SOA) and
 	SOA often leads to large, shared, and sequentially deployed components managed by a central Enterprise Service Bus (ESB), resulting in slower development and deployment cycles
     Microservices focus on small, independent, and self-contained services that are deployed, scaled, and updated autonomously using tools like containers and orchestrators, enabling faster and more flexible iterations. 
 --------------------------------------------------------------------------------------------------------
+
+API Lifecycle 
+==========================================
+
+1. Design
+2. Develop
+3. Test
+4. Deploy
+5. Discover
+6. Monitor
+
+--------------------------------------------------------------------------------------------------------
+
 Security in Architecture
 ==========================================
 
