@@ -1620,8 +1620,8 @@ Region - Cluster - Zone - Node - Pod - Container
 kubectl                                                                                                                 |
         ---> API    ----------------> API Server     ----------------------------------> Kubelet  ---------------  Kube-Proxy					    |							||						|
 UI                                                                                                                     						        |					        ||						|
-                            etcd       CCM                                                                             					     	    |						    ||						|
-                                                                                         Pod1           Pod2 										|						    ||
+                            etcd       CCM                                                                             					     	    |						    ||	 C L U S T E R		|
+                                                                                         Pod1           Pod2 										|						    ||                      |
                                                                                       (Container1)  (Container2)							        |							||						|
 
                                      CONTROL PLANE                                        NODE 1                                        NODE 2
@@ -1645,7 +1645,8 @@ UI                                                                              
         Node-Pod-Container has 1:1:1 relation
 
 2. Load balancing
-
+			DNS
+             |
             AKAMAI CDN (IP whitelisting)
         	 |
             KONG (Api Gateway)
@@ -1658,8 +1659,8 @@ UI                                                                              
 
 3. Autoscaling
 
-        Horizontal scaling :: adding more servers
-        	AutoScaling happens depending on the Pod - Resource metrics - like CPU usage, memory usage, request count
+        Horizontal Pod Autoscaling :: adding more servers
+        	AutoScaling happens depending on the Pod metrics - like CPU usage, memory usage, request count
         	--- HPA (Horizontal Pod Autoscaler) ---
         	kubectl autoscale deployment endpoints --cpu-percent=50 --min=1 --max=10
         Vertical Scaling   :: adding more resources to existing server , like more CPU, RAM, Network, Storage
