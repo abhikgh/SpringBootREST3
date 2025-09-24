@@ -715,6 +715,9 @@ while microservices are fine-grained, single-task components with an application
 Key distinctions include service size (large vs. small), governance (centralized in SOA, decentralized in microservices),
 data management (shared in SOA, independent in microservices), and communication (often via an enterprise service bus in SOA, more direct and lightweight in microservices). 
 
+The core difference in the lifecycles of Service-Oriented Architecture (SOA) and Microservices is their deployment model: 
+	SOA often leads to large, shared, and sequentially deployed components managed by a central Enterprise Service Bus (ESB), resulting in slower development and deployment cycles
+    Microservices focus on small, independent, and self-contained services that are deployed, scaled, and updated autonomously using tools like containers and orchestrators, enabling faster and more flexible iterations. 
 --------------------------------------------------------------------------------------------------------
 Security in Architecture
 ==========================================
