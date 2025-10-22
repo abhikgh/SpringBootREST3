@@ -5243,12 +5243,19 @@ public static Message fromJson(String json) throws IOException {
     return structBuilder.build();
 }
 
-proto to JSON
+proto to Java
 -----------------
- public String convertProtoToJson(MessageOrBuilder messageOrBuilder) throws InvalidProtocolBufferException {
-        return JsonFormat.printer().print(messageOrBuilder);
-    }
-objectMapper.readValue(convertProtoToJson(retailItemSalesPriceProto), RetailItemSalesPriceDetails.class);
+ //get proto from message
+SalesItemPriceProto.SalesItemPriceUpdated retailItemSalesPriceProto = SalesItemPriceProto.SalesItemPriceUpdated.parseFrom(Base64.getDecoder().decode(pubSubMessage.getData()));
+
+//get Java from proto
+		//convert proto to json
+			public String convertProtoToJson(MessageOrBuilder retailItemSalesPriceProto) throws InvalidProtocolBufferException {
+             return JsonFormat.printer().includingDefaultValueFields().print(retailItemSalesPriceProto);
+           }
+		//convert json to pojo
+		RetailItemSalesPriceDetails retailItemSalesPriceDetails = 
+		   return objectMapper.readValue(convertProtoToJson(retailItemSalesPriceProto), RetailItemSalesPriceDetails.class);
 
 ------------------------------------------------------------------------------------------------------------------------------------------
 
