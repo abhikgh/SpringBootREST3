@@ -267,61 +267,91 @@ Benefits : low overhead
 
 2. Microservices Event driven architecture
 ========================================================
-1. Spring's event-driven architecture
+Cloud Run service :: The serverless architecture of GCP is an event-driven model, whereby Cloud Run is a container-based platform 
+that supports any programming language or binary capable of running in a container, while it automatically scales.
+Decouples message producers and consumers, improves scalability and flexibility.
 
-//create Event
-public class OrderPlacedEvent extends ApplicationEvent {
-    private final Order order;
+‘Serverless’ essentially means that developers don’t need to handle server management, allowing them to focus solely on building and deploying applications.
 
-    public OrderPlacedEvent(Object source, Order order) {
-        super(source);
-        this.order = order;
-    }
+The Serverless framework generally falls into two categories: Backend-as-a-Service (BaaS) and Function-as-a-service (FaaS).
+The most common serverless computing model used is FaaS. 
+Code = event-driven function and run them in containers managed by cloud service providers.
+Each function is triggered by specific events or HTTP requests, and the cloud provider executes them on a running or new server.
+This entire execution process is invisible to developers, and hence serverless computing.
 
-    public Order getOrder() {
-        return order;
-    }
-}
+Subscription :
+	Topic : projects/ingka-rrm-erix-prod/topics/INGKA-range-eRIX-RetailItemSalesPriceUpdated-production
+        Push Endpoint: 
+           Cloud Run service + Endpoint
+					
 
-//publish Event
-@Service
-public class OrderService {
+		Base Load Topics
+		------------------------
+		spe-prod-RetailItemSalesPrice-base	
+			spe-prod-RetailItemSalesPrice-dead-letter-base
+				
+		Base Load process ::
+			Set content version as -1 for the item which has issue in item_price_t table, and share the topic name to erix , and ask to resync. If any issue in fees, then we have to set in fee table, and then set content version as -1, and share fee topic name to erix team to resync	
+			A baseload will be provided to the consumer's Pub/Sub topic. eCBD will publish baseload directly to consumer's topic. Regular updates(delta) will be published on the main topic			
+					Create Pub/Sub Topic to Receive Baseload.
+					Grant Pub/Sub Publisher Role to eCBD’s Service Account
+			
 
-    @Autowired
-    private ApplicationEventPublisher applicationEventPublisher;
-
-    public void placeOrder(Order order) {
-        // Logic to place the order
-
-
-        // Publish the order placed event
-        applicationEventPublisher.publishEvent(new OrderPlacedEvent(this, order));
-    }
-}
-
-//Event listener
-@Component
-public class OrderConfirmationListener {
-
-    @EventListener
-    public void handleOrderPlacedEvent(OrderPlacedEvent event) {
-
-        //Logic to manage inventory
-        Order order = event.getOrder();
-
-        // Logic to send order confirmation email
-        Order order = event.getOrder();
-
-        // Logic to process payment
-        Order order = event.getOrder();
-
-        // Process payment for the order
-        System.out.println("Payment processed for order: " + order.getId());
-
-        // Send email to the customer confirming the order
-        System.out.println("Order confirmation email sent for order: " + order.getId());
-    }
-}
+		Delta Subscription : spe-prod-RetailItemSalesPrice-live-push-new
+		
+					Topic : projects/ingka-rrm-erix-prod/topics/INGKA-range-eRIX-RetailItemSalesPriceUpdated-production
+					
+					Push Endpoint: 
+					(Cloud Run service)
+					https://spe-erix-price-event-new-wivl3ihu6q-ez.a.run.app/erix-price/erix-price-data
+					
+					Dead Letter Topic : projects/ikea-dt-spe-prod/topics/spe-prod-RetailItemSalesPrice-dead-letter-live
+					
+		Delta DLT subscription : spe-prod-RetailItemSalesPrice-dead-letter-live-push-new		
+		
+					Topic : projects/ikea-dt-spe-prod/topics/spe-prod-RetailItemSalesPrice-dead-letter-live
+					
+					Push Endpoint: 
+					https://dummy.spe.ingka.com/
+			
+		Fee ::
+		
+		Base Load Topics
+		------------------------
+		spe-prod-RetailItemFee-base
+			spe-prod-RetailItemFee-dead-letter-base
+				
+		Delta Subscription : spe-prod-RetailItemFee-live-push-new
+		
+					Topic : projects/ingka-rrm-erix-prod/topics/INGKA-range-eRIX-RetailItemFeeUpdated-production
+					
+					Push Endpoint: 
+					(Cloud Run service)
+					https://spe-erix-price-event-new-wivl3ihu6q-ez.a.run.app/erix-price/erix-fee-data
+					
+					Dead Letter Topic : projects/ikea-dt-spe-prod/topics/spe-prod-RetailItemFee-dead-letter-live
+					
+		Delta DLT subscription : spe-prod-RetailItemFee-dead-letter-live-push-new	
+		
+					Topic : projects/ikea-dt-spe-prod/topics/spe-prod-RetailItemFee-dead-letter-live
+					
+					Push Endpoint: 
+					https://dummy.spe.ingka.com/
+					
+		Cloud Run :	spe-erix-price-event-new
+					
+					2 endpoints : 
+					/erix-price-data
+					/erix-fee-data
+					
+					
+					Image : gcr.io/ikea-dt-spe-prod/sales-price-execution/spe-erix-price-event@sha256:9e8fe3b46f1631f9dc36dc04a57b53f24b1c19772db6adbad8ae5ab1d77b98a3
+					
+		2 Base Topics
+		
+		2 Delta Subscriptions
+		2 Delta DLT Subscriptions
+		1 Cloud Run -> 2 Endpoints 
 
 2. Kafka (See SpringBootKafka)
 
