@@ -146,7 +146,7 @@ JWT Authentication Flow
 						{ REDIS }
 		      	 	 
 					 | {JWTToken}
-		      		 |		     httpHeaders.set("Authorization", "Bearer JWTToken");
+		      		 |		     httpHeaders.set("Authorization", "Bearer <JWTToken>");
 User/Machine    -------> CLIENT  -------------------------------------------------------->       CLOUD DNS             ------------>         RESOURCE SERVER
 							                                                                         |
 			                                                       				         AKAMAI (CDN) (IP whitelisting)                   -> validates JWTToken
@@ -158,6 +158,25 @@ User/Machine    -------> CLIENT  -----------------------------------------------
 			                                                                			    INGRESS (Load Balancer)
 			                                                                      					 |
 			                                                                 				   WORKLOADS (services)
+
+Secure Connection : via JWT ->  httpHeaders.set("Authorization", "Bearer <JWTToken>");
+	Map<String, List<String>> headerMap = Maps.newHashMap();
+    headerMap.put("Authorization", Collections.singletonList("Bearer " + jwtToken));
+    return createHeaders(CollectionUtils.toMultiValueMap(headerMap));
+
+Direct Connection : via x-client-id, x-client-secret
+	Map<String, List<String>> headerMap = Maps.newHashMap();
+    headerMap.put("x-client-id", Collections.singletonList(xClientId));
+    headerMap.put("x-client-secret", Collections.singletonList(xClientSecret));
+    return createHeaders(CollectionUtils.toMultiValueMap(headerMap));
+
+protected HttpHeaders createHeaders(MultiValueMap<String, String> headers) {
+        HttpHeaders requestHeaders = new HttpHeaders();
+        requestHeaders.addAll(headers);
+        return requestHeaders;
+}
+
+
 
 
  Benefits :
