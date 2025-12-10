@@ -4327,6 +4327,15 @@ private ApplicationMapConfig applicationMapConfig;
 
 String value1 = applicationMapConfig.getApplicationMap().get("306");
 
+Read values as List/Map
+---------------------------------------
+serviceArea.statcodeSpliting.countries={AB:2,CD:2}
+@Value("#{${serviceArea.statcodeSpliting.countries}}") 
+private Map<String, Integer> stateCodeMap;
+
+@Value("#{'${admin.articles.of.customer.returns?:123}'.split(',')}")
+private List<String> adminArticles;
+
 
 Get individual property from Environment
 ------------------------------------------
