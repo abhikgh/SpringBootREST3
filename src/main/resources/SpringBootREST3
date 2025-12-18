@@ -1875,6 +1875,75 @@ private CompletableFuture<Hero> getHeroDetails(String heroName) {
 }
 
 ---------------------------------------------------------------------------------------------------
+Read from cache and fallback to API
+----------------------------------------------
+
+Set<String> uniqueOfferNumbers = new HashSet<>(itemsWithOfferNumber.keySet());
+Map<String, CircularOffer> circularOfferMap = new HashMap<>();
+
+if (circularOfferCachingEnabled) {
+                populateCircularOffersFromCache(uniqueOfferNumbers, circularOfferMap);
+            }
+// If there are any remaining unique offers not available in cache, fetch them from the API
+if (!uniqueOfferNumbers.isEmpty()) {
+	populateCircularOffersFromAPI(uniqueOfferNumbers, circularOfferMap);
+}
+
+private void populateCircularOffersFromCache(Set<String> uniqueOfferNumbers, Map<String, CircularOffer> circularOfferMap) {
+        if (!CollectionUtils.isEmpty(uniqueOfferNumbers)) {
+            Set<String> availableCircularOffers = new HashSet<>();
+            Set<CircularOffer> circularOfferRedisResponse = getFromCache(uniqueOfferNumbers);
+            circularOfferRedisResponse.forEach(redisResponse -> {
+                circularOfferMap.put(redisResponse.getOfferNumber(), redisResponse);
+                availableCircularOffers.add(redisResponse.getOfferNumber());
+            });
+            uniqueOfferNumbers.removeAll(availableCircularOffers);
+        }
+}
+
+private void populateCircularOffersFromAPI(Set<String> uniqueOfferNumbers, Map<String, CircularOffer> circularOfferMap){
+        // If internal API is enabled, first fetch from the internal API
+        if (circularInternalEndPointEnabled) {
+            // Fetch from internal API
+            circularOfferService.getCircularOfferPrices(uniqueOfferNumbers, circularOfferMap);
+			(same as populateCircularOffersFromCache)
+        } // Fetch any remaining offers (SOLD, DELETED, missed) asynchronously from external API
+        
+				
+		List<CompletableFuture<CircularOffer>> completableFutureList = uniqueOfferNumbers.stream()
+                .map(circularOfferService::getOffersViaCircularApi).toList();
+       try {
+           /* CompletableFuture.allOf(completableFutureList.toArray(new CompletableFuture[0])).join();
+            completableFutureList.stream()
+                    .map(CompletableFuture::join)
+                    .filter(Objects::nonNull)
+                    .forEach(circularOffer -> circularOfferMap.put(circularOffer.getOfferNumber(), circularOffer)); */
+			
+			CompletableFuture.allOf(cfList.toArray(new CompletableFuture[0])).join();
+			for(CompletableFuture<CircularOffer> cf: completableFutureList){
+				 if(cf.isDone() && !cf.get().isEmpty()){
+					CircularOffer circularOffer = cf.get()
+					circularOfferMap.put(circularOffer.getOfferNumber(), circularOffer));
+				}
+			}	
+        } catch (Exception e) {
+            throw (Exception) e.getCause();
+        }
+}
+	
+ @Async
+public CompletableFuture<CircularOffer> getOffersViaCircularApi(String offerNumber) {
+	try {
+		CircularOffer response = circularPriceServiceRepository.getCircularOfferPriceViaExternalApi(offerNumber);
+		return CompletableFuture.completedFuture(response);
+	} catch (Exception e) {
+		return CompletableFuture.failedFuture(e);
+	}
+}	
+
+
+
+----------------------------------------------------------------------------------------------------
 
 Exception Handler
 ---------------------
