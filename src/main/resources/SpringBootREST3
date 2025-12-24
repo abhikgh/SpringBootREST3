@@ -3202,12 +3202,30 @@ CSRF protection - CSRF token to be shared between client and server
 httpSecurity
         .csrf().disable() //disable for APIs as it is stateless or JWT authentication
 
+SSRF (Server side Request Forgery)
+============================================================
+Server-Side Request Forgery (SSRF) is a critical web vulnerability where an attacker tricks a web application into making unintended requests to internal or external systems,
+using the server as a proxy to bypass firewalls and access private resources like cloud metadata, databases, or internal APIs,
+
 XSS (Cross-Site Scripting)
 ===============================
 Implement malicious code in user's website
 When the malicious code is processed, it can fetch any data.
 Javascript-based
 more dangerous
+
+OWASP Top 10:2025
+===============================
+A01:2025 - Broken Access Control
+A02:2025 - Security Misconfiguration
+A03:2025 - Software Supply Chain Failures
+A04:2025 - Cryptographic Failures
+A05:2025 - Injection
+A06:2025 - Insecure Design
+A07:2025 - Authentication Failures
+A08:2025 - Software or Data Integrity Failures
+A09:2025 - Security Logging & Alerting Failures
+A10:2025 - Mishandling of Exceptional Conditions
 
 ---------------------------------------------------------------------------------------------------------------------------
 
