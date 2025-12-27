@@ -821,9 +821,44 @@ SAST(Static Application Security Testing) 				vs 			    SCA (Software Compositio
 Scans static content like code, docs for Security vuln.					Scans dependencies for Security vuln.
 Shifts security left in the SDLC										Security across SDLC
 Rule-based analysis														Multiple scanning techniques
-Pipeline integration for Continous security checks
+Pipeline integration for Continous security checks						Pipeline integration for Continous security check
 
 ----------------------------------------------------------------------------------------------------------------------
+
+Blackbox Testing				vs 			   					Whitebox Testing
+==============================================================================================================================
+
+Tester is not concerned with the software’s internal working details but rather focuses on validating the functionality
+Functional Testing
+Regression Testing
+Nonfunctional Testing (NFT)
+
+												Tester knows the internal working and code of software and designs test cases accordingly
+												Unit Testing
+											    Integration Testing
+												Regression Testing
+----------------------------------------------------------------------------------------------------------------------
+
+Nonfunctional Testing (NFT)
+=======================================
+- Load Testing
+- Security Testing
+
+----------------------------------------------------------------------------------------------------------------------
+
+Security Testing
+=======================================
+1. Vulnerability Scanning
+2. Security Scanning
+3. Penetration Testing
+4. Risk Assessment
+5. Security Auditing
+6. Ethical Hacking
+7. Application Security Testing
+8. Network Security Testing
+
+----------------------------------------------------------------------------------------------------------------------
+
 Spring Boot Design Patterns
 =======================================
 
