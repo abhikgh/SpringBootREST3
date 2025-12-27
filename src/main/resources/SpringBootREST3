@@ -809,7 +809,7 @@ AKAMAI (CDN) (IP whitelisting)
 
 4.Security Tools 
 
-Github Advanced Security (GHAS) -  Source Code Analysis, Security scanning, Secret detection, Dependency review
+Github Advanced Security (GHAS) -  Source Code Analysis, Vulnerability Scanning, Secret detection, Dependency review
 Trivy : scans images for security + Dependency review
 Renovate :  Automate PR for dependency management
 
@@ -848,14 +848,13 @@ Nonfunctional Testing (NFT)
 
 Security Testing
 =======================================
-1. Vulnerability Scanning
+1. Vulnerability Scanning  - Automated
 2. Security Scanning
-3. Penetration Testing
+3. Penetration Testing( Ethical Hacking) - Manual, From SQL injection to password cracking, a pen tester mimics a hacker
 4. Risk Assessment
 5. Security Auditing
-6. Ethical Hacking
-7. Application Security Testing
-8. Network Security Testing
+6. Application Security Testing
+7. Network Security Testing
 
 ----------------------------------------------------------------------------------------------------------------------
 
@@ -3336,6 +3335,7 @@ It then selects one (often using a load balancing algorithm) and directly sends 
 Pen test
 ==============
 API penetration testing is a security testing method that simulates hacker attacks to evaluate the security of an API
+From SQL injection to password cracking, a pen tester “thinks” and “acts” like a hacker
 - BurpSuite
 
 
