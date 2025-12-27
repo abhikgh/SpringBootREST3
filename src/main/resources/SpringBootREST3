@@ -807,11 +807,11 @@ AKAMAI (CDN) (IP whitelisting)
 
 3. GCP Security Command center : for Threats and vulnerabilities
 
-4. Static Code Analysis
+4.Security Tools 
 
-sonar / GHAS -  Security scanning, secret detection, alerts, dependency review
-Trivy : scans images for security + dependency review
-Renovate :  scans and automates PR for dependency management
+Github Advanced Security (GHAS) -  Source Code Analysis, Security scanning, Secret detection, Dependency review
+Trivy : scans images for security + Dependency review
+Renovate :  Automate PR for dependency management
 
 5. @JsonIgnoreProperties(ignoreUnknown = true)
 
