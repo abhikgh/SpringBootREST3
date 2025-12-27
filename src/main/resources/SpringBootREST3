@@ -816,7 +816,14 @@ Renovate :  Automate PR for dependency management
 5. @JsonIgnoreProperties(ignoreUnknown = true)
 
 ----------------------------------------------------------------------------------------------------------------------
+SAST(Static Application Security Testing) 				vs 			    SCA (Software Composition Analysis)
+==============================================================================================================================
+Scans static content like code, docs for Security vuln.					Scans dependencies for Security vuln.
+Shifts security left in the SDLC										Security across SDLC
+Rule-based analysis														Multiple scanning techniques
+Pipeline integration for Continous security checks
 
+----------------------------------------------------------------------------------------------------------------------
 Spring Boot Design Patterns
 =======================================
 
