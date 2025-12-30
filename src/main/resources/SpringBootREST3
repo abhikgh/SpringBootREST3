@@ -849,15 +849,18 @@ Nonfunctional Testing (NFT)
 Security Testing
 =======================================
 1. Vulnerability Scanning  - Automated
-2. Security Scanning
-3. Penetration Testing( Ethical Hacking) - Manual, From SQL injection to password cracking, a pen tester mimics a hacker
-4. Risk Assessment
-5. Security Auditing
-6. Application Security Testing
-7. Network Security Testing
+2. Penetration Testing( Ethical Hacking) - Manual, From SQL injection to password cracking, a pen tester mimics a hacker
+3. Application Security Testing
+4. Network Security Testing
 
 ----------------------------------------------------------------------------------------------------------------------
+Man-in-the-middle (MitM) attacks
+====================================
 
+The primary HTTP header for preventing man-in-the-middle (MitM) attacks is the Strict-Transport-Security (HSTS) header,
+which enforces the use of encrypted HTTPS connections. 
+
+----------------------------------------------------------------------------------------------------------------------
 Spring Boot Design Patterns
 =======================================
 
@@ -3245,7 +3248,8 @@ httpSecurity
 
 SSRF (Server side Request Forgery)
 ============================================================
-Server-Side Request Forgery (SSRF) is a critical web vulnerability where an attacker tricks a web application into making unintended requests to internal or external systems,
+Server-Side Request Forgery (SSRF) is a critical web vulnerability where an attacker tricks a web application into making unintended requests
+to internal or external systems,
 using the server as a proxy to bypass firewalls and access private resources like cloud metadata, databases, or internal APIs,
 
 XSS (Cross-Site Scripting)
@@ -3254,6 +3258,22 @@ Implement malicious code in user's website
 When the malicious code is processed, it can fetch any data.
 Javascript-based
 more dangerous
+
+IDOR (Insecure Direct Object Reference)
+=============================================
+An IDOR (Insecure Direct Object Reference) vulnerability lets attackers access or modify data they shouldn't
+by manipulating direct object identifiers (like IDs in URLs or file paths) because the application fails to enforce proper authorization checks,
+allowing them to bypass security and view other users' files or records, leading to data breaches, unauthorized changes, or even full system compromise. 
+Prevention involves rigorous server-side access control, ensuring every request verifies user authorization for the specific object requested, not just relying on authentication. 
+
+Weak cryptographic functions
+==================================
+Using weak cryptographic functions (like old DES, RC4, MD5, SHA-1) creates severe security risks, allowing attackers to decrypt sensitive data.
+
+Insecure data export and download functionality 
+==========================================================
+Insecure data export and download functionality refers to vulnerabilities that can lead to the unauthorized exposure, modification, or theft of sensitive information
+during or after the transfer process. This typically occurs when developers fail to implement adequate security controls, assuming that the file system or communication channels are inherently secure. 
 
 OWASP Top 10:2025
 ===============================
