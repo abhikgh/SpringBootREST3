@@ -809,9 +809,13 @@ AKAMAI (CDN) (IP whitelisting)
 
 4.Security Tools 
 
-Github Advanced Security (GHAS) -  Source Code Analysis, Vulnerability Scanning, Secret detection, Dependency review
+Github Advanced Security (GHAS) -  Code Scanning, Secret Scanning, Vulnerability Scanning, Dependency review
+				Code Scanning - how code is written (e.g., insecure functions, logic flaws)
+			  	Secret Scanning - automatically alerts for sensitive data like passwords, tokens, API keys in code
+				Vulnerability Scanning - what is running , checks running systems, networks, applications for known weaknesses like outdated libraries, missing patches, or misconfigurations
 Trivy : scans images for security + Dependency review
 Renovate :  Automate PR for dependency management
+Dependabot : GitHub's built-in feature for automated dependency management
 
 5. @JsonIgnoreProperties(ignoreUnknown = true)
 
