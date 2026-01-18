@@ -3,6 +3,15 @@ M2 = C:\Program Files\apache-maven-3.6.1\bin
 M2_HOME = C:\Program Files\apache-maven-3.6.1
 Path = ;C:\Program Files\apache-maven-3.6.1\bin
 
+Port check
+-------------
+netstat -a -n -o | find "8080"
+
+Kill process
+-------------
+taskkill /F /PID 62786
+
+
 mvn commands
 =====================
 mvn clean install -DskipTests=true
@@ -31,14 +40,6 @@ git branch
 git stash
 git stash pop
 git reset --soft HEAD~1 (to remove if committed to master directly)
-git
-
-
-Git Stash
-===============
-
-
-
 
 Git Merge
 ================
@@ -57,22 +58,11 @@ cleaner project history
 The golden rule of rebasing :: only use if no one else is working on the main branch
 
 
-
-
 You have not concluded your merge (MERGE_HEAD exists). Please, commit your changes before you merge
 -------------------------------------------------------------------------------------------------------
 git merge --abort
 git reset --merge
 Pull the branch and resolve the conflicts
 
-
-
-Port check
--------------
-netstat -a -n -o | find "8080"
-
-Kill process
--------------
-taskkill /F /PID 62786
 
 
