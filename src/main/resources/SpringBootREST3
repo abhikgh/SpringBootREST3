@@ -3162,6 +3162,172 @@ public class RedisConfig {
 
 }
 
+** Redis work configuration **
+
+redis.cache.event.lettuce.pool.maxtotal=5000 
+redis.cache.event.lettuce.pool.maxidle=1000 
+redis.cache.event.lettuce.pool.minidle=100 
+
+
+
+@Configuration
+public class RedisBeanConfiguration {
+
+    @Value("${retry.template.custom.enabled:true}")
+    private boolean retryEnabled;
+
+    @Value("${retry.template.custom.properties.count:2}")
+    private int retryCount;
+
+    @Value("${retry.template.custom.properties.sleepBackOffDuration:100}")
+    private int retryBackOffDuration;
+
+    @Bean
+    @Primary
+    @ConfigurationProperties(prefix = "redis.cache.event")
+    @Validated
+    public RedisConfiguration.RedisProps redisEventOfferTemplate() {
+        return new RedisConfiguration.RedisProps();
+    }
+
+    /**
+     * Creates the RedisCacheHelper bean
+     *
+     * @param redisTemplatesMap A map of RedisTemplates
+     * @return Create a Map of multiple RedisTemplates
+     */
+    @Bean
+    public RedisCacheHelper redisTemplates(@Qualifier("CrossRegionRedisTemplatesMap") Map<String, RedisTemplate<String, String>> redisTemplatesMap) {
+        return new RedisCacheHelper(redisTemplatesMap, retryEnabled, retryCount, retryBackOffDuration);
+    }
+
+    /**
+     * A map of RedisTemplates, one template for each Redis host
+     * specified in the property redis.hosts
+     *
+     * @param hosts                  A comma separated list of hostname:port combinations
+     * @param socketTimeOutInMillis  Socket timeout in milliseconds
+     * @param commandTimeOutInMillis Command timeout in milliseconds
+     * @param poolConfig        A Jedis pool configuration
+     * @return A map of RedisTemplates, one template for each Redis host
+     */
+    @Bean("CrossRegionRedisTemplatesMap")
+    public Map<String, RedisTemplate<String, String>> redisTemplatesMap(@Value("${redis.additional.hosts:#{null}}") String hosts,
+                                                                        @Value("${redis.host}") String primaryRedisHost,
+                                                                        @Value("${redis.port}") Integer primaryRedisPort,
+                                                                        @Value("${redis.socketTimeOutInMillis}") Integer socketTimeOutInMillis,
+                                                                        @Value("${redis.commandTimeOutInMillis}") Integer commandTimeOutInMillis,
+                                                                        GenericObjectPoolConfig<String> poolConfig,
+                                                                        RedisTemplate<String, String> primaryRegionRedisTemplate) {
+        MultiRedisTemplatesMapFactory<String, String> factory = new MultiRedisTemplatesMapFactory<>();
+        var redisTemplatesMap = factory.create(hosts, socketTimeOutInMillis, commandTimeOutInMillis, poolConfig);
+
+        // Add the primary Redis template to the map
+        // (prefix it with a primary in case we need to reference it specifically)
+        redisTemplatesMap.put("primary" + primaryRedisHost + ":" + primaryRedisPort, primaryRegionRedisTemplate);
+
+        return redisTemplatesMap;
+    }
+}
+	**Service**
+    public String createCacheKey(String value, String... args) {
+        for (String arg : args) {
+            value = value.concat(":").concat(arg);
+        }
+        return value;
+    }
+
+    public String getCachedData(String key) {
+        AtomicReference<String> value = new AtomicReference<>();
+        try {
+            redisTemplates.keySet().forEach(host -> {
+                var redisTemplate = this.redisTemplates.get(host);
+                var retValue = redisTemplate.opsForValue().get(key);
+                if (retValue != null) {
+                    value.set(retValue);
+                }
+            });
+        } catch (Exception exception) {
+            log.error(ERROR_IN_RETRIEVING_CACHING_DATA, key);
+            throw exception;
+        }
+        return value.get();
+    }
+	
+	public void clearRedisCacheAcrossRegions(Set<String> keysToExpire) {
+        final AsyncDeleteCallback deleteCallback = new AsyncDeleteCallback(keysToExpire);
+        // Use ExecutorService to handle concurrent deletion
+        redisTemplates.keySet().forEach(host -> {
+            var template = redisTemplates.get(host);
+            long startTime = System.currentTimeMillis();
+            try {
+                executeWithRetry(template, deleteCallback, host);
+                LOGGER.info(EventsConstants.REDIS_DELETE_SUCCESS_LOG_MESSAGE, host, (System.currentTimeMillis() - startTime));
+            } catch (RuntimeException e) {
+                var ex = new SPERuntimeException(
+                        ErrorConstants.Group.APPLICATION_ERROR, EventsConstants.REDIS_ERROR,
+                        ErrorConstants.Code.INTERNAL_ERROR.name(), SYSTEM_NAME, e.getLocalizedMessage(),
+                        ErrorConstants.Severity.MEDIUM, Timestamp.valueOf(EventsHelper.getCurrentUTCTime()),
+                        HttpStatus.INTERNAL_SERVER_ERROR, e);
+                LOGGER.error(EventsConstants.REDIS_DELETE_FAIL_LOG_MESSAGE, host, String.join(", ", keysToExpire), ex);
+            }
+        });
+    }
+
+    public void executeWithRetry(RedisTemplate<String, String> template, RedisCallback<Object> callback, String host) throws SPERuntimeException {
+        int attempts = 1 + (retryEnabled ? retryCount : 0);
+        SPERuntimeException exception = null;
+        for (int n = 0; n < attempts; n++) {
+            try {
+                template.execute(callback);
+                return;  // If successful, break the loop
+            } catch (RedisConnectionFailureException e) {
+                exception = handleRedisException(e, host, n, attempts);
+            }
+            // Wait before retrying
+            if (n < attempts - 1) {
+                try {
+                    Thread.sleep(retryBackOffDuration);
+                } catch (InterruptedException e) {
+                    LOGGER.warn("Error waiting for retry", e);
+                    Thread.currentThread().interrupt();  // Reset interrupt flag
+                }
+            }
+        }
+
+        // If all attempts fail, throw the last exception encountered
+        if (exception != null) {
+            throw exception;
+        }
+    }
+
+    
+    static class AsyncDeleteCallback implements RedisCallback<Object> {
+        private final Set<String> keysToDelete;
+
+        public AsyncDeleteCallback(Set<String> keysToDelete) {
+            this.keysToDelete = keysToDelete;
+        }
+
+        @Override
+        public Object doInRedis(RedisConnection connection) throws DataAccessException {
+            byte[][] keys = keysToDelete.stream().map(String::getBytes).toArray(byte[][]::new);
+            connection.keyCommands().del(keys);
+            return null;  // No result expected
+        }
+    }
+
+    public void cacheData(String key, String itemJson, long cacheTTLInSeconds) {
+        try {
+            redisTemplates.keySet().forEach(host -> {
+                var redisTemplate = this.redisTemplates.get(host);
+                redisTemplate.opsForValue().set(key, itemJson, Duration.of(cacheTTLInSeconds, ChronoUnit.SECONDS));
+            });
+        } catch (Exception exception) {
+            LOGGER.error(ERROR_IN_CACHING_DATA, key);
+            throw exception;
+        }
+    }
 
 Service
 ----------
