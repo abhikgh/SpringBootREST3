@@ -5659,3 +5659,43 @@ Ignore JavaDoc :
 			</plugin>
 mvn clean install -Dmaven.javadoc.skip=true
 
+------------------------------------------------------------------------------------------------------------------------------------------
+
+Read a property into a bean by StreamReader
+-------------------------------------------------------
+
+keyPart1-keyPart2=20,VAT,0,
+
+@Record
+public class MockValues {
+    @Field(at = 0)
+    private BigDecimal taxRate;
+    @Field(at = 1)
+    private String taxType;
+    @Field(at = 2)
+    private String taxCode;
+    @Field(at = 3)
+    private String taxationInfo;
+	
+	import java.io.ByteArrayInputStream;
+	import java.io.InputStream;
+	import java.io.InputStreamReader;
+	import java.io.Reader;
+	
+	StreamFactory streamFactory = StreamFactory.newInstance();
+	InputStream inputStream =
+                new ByteArrayInputStream(propertyUtil.getProperty(property).getBytes(StandardCharsets.UTF_8));  //environment.getProperty(property)
+	Reader targetReader = new InputStreamReader(inputStream);	  
+		
+	StreamBuilder streamBuilder = new StreamBuilder("taxStream")
+                .format("delimited")
+                .parser(new DelimitedParserBuilder(','))
+                .addRecord(MockValues.class);
+				
+	streamFactory.define(streamBuilder);	
+    BeanReader beanReader = streamFactory.createReader("taxStream", targetReader);	
+	
+    return (MockValues) beanReader.read();
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
