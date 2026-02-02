@@ -5699,3 +5699,28 @@ public class MockValues {
 
 ------------------------------------------------------------------------------------------------------------------------------------------
 
+Proto
+--------------------
+Protocol Buffers are a language-neutral, platform-neutral extensible mechanism for serializing structured data.
+It’s like JSON, except it’s smaller and faster, and it generates native language bindings.
+
+encode : input string to proto string
+
+var protoBuilder = SellingRangeItemPriceUpdated.SalesItemPriceUpdated.newBuilder();
+            JsonFormat.parser().ignoringUnknownFields().merge(input, protoBuilder);
+            return Base64.getEncoder().encodeToString(protoBuilder.buildPartial().toByteArray());
+			
+			
+decode : proto string to json
+
+SellingRangeItemPriceUpdated.SalesItemPriceUpdated retailItemSalesPriceProto = SellingRangeItemPriceUpdated.SalesItemPriceUpdated.parseFrom(Base64.getDecoder().decode(message); //X
+return objectMapper.readValue(convertProtoToJson(retailItemSalesPriceProto), RetailItemSalesPriceDetails.class)
+
+ public String convertProtoToJson(MessageOrBuilder messageOrBuilder) throws InvalidProtocolBufferException {
+        return JsonFormat.printer().includingDefaultValueFields().print(messageOrBuilder);
+    }
+	
+			
+  var retailItemSalesPriceProto = eventsHelper.getRetailItemSalesPriceProtoFromMessage(message);	//(call X)		
+
+------------------------------------------------------------------------------------------------------------------------------------------
