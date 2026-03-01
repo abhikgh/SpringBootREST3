@@ -139,25 +139,30 @@ JWT Authentication Flow
 5. Authorizing the request
 
 
-	     AUTHENTICATION SERVER		  (Authentication)
-	 {username, password, clientId, clientSecret, grantType, audience, scope}	            (Resource Owner Password flow)
-	 {clientId, clientSecret, grantType, audience, scope}     			            (Client Credential flow)
-	         		 |
-						{ REDIS }
-		      	 	 
-					 | {JWTToken}
-		      		 |		     httpHeaders.set("Authorization", "Bearer <JWTToken>");
-User/Machine    -------> CLIENT  -------------------------------------------------------->       CLOUD DNS             ------------>         RESOURCE SERVER
-							                                                                         |
-			                                                       				         AKAMAI (CDN) (IP whitelisting)                   -> validates JWTToken
-			                                                                   					     |                                    -> validates Role from the JWTToken
-			                                                                     			 KONG (Api Gateway)                         -> returns the secure resource to the client
-			                                                                       					 |
-			                                                                				  CLOUD ARMOUR (firewall)     <---------- CLOUD FUNCTION (policies to support that CA only accepts IPs passed through Akamai)
-			                                                                       					 |
-			                                                                			    INGRESS (Load Balancer)
-			                                                                      					 |
-			                                                                 				   WORKLOADS (services)
+1. OAuth2.0 Protocol
+
+Our REST endpoints are accessible only to internal services within the company.
+Access to our REST endpoints require a JSON Bearer token, which must be presented with each request.
+The response is not rendered in browsers, so the risk of Cross-Site Scripting (XSS) attacks is minimal.
+												get Auth0 Token
+    Client -------> POST: /user/login         -------------------> AUTHENTICATION SERVER
+                  {client_id, client_secret, grant_type=client_credentials}
+
+     |    |                                                            -> generates JWTToken
+     |    |
+     |    | <------------------------------------------------
+     |
+     |          GET : /users                                                                                    Authorization
+     |          httpHeaders.set("Authorization", "Bearer <JWTToken>");
+     | --------------------------------------------------------->       CLOUD DNS             ------------>         WORKLOADS 
+                                                                         |
+                                                                       AKAMAI (CDN) (IP whitelisting)            -> validates JWT
+                                                                         |                                       -> validates Role from the JWT
+                                                                      KONG (Api Gateway)                         -> returns the secure resource to the client
+                                                                         | [ Authentication,Authorization,Transformation,Routing,Throttling, Rate limiting, Monitoring, Logging]
+                                                                    CLOUD ARMOUR (firewall)     <---------- CLOUD FUNCTION (policies to support that CA only accepts IPs passed through Akamai)
+                                                                         |
+                                                                    INGRESS (Load Balancer)
 
 Secure Connection : via JWT ->  httpHeaders.set("Authorization", "Bearer <JWTToken>");
 	Map<String, List<String>> headerMap = Maps.newHashMap();
@@ -781,43 +786,6 @@ API Lifecycle
 
 --------------------------------------------------------------------------------------------------------
 
-Security in Architecture
-==========================================
-
-1. OAuth2.0 Protocol
-
-Our REST endpoints are accessible only to internal business services within the company and not externally.
-Access to our REST endpoints require a JSON security token, which must be presented with each request.
-This security token along with the client id is validated before processing the request.
-We have throttling and rate-limiting enforced at the load balancer and Cloud armor level to prevent abuse.
-The response is not rendered in browsers, so the risk of Cross-Site Scripting (XSS) attacks is very low.
-Because of these controls, the chances of XSS injection attacks on our REST service endpoint are minimal.
-We believe that heavy input validation against XSS is not necessary and minimizing validation helps keep latency low, which is critical for our service consumers.
-
-2. GCP Architecture
-AKAMAI (CDN) (IP whitelisting)                 
-	 |                                   
-      KONG (Api Gateway)                    
-	 |
-  CLOUD ARMOUR (firewall)     <---------- CLOUD FUNCTION (policies to support that CA only accepts IPs passed through Akamai)
-	 |
-    INGRESS (Load Balancer)
-	|
-    WORKLOADS (services)
-
-3. GCP Security Command center : for Threats and vulnerabilities
-
-4.Security Tools 
-
-Github Advanced Security (GHAS) -  Code Scanning, Secret Scanning, Vulnerability Scanning, Dependency review
-				Code Scanning - how code is written (e.g., insecure functions, logic flaws)
-			  	Secret Scanning - automatically alerts for sensitive data like passwords, tokens, API keys in code
-				Vulnerability Scanning - what is running , checks running systems, networks, applications for known weaknesses like outdated libraries, missing patches, or misconfigurations
-Trivy : scans images for security + Dependency review
-Renovate :  Automate PR for dependency management
-Dependabot : GitHub's built-in feature for automated dependency management
-
-5. @JsonIgnoreProperties(ignoreUnknown = true)
 
 ----------------------------------------------------------------------------------------------------------------------
 SAST(Static Application Security Testing) 				vs 			    SCA (Software Composition Analysis)
