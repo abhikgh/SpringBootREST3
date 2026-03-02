@@ -811,9 +811,9 @@ API Lifecycle
 6. Monitor
 
 --------------------------------------------------------------------------------------------------------
+Types of Testing
+=============================
 
-
-----------------------------------------------------------------------------------------------------------------------
 SAST(Static Application Security Testing) 				vs 			    SCA (Software Composition Analysis)
 ==============================================================================================================================
 Scans static content like code, docs for Security vuln.					Scans dependencies for Security vuln.
@@ -821,7 +821,7 @@ Shifts security left in the SDLC										Security across SDLC
 Rule-based analysis														Multiple scanning techniques
 Pipeline integration for Continous security checks						Pipeline integration for Continous security check
 
-----------------------------------------------------------------------------------------------------------------------
+
 
 Blackbox Testing				vs 			   					Whitebox Testing
 ==============================================================================================================================
@@ -835,14 +835,14 @@ Nonfunctional Testing (NFT)
 												Unit Testing
 											    Integration Testing
 												Regression Testing
-----------------------------------------------------------------------------------------------------------------------
+
 
 Nonfunctional Testing (NFT)
 =======================================
 - Load Testing
 - Security Testing
 
-----------------------------------------------------------------------------------------------------------------------
+
 
 Security Testing
 =======================================
@@ -851,7 +851,7 @@ Security Testing
 3. Application Security Testing
 4. Network Security Testing
 
-----------------------------------------------------------------------------------------------------------------------
+
 Man-in-the-middle (MitM) attacks
 ====================================
 
