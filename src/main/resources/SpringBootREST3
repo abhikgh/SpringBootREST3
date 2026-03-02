@@ -4039,6 +4039,7 @@ Controller :: public ResponseEntity<ServiceForm> serviceForm(@Valid @RequestBody
         "invoiceType",
         "orderItems"
 })
+@Schema(description = "ServiceForm request", requiredProperties={"orderId", "location","invoiceType"}) 
 public class ServiceForm implements Serializable {
 
     //@NotNull - not null / blanks are allowed
@@ -4048,21 +4049,21 @@ public class ServiceForm implements Serializable {
 
     //@Nonnull - preventing null-related issues at the development stage, doesn’t trigger any runtime validation
     @JsonProperty(value = "orderId")
-    @Schema(description = "orderID of the request", example = "12") //will be mapped to Swagger doc
+    @Schema(description = "orderID of the request", example = "12", required=true) //will be mapped to Swagger doc
     @NotNull(message = "Order Id should not be not null")
     @Digits(integer = 3,fraction = 0,message = "Invalid Order ID") //can be both +ve or -ve
     @Valid
     private Integer orderId;
 
     @JsonProperty(value = "location")
-    @Schema(description = "Location of the request", example = "ANT")
+    @Schema(description = "Location of the request", example = "ANT", required=true)
     @NotBlank(message = "Location is required")
     @Size(min = 2, max = 20)
     @Valid
     private String location;
 
     @JsonProperty(value = "invoiceType")
-    @Schema(description = "invoiceType of the request", example = "22")
+    @Schema(description = "invoiceType of the request", example = "22", required=true)
     @NotNull(message = "Invoice type should not be not null") //for Integer
     @Positive(message = "Invoice type should not be negative")
     @Max(900)
@@ -4193,12 +4194,12 @@ public class Person {
     @JsonProperty
     @NotBlank
     @Size(min = 5, message = "First name must have at-least 5 chars")
-    @Schema(description = "First name", example = "Johny")
+    @Schema(description = "First name", example = "Johny", required=true)
     @Valid
     private String firstName;
 
     @JsonProperty
-    @Schema(description = "Last name", example = "Doe")
+    @Schema(description = "Last name", example = "Doe", required=true)
     @Size(min = 5, message = "Last name must have at-least 5 chars")
     @Valid
     private String lastName;
@@ -4226,6 +4227,7 @@ Map<String, String> addressMap = new HashMap<>();
 addressMap.put("aa","bb");
 personAddress.setAddressMap(addressMap);
 person.setPersonAddress(personAddress);
+Validator validator = jakarta.validation.Validation.buildDefaultValidatorFactory().getValidator();
 Set<ConstraintViolation<Person>> validationErrors = validator.validate(person);
 if (!validationErrors.isEmpty()) {
     ConstraintViolation<Person> violation = validationErrors.iterator().next();
@@ -4234,7 +4236,7 @@ if (!validationErrors.isEmpty()) {
     errorProperties.throwSPEException(ErrorProperties.ErrorCode.INVALID_ITEM, List.of(item));
 }
 
-//test :    validator = jakarta.validation.Validation.buildDefaultValidatorFactory().getValidator();
+
 ------------------------------------------------------------------------------------------------------------------------
 
 To route all requests through this path :
