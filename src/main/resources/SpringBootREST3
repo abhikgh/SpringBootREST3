@@ -1961,7 +1961,7 @@ private void populateCircularOffersFromAPI(Set<String> uniqueOfferNumbers, Map<S
                     .filter(Objects::nonNull)
                     .forEach(circularOffer -> circularOfferMap.put(circularOffer.getOfferNumber(), circularOffer)); */
 			
-			CompletableFuture.allOf(cfList.toArray(new CompletableFuture[0])).join();
+			CompletableFuture.allOf(completableFutureList.toArray(new CompletableFuture[0])).join();
 			for(CompletableFuture<CircularOffer> cf: completableFutureList){
 				 if(cf.isDone() && !cf.get().isEmpty()){
 					CircularOffer circularOffer = cf.get()
