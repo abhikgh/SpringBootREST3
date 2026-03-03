@@ -84,17 +84,15 @@ which the client then uses to make requests to the resource server on the user's
 
 JWT ( Json Web Token ) - based Authentication
 ------------------------------------------------
-access token = JWT 
-JWTs are used as authentication tokens to share information between Client and Authorization Server / Resource Server
-JWT just verifies that the data inside is correct
+JWT tokens contain all the information of a user that the server needs to validate the request
+JWT token is passed with every API request.
 
 JWT = header.payload.signature
     = Base64urlEncoded(header).Base64urlEncoded(payload).alg(Base64urlEncoded(header).Base64urlEncoded(payload), secret)
 
-secure
 stateless
-compact
-SSO
+secure
+scalable
 
 header:
     {
@@ -102,7 +100,7 @@ header:
       "alg": "HMACSHA256"
     }
 
-payload: The payload information is called Claims
+payload: claims (details of the user)
         3 types of claims: Private, Public, Registered
         -> Private Claims : Base64urlEncoded(payload)
         -> Public Claims : any claim
