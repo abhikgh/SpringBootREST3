@@ -90,8 +90,8 @@ JWT token is passed with every API request.
 JWT = header.payload.signature
     = Base64urlEncoded(header).Base64urlEncoded(payload).alg(Base64urlEncoded(header).Base64urlEncoded(payload), secret)
 
-stateless
-secure
+stateless :: JWT centralizes authentication & authorization by generating a single shared token that contains user and app-level information
+secure :: CLIENT does not know user credentials - has only the JWTToken
 scalable
 
 header:
@@ -179,13 +179,6 @@ protected HttpHeaders createHeaders(MultiValueMap<String, String> headers) {
         return requestHeaders;
 }
 
-
-
-
- Benefits :
-JWT centralizes authentication & authorization by generating a single shared token that contains user and app-level information
-1. CLIENT does not know user credentials - has only the JWTToken
-2. Granular access to CLIENT
 
 
 JWT RefreshToken
