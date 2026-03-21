@@ -3632,12 +3632,14 @@ public class GatlingSimulation extends Simulation {
             http.baseUrl("http://localhost:9100")
                     .acceptHeader("application/json");
 
-    ChainBuilder read = exec(http("Read Spring Rest Controller").get("/v3/rest/home"));
-    ScenarioBuilder users = scenario("Users Read").exec(read);
-
-    {
         setUp(
-                users.injectOpen(
+				scenario("Users Read")
+				.feed(csv("data/test-data.csv).eager.random, 10)
+				.exec(http("Read Spring Rest Controller")
+						.get("/v3/rest/home")
+						.headers("")
+						.body(ElFileBody("readBody.json"))
+				.injectOpen(
                         atOnceUsers(1),
                         nothingFor(2),
                         atOnceUsers(50),
@@ -3645,8 +3647,9 @@ public class GatlingSimulation extends Simulation {
                         constantUsersPerSec(100.0).during(20),
                         constantUsersPerSec(30.0).during(30)
                 )
-        ).protocols(httpProtocol);
-    }
+				.throttle(reachRPS(100) in 2, holdFor(2)
+				.protocols(httpProtocol)
+        )
 }
 
 simulation service :: E:\Softwares\gatling-charts-highcharts-bundle-3.9.5\user-files\simulations\GatlingSimulations.java
