@@ -1533,9 +1533,7 @@ public HeroDetailsResponse defaultGetHeroDetails(Exception exception){
 
 18. Event Sourcing
 ---------------------------------------------------------------------------
-The Event Sourcing pattern in Microservices helps in synchronizing data across multiple services by using a log of events to represent changes
-in each service state. This ensures consistency among services.
-
+data consistency across multiple services by maintaining a log of events in each service
 - auditing
 - analytics
 
@@ -3537,6 +3535,13 @@ Write-Behind : microservice writes to the cache and returns quickly, cache async
 
 In memory caching (Caffeine : Asynchronous loading and write-through caching)
 Distributed caching (Redis : Data is stored across multiple servers -Faster ,  High Availability, Scalability)
+
+Cache eviction												 vs 										Cache invalidation 
+====================================================================================================================================
+frees up space when the cache is full (capacity-driven / LRU)
+			
+										          		                  removes stale data when the primary source changes (data accuracy)
+
 
 
 Pen test
