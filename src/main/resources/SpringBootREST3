@@ -1435,9 +1435,7 @@ public List<Movie> getMoviesOfDirector(
 
 16. Bulkhead (Fault Tolerance)
 ---------------------------------------------------------------------------
-Latency in one service should not migrate to the whole system
-The Bulkhead Pattern in Microservices allows services to operate predictably during varying load conditions by isolating failures and preventing them
-from affecting other parts of the system.
+Latency in one service should not migrate to the whole system - by isolating components into independent pools - so it isolate failures
 
 resilience4j:
    bulkhead:
