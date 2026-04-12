@@ -3527,6 +3527,7 @@ Least Time : route traffic to the instance that is responding faster
 Content-Based ::  route traffic based on complex algorithms analyzing several factors like location, server health, and capacity
 DNS-Based :: commonly used in cloud-native microservices to efficiently distribute traffic across containers and pods. 
      It leverages domain name system techniques for improved scalability and performance.
+Dynamic :: system with a mix of heavy and light processing services
 
 Caching strategies
 =====================
