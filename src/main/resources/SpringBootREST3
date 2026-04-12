@@ -2292,6 +2292,7 @@ Timer                                 measuring short-duration latencies, and th
 Counter				      count
 Gauge	                              current value
 DistributionSummary	              total amount of all recorded events
+Throughput						  no of successful response in a time
 Micrometer Observation API            lightweight library for application metrics
 
 //Counter metric
