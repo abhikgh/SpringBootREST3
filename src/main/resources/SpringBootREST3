@@ -3525,6 +3525,9 @@ Read-Through : microservice always reads from the cache , if data is not presen 
 Write-Through : microservice always writes into the cache , if data is not present in DB, cache will write to DB
 Write-Behind : microservice writes to the cache and returns quickly, cache asynchronously updates the database afterwards
 
+In memory caching (Caffeine : Asynchronous loading and write-through caching)
+Distributed caching (Redis : Data is stored across multiple servers -Faster ,  High Availability, Scalability)
+
 
 Pen test
 ==============
