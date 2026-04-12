@@ -3519,7 +3519,7 @@ A Load Balancer is a component (or a managed cloud service) that receives incomi
 improving performance , reliability and High Availability.
 
 Round Robin :  the load balancer sends requests in turns.
-Weighted Round Robin : same as Round Robin, but some servers get more turns. You assign a weight to each instance, and the balancer sends more traffic to the heavier ones.
+Weighted Round Robin : same as Round Robin, but some servers get more turns - for variable traffic
 Hash-based ::
 Static :: rules defined by the user
 Least Connections : send the next request to the instance with the fewest active connections. 
