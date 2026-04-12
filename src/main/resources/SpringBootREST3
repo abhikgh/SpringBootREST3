@@ -3508,6 +3508,18 @@ It then selects one (often using a load balancing algorithm) and directly sends 
                                                          Client sends requests to a load balancer
                                                          The load balancer queries the service registry and forwards the request to a healthy service instance.
 
+Load Balancer
+===================
+
+A Load Balancer is a component (or a managed cloud service) that receives incoming traffic and distributes it across multiple service instances,
+improving performance and availability.
+
+Round Robin :  the load balancer sends requests in turns.
+Weighted Round Robin : same as Round Robin, but some servers get more turns. You assign a weight to each instance, and the balancer sends more traffic to the heavier ones.
+Hash-based (Sticky sesion): take a stable request attribute (like client IP or session ID), compute a hash, and map it to a specific server. Same user tends to land on the same instance.
+Least Connections : send the next request to the instance with the fewest active connections. 
+Least Time : route traffic to the instance that is responding faster
+
 Pen test
 ==============
 API penetration testing is a security testing method that simulates hacker attacks to evaluate the security of an API
