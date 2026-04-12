@@ -3520,6 +3520,14 @@ Hash-based (Sticky sesion): take a stable request attribute (like client IP or s
 Least Connections : send the next request to the instance with the fewest active connections. 
 Least Time : route traffic to the instance that is responding faster
 
+Caching strategies
+=====================
+Cache-Aside : microservice always reads from the cache , if data is not presen in cache , onus on service to get the value from DB and update cache
+Read-Through : microservice always reads from the cache , if data is not presen in cache , onus on cache to get the value from DB and update cache
+Write-Through : microservice always writes into the cache , if data is not present in DB, cache will write to DB
+Write-Behind : microservice writes to the cache and returns quickly, cache asynchronously updates the database afterwards
+
+
 Pen test
 ==============
 API penetration testing is a security testing method that simulates hacker attacks to evaluate the security of an API
