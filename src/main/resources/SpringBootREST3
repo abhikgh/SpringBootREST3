@@ -1532,7 +1532,9 @@ public HeroDetailsResponse defaultGetHeroDetails(Exception exception){
 
 18. Event Sourcing
 ---------------------------------------------------------------------------
-Event logs
+The Event Sourcing pattern in Microservices helps in synchronizing data across multiple services by using a log of events to represent changes
+in each service state. This ensures consistency among services.
+
 - auditing
 - analytics
 
@@ -3381,7 +3383,7 @@ Set<String> matchingKeys = priceCacheTemplate.execute((RedisCallback<Set<String>
 
 Handling Duplicate Requests
 ------------------------------
-Idempotent key in header
+Idempotent key in header (Idempotent :: Ensuring that operations have the same effect whether executed once or multiple times)
 Token-Based Request Validation
 
 ---------------------------------------------------------------------------------------------
@@ -3514,9 +3516,13 @@ improving performance and availability.
 
 Round Robin :  the load balancer sends requests in turns.
 Weighted Round Robin : same as Round Robin, but some servers get more turns. You assign a weight to each instance, and the balancer sends more traffic to the heavier ones.
-Hash-based (Sticky sesion): take a stable request attribute (like client IP or session ID), compute a hash, and map it to a specific server. Same user tends to land on the same instance.
+Hash-based ::
+Static :: rules defined by the user
 Least Connections : send the next request to the instance with the fewest active connections. 
 Least Time : route traffic to the instance that is responding faster
+Content-Based ::  route traffic based on complex algorithms analyzing several factors like location, server health, and capacity
+DNS-Based :: commonly used in cloud-native microservices to efficiently distribute traffic across containers and pods. 
+     It leverages domain name system techniques for improved scalability and performance.
 
 Caching strategies
 =====================
