@@ -294,6 +294,8 @@ Code = event-driven function and run them in containers managed by cloud service
 Each function is triggered by specific events or HTTP requests, and the cloud provider executes them on a running or new server.
 This entire execution process is invisible to developers, and hence serverless computing.
 
+Primary benefit :: improved scalability
+
 Subscription :
 	Topic : projects/ingka-rrm-erix-prod/topics/INGKA-range-eRIX-RetailItemSalesPriceUpdated-production
         Push Endpoint: 
