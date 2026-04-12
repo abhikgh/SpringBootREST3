@@ -294,7 +294,9 @@ Code = event-driven function and run them in containers managed by cloud service
 Each function is triggered by specific events or HTTP requests, and the cloud provider executes them on a running or new server.
 This entire execution process is invisible to developers, and hence serverless computing.
 
-Primary benefit :: improved scalability
+Primary benefit :: Auto-scaling
+
+Problem :: Cold Start Latency is a common challenge in Serverless Architecture, where the initial startup time of a function may lead to delays in response.
 
 Subscription :
 	Topic : projects/ingka-rrm-erix-prod/topics/INGKA-range-eRIX-RetailItemSalesPriceUpdated-production
