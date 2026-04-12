@@ -1311,6 +1311,7 @@ Separate APIGWs for separate types of client
 Separates Commands(write to Database) from Queries(reading from Database) into separate services
 -auditing
 -scalable
+Resolves issues of data duplication and inconsistency by separating the command and query responsibilities, allowing for specialized models.
 
 
 14. Circuit Breaker (Fault Tolerance)
@@ -1435,6 +1436,8 @@ public List<Movie> getMoviesOfDirector(
 16. Bulkhead (Fault Tolerance)
 ---------------------------------------------------------------------------
 Latency in one service should not migrate to the whole system
+The Bulkhead Pattern in Microservices allows services to operate predictably during varying load conditions by isolating failures and preventing them
+from affecting other parts of the system.
 
 resilience4j:
    bulkhead:
@@ -1548,7 +1551,7 @@ Candidate for Test-Driven Development
 
 20. 2-phase commit (2PC)
 -----------------------------------------------
-Prepare and Commit
+Prepare and Commit - Guarantees Atomicity
 
 Phase1 : Prepare
                                    Service 1
