@@ -3530,7 +3530,7 @@ DNS-Based :: commonly used in cloud-native microservices to efficiently distribu
 
 Caching strategies
 =====================
-Cache-Aside : microservice always reads from the cache , if data is not presen in cache , onus on service to get the value from DB and update cache
+Cache-Aside : microservice always reads from the cache , if data is not presen in cache , onus on service to get the value from DB and update cache (automatic cache invalidation, ensuring that the cache is updated when underlying data changes, avoiding stale data issues)
 Read-Through : microservice always reads from the cache , if data is not presen in cache , onus on cache to get the value from DB and update cache
 Write-Through : microservice always writes into the cache , if data is not present in DB, cache will write to DB
 Write-Behind : microservice writes to the cache and returns quickly, cache asynchronously updates the database afterwards
