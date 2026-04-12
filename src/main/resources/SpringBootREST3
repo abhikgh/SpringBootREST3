@@ -1227,6 +1227,7 @@ public class SingletonEx {
 11. Aspect Design pattern (Proxy/Sidecar)
 ------------------------------------------------
 - AOP framework to apply cross-cutting concerns to modules without changing their core logic
+sidecar ::companion service to the main service to handle specific tasks like storage or network functions
 
 <dependency>
     <groupId>org.springframework.boot</groupId>
