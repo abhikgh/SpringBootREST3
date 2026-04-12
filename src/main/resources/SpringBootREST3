@@ -3806,7 +3806,8 @@ Client -> Proxy -> Internet -> Server
 
 Fault tolerance 		vs 						                            Resiliency
 -----------------------------------------------------------------------------------------------------------
-ability to continue functioning even in the presence of failures		ability of a system to recover from failures and disruptions
+ability to continue functioning even in the presence of failures		ability of a system to recover from downtime
+																	. Resilience ensures that the system can recover quickly from failures, providing continuous availability.
 
 ---------------------------------------------------------------------------------------------------------------------------
 
