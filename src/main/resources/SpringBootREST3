@@ -2840,6 +2840,9 @@ public ResponseEntity<String> helloPost(@Valid @RequestBody Person person) {
             .body(person.getFirstName().concat("----").concat(person.getLastName()));
 }
 
+//to keep hidden from OpenAPI docs
+@Operation(summary = "", operationId = "", hidden = true)
+
 http://localhost:9100/v3/api-docs (JSON)
 http://localhost:9100/v3/api-docs.yaml (YAML)
 Paste the yaml in Swagger Editor
