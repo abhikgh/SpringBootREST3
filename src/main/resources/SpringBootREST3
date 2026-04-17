@@ -179,6 +179,212 @@ protected HttpHeaders createHeaders(MultiValueMap<String, String> headers) {
         return requestHeaders;
 }
 
+JWT Token 
+-----------------------
+
+
+
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.JWTVerifier;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.interfaces.DecodedJWT;
+
+@Service
+public class CouponJWTService {
+
+    @Setter
+    private String activeKeyId;
+    private final boolean couponJwtEnabled;
+    private final String[] jwtKeysConfig;
+    private final HashMap<String, Algorithm> configuredAlgorithms;
+    @Value("${coupon.token.expiry.seconds:1200}")
+    private long tokenExpirySeconds;
+
+    public CouponJWTService(@Value("#{'${coupon.jwt.keys}'.split(',')}") String[] jwtKeysConfig,
+                            @Value("${coupon.jwt.keys.active:defaultKeyId}") String activeKeyId,
+                            @Value("${coupon.jwt.enabled:false}") boolean couponJwtEnabled) {
+        this.jwtKeysConfig = jwtKeysConfig;
+        this.activeKeyId = activeKeyId;
+        this.couponJwtEnabled = couponJwtEnabled;
+        this.configuredAlgorithms = new HashMap<>();
+        if (couponJwtEnabled)
+            setupAlgorithmsCache();
+    }
+
+    private void setupAlgorithmsCache() {
+     configuredAlgorithms.put(keyId, Algorithm.HMAC256(secretKey));
+    }
+
+    private Algorithm getAlgorithm(String activeKeyId) {
+        // use cached algorithm if available
+        Algorithm algorithm = configuredAlgorithms.get(activeKeyId);
+        if (algorithm != null) {
+            return algorithm;
+        }
+        throw new IllegalArgumentException("Invalid keyId for JWT signing and validation");
+    }
+
+
+    /**
+     * Validate the given JWT token.
+     *
+     * @param token the JWT token string
+     * @return Optional of DecodedJWT if valid, otherwise Optional.empty()
+     */
+    public Optional<DecodedJWT> validateToken(String token) {
+        if (couponJwtEnabled) {
+            DecodedJWT decodedJWT = JWT.decode(token);
+            JWTVerifier verifier = JWT.require(getAlgorithm(decodedJWT.getHeaderClaim(KEY_ID).asString()))
+                    .acceptLeeway(5) // 5 seconds leeway for clock skew
+                    .build();
+            // Verify signature and expiration
+            return Optional.of(verifier.verify(token));
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Generic method to create JWT token with standard and custom claims.
+     */
+    private com.auth0.jwt.JWTCreator.Builder createJwtTokenBuilder(String subject,
+                                                                   String value, String discountId,
+                                                                   String version, String currency) {
+        var currentTime = Instant.now();
+        return JWT.create()
+                .withHeader(getDefaultHeader(activeKeyId))
+                .withJWTId(UUID.randomUUID().toString())
+                .withIssuedAt(currentTime)
+                .withExpiresAt(currentTime.plusSeconds(tokenExpirySeconds))
+                .withIssuer(DEFAULT_ISSUER)
+                .withAudience(DEFAULT_AUDIENCE)
+                .withSubject(subject)
+                .withClaim(VALUE, value)
+                .withClaim(VERSION, version)
+                .withClaim(CURRENCY, currency)
+                .withClaim(DISCOUNT_ID, discountId);
+    }
+
+    /**
+     * Create a sample ClaimJWT token with custom values.
+     * if JWT is disabled, just return the redeemed value as string
+     *
+     * @param couponCode    the coupon code
+     * @param redeemedValue the redeemed value
+     * @param balanceValue  the remaining balance
+     * @param discountId    the discount ID
+     * @param version       discount version
+     * @param currency      discount currency
+     * @return custom ClaimJWT
+     */
+    public String getClaimToken(String couponCode, BigDecimal redeemedValue,
+                                BigDecimal balanceValue, String discountId,
+                                String version, String currency) {
+        if (couponJwtEnabled) {
+            return createJwtTokenBuilder(couponCode, redeemedValue.toString(), discountId, version, currency).
+                    withClaim(BALANCE, balanceValue.toString())
+                    .sign(getAlgorithm(activeKeyId));
+        }
+        return balanceValue.toString();
+    }
+
+    /**
+     * Create a sample PpoJWT token with custom values.
+     * if JWT is disabled, just return the future coupon value as string
+     *
+     * @param value      the coupon value
+     * @param discountId the discount ID
+     * @param currency   discount currency
+     * @param version    discount version
+     * @return custom PpoJWT token string
+     */
+    public String getPPOToken(BigDecimal value, long discountId, String version, String currency) {
+        if (couponJwtEnabled) {
+            return createJwtTokenBuilder(PPO_JWT_SUBJECT, value.toString(), String.valueOf(discountId), version, currency)
+                    .sign(getAlgorithm(activeKeyId));
+        }
+        return value.toString();
+    }
+
+    /**
+     * Create a sample ReservationJWT token with custom values.
+     * if JWT is disabled, just return the reservation amount as string
+     *
+     * @param couponCode the coupon code
+     * @param value      the coupon value
+     * @param discountId the discount ID
+     * @param version    discount version
+     * @param currency   discount currency
+     * @return custom ReservationJWT token string
+     */
+    public String getReservationToken(String couponCode, BigDecimal value,
+                                      String discountId, String version, String currency) {
+        if (couponJwtEnabled) {
+            return createJwtTokenBuilder(couponCode, value.toString(), discountId, version, currency)
+                    .sign(getAlgorithm(activeKeyId));
+        }
+        return value.toString();
+    }
+
+    /**
+     * Convert DecodedJWT to ReservationJWT
+     *
+     * @param jwt token
+     * @return ReservationJWT object
+     */
+    public ReservationJWT getReservationJWT(DecodedJWT jwt) {
+        return ReservationJWT.builder()
+                .jwtId(jwt.getId())
+                .issuedAt(jwt.getIssuedAtAsInstant())
+                .expirationTime(jwt.getExpiresAtAsInstant())
+                .issuer(jwt.getIssuer())
+                .audience(jwt.getAudience().getFirst())
+                .subject(jwt.getSubject())
+                .value(jwt.getClaim(VALUE).asString())
+                .discountId(jwt.getClaim(DISCOUNT_ID).asString())
+                .version(jwt.getClaim(VERSION).asString())
+                .currency(jwt.getClaim(CURRENCY).asString())
+                .build();
+    }
+
+    private Map<String, Object> getDefaultHeader(String activeKeyId) {
+        return Map.of(
+                "alg", KEY_ALGORITHM,
+                "typ", JWT_STR,
+                "ver", COMMON_JWT_VERSION,
+                KEY_ID, activeKeyId
+        );
+    }
+}
+
+@Data
+@SuperBuilder
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class ReservationJWT extends BaseCouponJWT {
+    // All fields are inherited from BaseCouponJWT
+
+}
+
+@Data
+@SuperBuilder
+@NoArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
+public abstract class BaseCouponJWT {
+    private String jwtId;
+    private Instant issuedAt;
+    private Instant expirationTime;
+    private String issuer;
+    private String audience;
+    private String subject;
+    private String value;
+    private String discountId;
+    private String version;
+    private String currency;
+}
+
+
 
 
 JWT RefreshToken
