@@ -94,20 +94,38 @@ stateless :: JWT centralizes authentication & authorization by generating a sing
 secure :: CLIENT does not know user credentials - has only the JWTToken
 scalable
 
-header:
-    {
-      "typ": "JWT"
-      "alg": "HMACSHA256"
-    }
 
-payload: claims (details of the user)
-        3 types of claims: Private, Public, Registered
+Header:
+{
+  "alg": "HS256", //HmacSHA256
+  "typ": "JWT",
+  "ver": "1",
+  "kid": "keyId"
+}
+
+Payload: claims (details of the user)
+		 3 types of claims: Private, Public, Registered
         -> Private Claims : Base64urlEncoded(payload)
         -> Public Claims : any claim
         -> Registered Claims : subject, issuer, scope, audience, expirationTime
+{
+  "jti": "uuid",
+  "iat": 1234567890,
+  "exp": 1234568090,
+  "iss": "SPE",
+  "aud": "SDM",
+  "sub": "coupon_code",
+  "val": "9.50",          // amount consumed with any healing deviation
+  "bal": "0.50",          // balance left without any healing 
+  "did": "DISCOUNT-123",  // discount ID
+  "dvn": "2",             // discount version number
+  "cur": "SEK",
+}
 
 signature:
     HMACSHA256(Base64urlEncoded(header).Base64urlEncoded(payload), secret)
+
+
 
     validates JWTToken : The signature is used to verify the sender and that the message wasn’t tampered
     If the payload is tampered then the signatures won't match
@@ -211,8 +229,16 @@ public class CouponJWTService {
             setupAlgorithmsCache();
     }
 
+    // coupon.jwt.keys=${jwt-signing-keys}         — key value , coming from 1 Password secrets
+    // coupon.jwt.keys.active=spe-sign-2026-feb.    —key id
+
     private void setupAlgorithmsCache() {
      configuredAlgorithms.put(keyId, Algorithm.HMAC256(secretKey));
+	/*
+		public static Algorithm HMAC256(String secret) throws IllegalArgumentException {
+        return new HMACAlgorithm("HS256", "HmacSHA256", secret);
+    }
+	*/
     }
 
     private Algorithm getAlgorithm(String activeKeyId) {
