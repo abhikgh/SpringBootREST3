@@ -373,6 +373,22 @@ public class CouponJWTService {
                 .build();
     }
 
+/*
+	`{
+	  "jti": "uuid",
+	  "iat": 1234567890,
+	  "exp": 1234568090,
+	  "iss": "SPE",
+	  "aud": "SDM",
+	  "sub": "coupon_code",
+	  "val": "9.50",          // amount consumed with any healing deviation
+	  "bal": "0.50",          // balance left without any healing 
+	  "did": "DISCOUNT-123",  // discount ID
+	  "dvn": "2",             // discount version number
+	  "cur": "SEK",
+	}
+*/
+
     private Map<String, Object> getDefaultHeader(String activeKeyId) {
         return Map.of(
                 "alg", KEY_ALGORITHM,
