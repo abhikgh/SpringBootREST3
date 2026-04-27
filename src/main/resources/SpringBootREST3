@@ -690,6 +690,8 @@ SecurityContextHolder
 Core class which holds the SecurityContext
 SecurityContextHolder uses “ThreadLocal” variables to store the principal details.
 
+server.servlet.context-path=/mfs/price
+
 ResponseEntity
 -----------------------
 
