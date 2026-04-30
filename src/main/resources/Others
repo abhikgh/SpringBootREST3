@@ -89,5 +89,21 @@ git merge --abort
 git reset --merge
 Pull the branch and resolve the conflicts
 
+Linux commands
+==========================
+
+Ubuntu
+
+Create file : nano text.txt
+Ctrl O Enter : save file 
+Ctr X : exit
+
+ cat text.txt : view file
+
+Edit file :
+vim text.txt 
+i
+
+Esc :wq enter
 
 
