@@ -98,7 +98,9 @@ pwd
 ls
 ls -lah
 cd
-
+mkdir
+Move file : mv text.txt test/
+Rename file : mv text.txt textNew.txt
 
 Create file : nano text.txt
 Save file   : Ctrl O Enter 
@@ -111,9 +113,8 @@ i
 
 Esc :wq enter
 
-
 redis-cli -h localhost -p 6379 
-
 get accessToken
+
 
 
