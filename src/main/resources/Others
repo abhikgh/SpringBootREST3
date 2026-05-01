@@ -94,16 +94,26 @@ Linux commands
 
 Ubuntu
 
+pwd
+ls
+ls -lah
+cd
+
+
 Create file : nano text.txt
-Ctrl O Enter : save file 
-Ctr X : exit
+Save file   : Ctrl O Enter 
+exit        : Ctr X
 
- cat text.txt : view file
+View file   : cat text.txt 
 
-Edit file :
-vim text.txt 
+Edit file   : vim text.txt 
 i
 
 Esc :wq enter
+
+
+redis-cli -h localhost -p 6379 
+
+get accessToken
 
 
