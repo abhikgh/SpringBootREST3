@@ -2192,6 +2192,25 @@ private void populateCircularOffersFromCache(Set<String> uniqueOfferNumbers, Map
         }
 }
 
+	public Set<CircularOffer> getFromCache(Set<String> uniqueOfferNumbers) {
+        Set<CircularOffer> circularOffer = new HashSet<>();
+        try {
+            List<String> cachedValues = circularCacheTemplate.opsForValue().multiGet(createCircularItemCacheKey(uniqueOfferNumbers));
+            if (cachedValues != null && !cachedValues.isEmpty()) {
+                cachedValues.stream().filter(Objects::nonNull).forEach(value -> {
+                    try {
+                        circularOffer.add(objectMapper.readValue(value, CircularOffer.class));
+                    } catch (JsonProcessingException e) {
+                        logger.severe("Unable to read circular offer: " + e.getMessage());
+                    }
+                });
+            }
+        } catch (Exception e) {
+            logger.severe("Error fetching circular offer : " + offerNumber + " - " + e.getMessage());
+        }
+        return circularOffer;
+    }
+
 private void populateCircularOffersFromAPI(Set<String> uniqueOfferNumbers, Map<String, CircularOffer> circularOfferMap){
         // If internal API is enabled, first fetch from the internal API
         if (circularInternalEndPointEnabled) {
@@ -2231,6 +2250,9 @@ public CompletableFuture<CircularOffer> getOffersViaCircularApi(String offerNumb
 		return CompletableFuture.failedFuture(e);
 	}
 }	
+
+
+
 
 
 
