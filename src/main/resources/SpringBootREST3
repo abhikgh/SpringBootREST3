@@ -1885,22 +1885,39 @@ JProfiler: For deep-dive analysis of hotspots in the code
 Microservice Optimizations for improved Performance
 =====================================================
 
-1. Load Balancer (INGRESS)
-2. Rate Limiting (Resilience4J)
-3. Circuit Breaker (Resilience4J)
-4. Multi-zones
-4. Multi-Clusters (group multiple servers into a cluster - so that if 1 server fails other can process the request)
-5. Multi-Regions
-6. Horizontal Pod Auto-scaling (adding more servers)
+1. 1. Multi Cluster Ingress :: Global Load Balancer that automatically distributes incoming traffic across Multi Region Clusters(spe-prod-cluster,spe-prod-cluster-apac)
+Akamai - Kong - Cloud Armour - Ingress
 
-7.JVM Tuning (-XX:+UseG1GC)
-8.@JsonInclude(JsonInclude.Include.NON_NULL)
-  @JsonIgnoreProperties(ignoreUnknown = true)
+2. Multi Region Clusters ::
+(Cluster, Region, Zone, Node, Pod, Container)
+	
+	Regional Cluster 1
+	Name :: spe-prod-cluster 
+	Region :: europe-west4
+	Zones :: europe-west4-a, europe-west4-b, europe-west4-c
+	
+	Regional Cluster 2 
+	Name ::  spe-prod-cluster-apac 
+	Region :: asia-southeast1
+	Zones :: asia-southeast1-a, asia-southeast1-b, asia-southeast1-c
+
+3. Horizontal Pod Auto-scaling: If the bottleneck is CPU or memory, increasing the number of replicas using a Horizontal Pod Autoscaler (HPA).
+
+4. Google PubSub is used for ingesting Product, SPR data from RIX. 
+5. Cloud MemStore HAProxy with failover is used for caching Country and Store prices per BU Code and BU Type
+6. Cloud Storage is used for ingesting Promotion data and intermediate RIX data 
+
+7. PostgresSQL HAProxy + Read Replicas 
+
+8. Service security with JWT Tokens
 9. ASync
 10. Caching
 11. Streaming
-12. Reactive Programming (Mono / Flux)
-13. Response Compression with GZip
+12. @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonIgnoreProperties(ignoreUnknown = true)
+
+13. Reactive Programming (Mono / Flux)
+14. Response Compression with GZip
       (Zips the JSON response from server so lesser bandwidth and lesser latency
        (P) - CPU Overhead)
         server:
@@ -1908,7 +1925,6 @@ Microservice Optimizations for improved Performance
             enabled: true
             mime-types: application/json
             min-response-size: 2048 #This will compress responses larger than 2KB for the specified MIME types.
-14. Protobuf
         
 15. DB Indexing
 16. Batch Processing
@@ -1926,6 +1942,80 @@ Microservice Optimizations for improved Performance
 22. Gatling
 
    
+-------------------------------------------------------------------------------------------------
+
+Microservice Security
+=====================================================
+
+1. 1. Multi Cluster Ingress :: Global Load Balancer that automatically distributes incoming traffic across Multi Region Clusters(spe-prod-cluster,spe-prod-cluster-apac)
+Akamai - Kong - Cloud Armour - Ingress
+
+2. Multi Region Clusters ::
+(Cluster, Region, Zone, Node, Pod, Container)
+	
+	Regional Cluster 1
+	Name :: spe-prod-cluster 
+	Region :: europe-west4
+	Zones :: europe-west4-a, europe-west4-b, europe-west4-c
+	
+	Regional Cluster 2 
+	Name ::  spe-prod-cluster-apac 
+	Region :: asia-southeast1
+	Zones :: asia-southeast1-a, asia-southeast1-b, asia-southeast1-c
+
+3. Horizontal Pod Auto-scaling: If the bottleneck is CPU or memory, increasing the number of replicas using a Horizontal Pod Autoscaler (HPA).
+
+4. Service security with JWT Tokens using OAuth2.0 Protocol
+Our REST endpoints are accessible only to internal services within the company.
+Access to our REST endpoints require a JSON Bearer token, which must be presented with each request.
+The response is not rendered in browsers, so the risk of Cross-Site Scripting (XSS) attacks is minimal.
+												get Auth0 Token
+    Client -------> POST: /user/login         -------------------> AUTHENTICATION SERVER
+                  {client_id, client_secret, grant_type=client_credentials}
+
+     |    |                                                            -> generates JWTToken
+     |    |
+     |    | <------------------------------------------------
+     |
+     |          GET : /users                                                                                    Authorization
+     |          httpHeaders.set("Authorization", "Bearer <JWTToken>");
+     | --------------------------------------------------------->       CLOUD DNS             ------------>         WORKLOADS 
+                                                                         |
+                                                                       AKAMAI (CDN) (IP whitelisting)            -> validates JWT
+                                                                         |                                       -> validates Role from the JWT
+                                                                      KONG (Api Gateway)                         -> returns the secure resource to the client
+                                                                         | [ Authentication,Authorization,Transformation,Routing,Throttling, Rate limiting, Monitoring, Logging]
+                                                                    CLOUD ARMOUR (firewall)     <---------- CLOUD FUNCTION (policies to support that CA only accepts IPs passed through Akamai)
+                                                                         |
+                                                                    INGRESS (Load Balancer)
+
+5. Google PubSub is used for ingesting Product, SPR data from RIX. 
+6. Google MemStore with HAProxy is used for caching Country and Store prices per BU Code and BU Type
+7. Google Cloud Storage is used for ingesting Promotion data and intermediate RIX data 
+8. Google PostgresSQL HAProxy + Read Replicas 
+
+9. Cloud Service Mesh + Certificates + mTLS
+10. IAM  (which users or services can access specific resources, ensuring least-privilege access)
+11. Secret Management - 1 password
+12. GCP Security Command center : for Threats and vulnerabilities
+
+13. Security Tools 
+
+	Github Advanced Security (GHAS) -  Code Scanning, Secret Scanning, Dependency Scanning, Vulnerability Scanning
+					Code Scanning - how code is written (e.g., insecure functions, logic flaws)
+				  	Secret Scanning - automatically alerts for sensitive data like passwords, tokens, API keys in code
+					Vulnerability Scanning - what is running , checks running systems, networks, applications for known weaknesses like outdated libraries, missing patches, or misconfigurations
+	Trivy : Image Scanning
+
+	Renovate :  Automate PR for dependency management
+	Dependabot : GitHub's built-in feature for automated dependency management
+
+14. @JsonIgnoreProperties(ignoreUnknown = true)
+
+
+  
+
+
 -------------------------------------------------------------------------------------------------
 
 Base64 encoded request
