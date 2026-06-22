@@ -1885,7 +1885,7 @@ JProfiler: For deep-dive analysis of hotspots in the code
 Microservice Optimizations for improved Performance
 =====================================================
 
-1. 1. Multi Cluster Ingress :: Global Load Balancer that automatically distributes incoming traffic across Multi Region Clusters(spe-prod-cluster,spe-prod-cluster-apac)
+1. Multi Cluster Ingress :: Global Load Balancer that automatically distributes incoming traffic across Multi Region Clusters(spe-prod-cluster,spe-prod-cluster-apac)
 Akamai - Kong - Cloud Armour - Ingress
 
 2. Multi Region Clusters ::
