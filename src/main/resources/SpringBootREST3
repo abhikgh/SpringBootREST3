@@ -1995,7 +1995,27 @@ The response is not rendered in browsers, so the risk of Cross-Site Scripting (X
 8. Google PostgresSQL HAProxy + Read Replicas 
 
 9. Cloud Service Mesh + Certificates + mTLS
-10. IAM  (which users or services can access specific resources, ensuring least-privilege access)
+	
+     Service mesh :: Service to service communication layer 
+
+		1. Service 
+        2. Sidecar 
+        3. Control plane : 
+				• Certificate validity
+                • Service identity
+                • Authentication & Authorization
+
+	
+┌─────────────┐                              ┌─────────────┐
+│  Service A  │                              │  Service B  │
+│  + Sidecar  │◄─────── mTLS Tunnel ────────►│  + Sidecar  │
+└─────────────┘         (Encrypted)          └─────────────┘
+     │                                             │
+     └──────────────┬──────────────────────────────┘
+                    │
+               Control Plane
+
+10. IAM  (which users or services can use to access specific resources, ensuring least-privilege access)
 11. Secret Management - 1 password
 12. GCP Security Command center : for Threats and vulnerabilities
 
@@ -2005,15 +2025,13 @@ The response is not rendered in browsers, so the risk of Cross-Site Scripting (X
 					Code Scanning - how code is written (e.g., insecure functions, logic flaws)
 				  	Secret Scanning - automatically alerts for sensitive data like passwords, tokens, API keys in code
 					Vulnerability Scanning - what is running , checks running systems, networks, applications for known weaknesses like outdated libraries, missing patches, or misconfigurations
-	Trivy : Image Scanning
+	
+    Trivy : Image Scanning
 
-	Renovate :  Automate PR for dependency management
-	Dependabot : GitHub's built-in feature for automated dependency management
+	Renovate :  Automate PRs for dependency management
+	Dependabot : Automate PRs for dependency management from GitHub
 
 14. @JsonIgnoreProperties(ignoreUnknown = true)
-
-
-  
 
 
 -------------------------------------------------------------------------------------------------
