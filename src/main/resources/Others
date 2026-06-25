@@ -11,6 +11,17 @@ Kill process
 -------------
 taskkill /F /PID 62786
 
+Java_Home in Mac
+---------------------
+nano ~/.zshrc
+
+export JAVA_HOME="/Users/abhik.ghosh/Library/Java/JavaVirtualMachines/liberica-25.0.3"
+export PATH=$JAVA_HOME/bin:$PATH
+
+Save:
+Ctrl + O
+Enter
+Ctrl + X
 
 mvn commands
 =====================
