@@ -1568,8 +1568,73 @@ Separates Commands(write to Database) from Queries(reading from Database) into s
 -scalable
 Resolves issues of data duplication and inconsistency by separating the command and query responsibilities, allowing for specialized models.
 
+14. Bulkhead (prevents Overloading) (No of requests that can be received)
+---------------------------------------------------------------------------
+Latency in one service should not migrate to the whole system - by isolating components into independent pools - so it isolate failures
 
-14. Circuit Breaker (Fault Tolerance)
+resilience4j:
+   bulkhead:
+     instances:
+       serviceA:
+         maxConcurrentCalls: 10
+         maxWaitDuration: 500ms
+
+@GetMapping(value = "/getMoviesOfDirector", produces = MediaType.APPLICATION_JSON_VALUE)
+@SneakyThrows
+@Logging
+@CircuitBreaker(name = "getMoviesOfDirector_CB",fallbackMethod = "getDummyValue")
+@RateLimiter(name = "basic")
+@Bulkhead(name = "serviceA", fallbackMethod = "getDummyValue")
+public List<Movie> getMoviesOfDirector(
+        @RequestParam(value = "director") String director) {
+    director = director.replaceAll(" ", "%20");
+
+    //Endpoint
+    String endpoint = "http://localhost:9050/orders/v1/getMoviesOfDirector/" + director;
+    URI uri = new URI(endpoint);
+
+    return restClientService.getMoviesOfDirector(uri, director);
+}
+
+public List<Movie> getDummyValue(Exception exception){
+    List<Movie> list = new ArrayList<>();
+    Movie movie = new Movie();
+    movie.setMovieId(100);
+    movie.setMovieName("someName");
+    list.add(movie);
+    return list;
+}
+
+15. Rate-limiter (Fault Tolerance) (Rate at which requests can be received)
+---------------------------------------------------------------------------
+
+resilience4j:
+  ratelimiter:
+      instances:
+        basic:
+          limitForPeriod: 2
+          limitRefreshPeriod: 1s # 2RPS
+          timeoutDuration: 10s     #time to acquire permission from RateLimiter before erroring out.
+
+@GetMapping(value = "/getMoviesOfDirector", produces = MediaType.APPLICATION_JSON_VALUE)
+@SneakyThrows
+@Logging
+@CircuitBreaker(name = "getMoviesOfDirector_CB",fallbackMethod = "getDummyValue")
+@RateLimiter(name = "basic")
+@Bulkhead(name = "serviceA", fallbackMethod = "getDummyValue")
+public List<Movie> getMoviesOfDirector(
+        @RequestParam(value = "director") String director) {
+    director = director.replaceAll(" ", "%20");
+
+    //Endpoint
+    String endpoint = "http://localhost:9050/orders/v1/getMoviesOfDirector/" + director;
+    URI uri = new URI(endpoint);
+
+    return restClientService.getMoviesOfDirector(uri, director);
+}
+
+
+16. Circuit Breaker (Fault Tolerance) (How many requests can fail)
 ---------------------------------------------------------------------------
 
 
@@ -1616,10 +1681,10 @@ resilience4j:
   circuitbreaker:
     instances:
       getMoviesOfDirector_CB:
+        failure-rate-threshold: 70 #Circuitbreaker will open if 70% of the last 10 calls failed
+        sliding-window-size: 10
         register-health-indicator: true
         sliding-window-type: count_based
-        sliding-window-size: 10
-        failure-rate-threshold: 70 #Circuitbreaker will open if 70% of the last 10 calls failed
         slow-call-rate-threshold: 40
         slow-call-duration-threshold: 2s
         permitted-number-of-calls-in-half-open-state: 1
@@ -1660,69 +1725,8 @@ Benefits
     Improves Resilience
     Fault Tolerance
 
-15. Rate-limiter (Fault Tolerance)
----------------------------------------------------------------------------
 
-resilience4j:
-  ratelimiter:
-      instances:
-        basic:
-          limitForPeriod: 2
-          limitRefreshPeriod: 1s # 2RPS
-          timeoutDuration: 10s     #time to acquire permission from RateLimiter before erroring out.
 
-@GetMapping(value = "/getMoviesOfDirector", produces = MediaType.APPLICATION_JSON_VALUE)
-@SneakyThrows
-@Logging
-@CircuitBreaker(name = "getMoviesOfDirector_CB",fallbackMethod = "getDummyValue")
-@RateLimiter(name = "basic")
-@Bulkhead(name = "serviceA", fallbackMethod = "getDummyValue")
-public List<Movie> getMoviesOfDirector(
-        @RequestParam(value = "director") String director) {
-    director = director.replaceAll(" ", "%20");
-
-    //Endpoint
-    String endpoint = "http://localhost:9050/orders/v1/getMoviesOfDirector/" + director;
-    URI uri = new URI(endpoint);
-
-    return restClientService.getMoviesOfDirector(uri, director);
-}
-
-16. Bulkhead (prevents Overloading , wait or fail-fast)
----------------------------------------------------------------------------
-Latency in one service should not migrate to the whole system - by isolating components into independent pools - so it isolate failures
-
-resilience4j:
-   bulkhead:
-     instances:
-       serviceA:
-         maxConcurrentCalls: 10
-
-@GetMapping(value = "/getMoviesOfDirector", produces = MediaType.APPLICATION_JSON_VALUE)
-@SneakyThrows
-@Logging
-@CircuitBreaker(name = "getMoviesOfDirector_CB",fallbackMethod = "getDummyValue")
-@RateLimiter(name = "basic")
-@Bulkhead(name = "serviceA", fallbackMethod = "getDummyValue")
-public List<Movie> getMoviesOfDirector(
-        @RequestParam(value = "director") String director) {
-    director = director.replaceAll(" ", "%20");
-
-    //Endpoint
-    String endpoint = "http://localhost:9050/orders/v1/getMoviesOfDirector/" + director;
-    URI uri = new URI(endpoint);
-
-    return restClientService.getMoviesOfDirector(uri, director);
-}
-
-public List<Movie> getDummyValue(Exception exception){
-    List<Movie> list = new ArrayList<>();
-    Movie movie = new Movie();
-    movie.setMovieId(100);
-    movie.setMovieName("someName");
-    list.add(movie);
-    return list;
-}
 
 
 17. Spring Retry (Fault Tolerance)
