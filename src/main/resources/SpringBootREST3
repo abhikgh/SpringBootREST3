@@ -4467,6 +4467,10 @@ public class ServiceForm implements Serializable {
     //@NotBlank - must be not null, and the trimmed length must be greater than zero (blanks are NOT allowed)
     //@NotEmpty - List
 
+    // @Positive
+    // @PositiveOrZero
+    // @Digits (allows deciamls)
+    
     //@Nonnull - preventing null-related issues at the development stage, doesn’t trigger any runtime validation
     @JsonProperty(value = "orderId")
     @Schema(description = "orderID of the request", example = "12", required=true) //will be mapped to Swagger doc
