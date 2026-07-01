@@ -1688,7 +1688,7 @@ public List<Movie> getMoviesOfDirector(
     return restClientService.getMoviesOfDirector(uri, director);
 }
 
-16. Bulkhead (Fault Tolerance)
+16. Bulkhead (prevents Overloading , wait or fail-fast)
 ---------------------------------------------------------------------------
 Latency in one service should not migrate to the whole system - by isolating components into independent pools - so it isolate failures
 
@@ -1696,7 +1696,7 @@ resilience4j:
    bulkhead:
      instances:
        serviceA:
-         maxConcurrentCalls: 1
+         maxConcurrentCalls: 10
 
 @GetMapping(value = "/getMoviesOfDirector", produces = MediaType.APPLICATION_JSON_VALUE)
 @SneakyThrows
