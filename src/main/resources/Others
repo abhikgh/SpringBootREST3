@@ -64,7 +64,10 @@ git init
 git checkout -b test (new branch)
 git checkout master (switch to existing branch)
 git pull origin master
-                    Local Repository
+git pull origin development  
+
+ToDo
+ Remote Repository  ---------> Local Repository	--------------->  Workspace
         -> git fetch                        -> git merge
 Remote Repository      ------> git pull              Workspace
 
@@ -76,6 +79,12 @@ git stash
 git stash pop
 git reset --soft HEAD~1 (to remove if committed to master directly)
 git branch -D branch_name
+
+git checkout -b SALESPRICE-6064-bkup
+git checkout SALESPRICE-6064    
+git config pull.rebase false #merge
+git pull origin development  
+esc : wq enter
 
 Git Merge
 ================
