@@ -2565,14 +2565,61 @@ Class Data Sharing (CDS)
 ==============================
 Reduce startup time and memory consumption
 
-1.Stores snapshot of the application classes in a archived file
-2.Startup, JVM can refer this archive and get the class file, improving the class-loading time
+1.Stores snapshot of the application classes in a CDS base archive file
+2.On Startup, JVM refers the CDS base archive file and gets the class file, improving the class-loading time
 
-spring.context.exit-on-refresh=true
 
--XX:ArchiveClassesAtExit=app-cds.jsa
-# On the JVM you plan to deploy to:
-java -Xshare:on -XX:SharedArchiveFile=app-cds.jsa -jar myapp.jar
+any-glob-to-any-file is commonly used in GitHub Actions to expand file glob patterns into a list of matching files.
+
+
+FROM bellsoft/liberica-openjdk-alpine:25.0.2 AS optimiser
+
+WORKDIR home/spe
+
+COPY target/app.jar app.jar
+
+RUN \
+
+    # -- 1. Generate the default JVM CDS base archive --------
+    java -Xshare:dump && \
+
+     # -- 2. Extract the fat jar into an exploded layout --------
+    java -Djarmode=tools -jar app.jar extract --destination app && \
+
+     # -- 3. Create empty config directory for the training run --------
+    mkdir -p /tmp/empty-config && \
+
+     # -- 4. CDS Training Run --------
+    java \
+        -Xshare:on \
+        -XX:ArchiveClassesAtExit=app.jsa \
+        -Dspring.context.exit=onRefresh \
+        -Dspring.cloud.config.enabled=false \
+        -Dspringdoc.api-docs.enabled=false \
+        -Dspringdoc.swagger-ui.enabled=false \
+        -Dspring.config.location=optional:classpath:/application.properties,optional:file:/tmp/empty-config/ \
+        -jar app/app.jar || true
+
+     # -- 5. Verify CDS creation --------
+    RUN if [ ! -f /home/spe/app/app.jsa ]; then \
+        echo "Build failed" && exit 1; \
+        fi
+
+    ]
+
+     # -- 6. Runner --------
+   FROM bellsoft/liberica-openjre-alpine:25.0.2
+
+   WORKDIR home/spe
+
+   EXPOSE 8080 
+
+   ENTRYPOINT [ "java", \
+        "-XX:SharedArchiveFile=app/app.jsa", \
+        "-X:share:auto", \
+        "-jar", "app/app.jar"
+   ]
+
 
 GraalVM native image 
 ========================
