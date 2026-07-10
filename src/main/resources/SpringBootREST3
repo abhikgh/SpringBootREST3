@@ -4089,6 +4089,40 @@ Compared to JMeter : Gatling is faster, lightweight, and provides more detailed 
     <version>4.3.1</version>
 </dependency>
 
+ 
+
+sudo su gatling 
+cd  
+
+ls - lah 
+
+ mkdir SALESPRICE-6046 
+cd SALESPRICE-6046 
+git clone <repo_url>
+cd spe-performance 
+git checkout -b SALESPRICE-6046 
+git pull origin SALESPRICE-6046 
+ 
+mvn clean install 
+ 
+ 
+mvn gatling:test -X -Denv=ppe -Dduration=5 -Dbrps-eu-cart=10 -Dthrottle=5 -Dgatling.simulationClass=spe.cart.OL_Cart_Auth  
+
+./launchTim.sh
+
+sudo rm -r target
+
+ 
+
+For view ::  
+
+cat launchTim.sh 
+ 
+
+For edit :: 
+
+vim launchTim.sh 
+
 Gatling Simulation
 ------------------------------
 package com.example.SpringBootREST3;
