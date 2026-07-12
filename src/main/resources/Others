@@ -86,16 +86,39 @@ git config pull.rebase false #merge
 git pull origin development  
 esc : wq enter
 
-Git Merge
-================
-git merge feature main
+git fetch vs git merge vs git pull vs git rebase
+-------------------------------------------------------
+git pull = git fetch + git merge
 
-main branch commits are put into feature branch
-safe :: existing branches are not changed
+git fetch : downloads the change from main but does not integrate into local branch
+git fetch origin 
+git diff local origin/main 
+
+
+git merge : does not download from main but integrates into local repo
+
+git checkout main
+git merge origin/main
+
+main A --- B --- X 
+
+origin/main A --- B --- C — D
+
+        C --- D
+       /       \
+A --- B         M. - new merge commit
+       \       /
+        X -----
+
+git diff SALESPRICE-6046 release
+
+chmod -R 777 mvnw :: ecursively sets read, write, and execute permissions for everyone 
+          mvn deploy --file pom.xml --settings settings.xml
+
 
 Git Rebase
 ================
-git rebase feature main
+git rebase main feature
 
 feature branch commits are put into main - each commit in feature is a commit in main
 cleaner project history
