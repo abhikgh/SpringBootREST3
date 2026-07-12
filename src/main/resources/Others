@@ -11,7 +11,7 @@ Kill process
 -------------
 taskkill /F /PID 62786
 
-Java_Home in Mac
+JAVA_HOME in Mac
 ---------------------
 
 Terminal :: nano ~/.zshrc
@@ -22,9 +22,13 @@ Ctrl O
 Enter
 Ctrl X
 
+echo $JAVA_HOME
+java -version
+
+
 mvn commands
 =====================
-mvn clean install -DskipTests=true
+mvn clean install -DskipTests
 mvn clean install -U
 mvn clean install -U -DskipTests
 mvn clean install -Dmaven.javadoc.skip=true
