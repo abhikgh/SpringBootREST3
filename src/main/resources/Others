@@ -67,7 +67,7 @@ Used :
 		git checkout SALESPRICE-6064  	(switch to existing branch)
 		git diff SALESPRICE-6046 release
 		git config pull.rebase false  #MERGE , IMPORTANT
-		git pull origin development  
+		git pull origin release  
 		esc : wq enter
 
 		git commit -m "initial commit"
@@ -80,7 +80,7 @@ If merge conflict
 git checkout -b SALESPRICE-6064-bkup
 git checkout SALESPRICE-6064    
 git config pull.rebase false  #MERGE , IMPORTANT
-git pull origin development  
+git pull origin release  
 esc : wq enter
 
 
