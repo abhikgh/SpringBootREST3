@@ -82,7 +82,7 @@ git branch -D branch_name
 
 git checkout -b SALESPRICE-6064-bkup
 git checkout SALESPRICE-6064    
-git config pull.rebase false #merge
+git config pull.rebase false  #MERGE , IMPORTANT
 git pull origin development  
 esc : wq enter
 
