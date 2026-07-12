@@ -97,18 +97,46 @@ git diff local origin/main
 
 git merge : does not download from main but integrates into local repo
 
-git checkout main
-git merge origin/main
 
 main A --- B --- X 
 
-origin/main A --- B --- C — D
+feature A --- B --- C — D
+
+git checkout feature
+git merge main
 
         C --- D
        /       \
 A --- B         M. - new merge commit
        \       /
         X -----
+
+
+main  A --- B --- C --- F --- G
+           \
+feature     D --- E
+
+git checkout feature
+git fetch origin
+git merge origin/main
+
+
+
+A --- B --- C --- F --- G
+           \             \
+            D --- E ------ M  - new merge commit
+
+Keeps history 
+
+
+git checkout feature
+git fetch origin
+git merge origin/main
+
+A --- B --- C --- F --- G --- D' --- E'
+
+Rewrites commit history
+
 
 git diff SALESPRICE-6046 release
 
