@@ -224,4 +224,3 @@ For edit ::
 vim launchTim.sh 
 
 check this in main
-git push --set-upstream origin SALESPRICE-6046-3
