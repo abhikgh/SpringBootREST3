@@ -64,9 +64,18 @@ mvn clean install -Dmaven.javadoc.skip=true
 
 Git commands (SCM and VC tool)
 =====================================
+(local repository = staging area =  .git folder inside the workspace)
+git init
+
+git add . (stage all modified files)
+git commit -m "initial commit"
+    git push -u origin salesprice-6046  (The -u flag links your local branch to the remote branch so you can just type git push in the future)
+git push
+
+git log (to view log of commits)
 
 Used : 
-		
+		g
 		git init	(local repository = staging area =  .git folder inside the workspace)
 		git checkout -b SALESPRICE-6064 (new branch)
 		git checkout SALESPRICE-6064  	(switch to existing branch)
@@ -88,6 +97,12 @@ git config pull.rebase false  #MERGE , IMPORTANT
 git pull origin release  
 esc : wq enter
 
+Git Merge - merge feature into main
+================
+1. git checkout release
+2. git pull origin release
+3. git merge salesprice-6046
+4. git push origin release
 
 chmod -R 777 mvnw :: ecursively sets read, write, and execute permissions for everyone 
           mvn deploy --file pom.xml --settings settings.xml
