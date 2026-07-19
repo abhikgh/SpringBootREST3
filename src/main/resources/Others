@@ -28,6 +28,7 @@ Git commands (SCM and VC tool)
 git init
 git add . (stage all modified files)
 git commit -m "initial commit"
+git push
 
 git push -u origin salesprice-6046  (The -u flag links your local branch to the remote branch so you can just type git push in the future)
 
