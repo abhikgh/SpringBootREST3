@@ -26,6 +26,9 @@ Git commands (SCM and VC tool)
 =====================================
 (local repository = staging area =  .git folder inside the workspace)
 git init
+git add . (stage all modified files)
+git commit -m "initial commit"
+
 git checkout -b test (new branch)
 git checkout master (switch to existing branch)
 git pull origin master
@@ -33,7 +36,7 @@ git pull origin master
         -> git fetch                        -> git merge
 Remote Repository      ------> git pull              Workspace
 
-git commit -m "initial commit"
+
 git clone <repository-url>
 git config --global user.name "Your Name"
 git branch
