@@ -26,12 +26,11 @@ Git commands (SCM and VC tool)
 =====================================
 (local repository = staging area =  .git folder inside the workspace)
 git init
+
 git add . (stage all modified files)
 git commit -m "initial commit"
+    git push -u origin salesprice-6046  (The -u flag links your local branch to the remote branch so you can just type git push in the future)
 git push
-
-git push -u origin salesprice-6046  (The -u flag links your local branch to the remote branch so you can just type git push in the future)
-
 
 git log (to view log of commits)
 
@@ -51,16 +50,13 @@ git stash pop
 git reset --soft HEAD~1 (to remove if committed to master directly)
 
 
-
-Git Stash
-===============
-
-
-
-
-Git Merge
+Git Merge - merge feature into main
 ================
-git merge feature main
+1. git checkout release
+2. git pull origin release
+3. git merge salesprice-6046
+4. git push origin release
+
 
 main branch commits are put into feature branch
 safe :: existing branches are not changed
