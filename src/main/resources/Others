@@ -29,6 +29,11 @@ git init
 git add . (stage all modified files)
 git commit -m "initial commit"
 
+git push -u origin salesprice-6046  (The -u flag links your local branch to the remote branch so you can just type git push in the future)
+
+
+git log (to view log of commits)
+
 git checkout -b test (new branch)
 git checkout master (switch to existing branch)
 git pull origin master
@@ -66,6 +71,8 @@ You have not concluded your merge (MERGE_HEAD exists). Please, commit your chang
 git merge --abort
 git reset --merge
 Pull the branch and resolve the conflicts
+
+check if this is committed or not
 
 
 
