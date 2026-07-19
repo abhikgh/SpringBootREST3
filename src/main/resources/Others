@@ -75,8 +75,6 @@ git push
 git log (to view log of commits)
 
 Used : 
-		g
-		git init	(local repository = staging area =  .git folder inside the workspace)
 		git checkout -b SALESPRICE-6064 (new branch)
 		git checkout SALESPRICE-6064  	(switch to existing branch)
 		git diff SALESPRICE-6046 release
