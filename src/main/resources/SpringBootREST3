@@ -996,6 +996,8 @@ private String getJWTToken() {
                                     .uri("/authenticate")
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .accept(MediaType.APPLICATION_JSON)
+									.contentType(MediaType.APPLICATION_JSON)
+									.headers(headers -> headers.addAll(httpHeaders))
                                     .body(claims)
                                     .retrieve()
                                     .body(AuthenticationResponse.class))
