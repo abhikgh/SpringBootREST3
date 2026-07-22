@@ -3514,15 +3514,43 @@ public class CaffeineConfig {
         return caffeineCacheManager;
     }
 
+	application.cache.configuration=maximumSize=5000,expireAfterAccess=6000s 
+    application.secondary.cache.configuration=maximumSize=500,expireAfterAccess=86400s
+
+	@Bean
+	@Primary 
+	public CacheManager primaryCacheManager(){
+	
+		CaffeineCacheManager caffeineCacheManager = new CaffeineCacheManager();
+                 	caffeineCacheManager.setCacheNames(this.cacheNames);
+			caffeineCacheManager.setSpecification(cacheSpecs);
+		caffeineCacheManager.setAllowNullValues(false);
+			return caffeineCacheManager;
+	}
+
+	@Bean
+	@ConditionalOnProperty(name = {"application.secondary.cache.configuration"})
+	public CacheManager secondaryCacheManager(){
+	
+		CaffeineCacheManager caffeineCacheManager = new CaffeineCacheManager();
+                 	caffeineCacheManager.setCacheNames(this.cacheNames);
+			caffeineCacheManager.setSpecification(secondaryCacheSpecs);
+		caffeineCacheManager.setAllowNullValues(false);
+			return caffeineCacheManager;
+	}
+
 }
 
 Service
 ------------------
 @Cacheable(key = "#buCode.concat('-').concat(#buType).concat('-').concat(#countryCode)", cacheManager = "caffeineCacheManager", cacheNames = CaffeineConfig.BU_CACHE, unless = "#result==null")
-@Cacheable(key = "#ctyCode", cacheNames = SPE_ESSENTIAL_ITEM_CACHE, unless = "#result==null or #result.isEmpty()", cacheManager = "secondaryCacheManager")
+@Cacheable(key = "#ctyCode", cacheNames = SPE_ESSENTIAL_ITEM_CACHE, unless = "#result==null or #result.isEmpty()")
 //unless = "#result==null" - null values will not be cached , for String return
 //unless = "#result==null or #result.isEmpty()", null or empty will not be cached - for List/Set/Map return
-//cacheManager = "secondaryCacheManager"
+@Cacheable(key = "#ctyCode", cacheNames = SOME_CACHE_NAME, unless = "#result==null or #result.isEmpty()", cacheManager = "secondaryCacheManager")
+//cacheManager = "secondaryCacheManager" - This is stored in secondary cache , not in primary cache
+
+
 public Bucode getBuCode(String buCode, String buType, String countryCode) {
     //This method call will by default try to retrieve from the Caffeine cache based on the key, if not found will go into the method and will set by default
     System.out.println("Checking in Redis...");
