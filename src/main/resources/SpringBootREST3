@@ -3519,7 +3519,10 @@ public class CaffeineConfig {
 Service
 ------------------
 @Cacheable(key = "#buCode.concat('-').concat(#buType).concat('-').concat(#countryCode)", cacheManager = "caffeineCacheManager", cacheNames = CaffeineConfig.BU_CACHE, unless = "#result==null")
-//unless = "#result==null" - null values will not be cached
+@Cacheable(key = "#ctyCode", cacheNames = SPE_ESSENTIAL_ITEM_CACHE, unless = "#result==null or #result.isEmpty()", cacheManager = "secondaryCacheManager")
+//unless = "#result==null" - null values will not be cached , for String return
+//unless = "#result==null or #result.isEmpty()", null or empty will not be cached - for List/Set/Map return
+//cacheManager = "secondaryCacheManager"
 public Bucode getBuCode(String buCode, String buType, String countryCode) {
     //This method call will by default try to retrieve from the Caffeine cache based on the key, if not found will go into the method and will set by default
     System.out.println("Checking in Redis...");
