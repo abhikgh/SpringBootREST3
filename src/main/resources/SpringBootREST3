@@ -1007,6 +1007,8 @@ private String getJWTToken() {
     return jwt;
 }
 
+this.restClient.post().uri(this.appendQueryParameters(StringUtils.hasLength(urlOverride) ? urlOverride : this.getRequestUri(), queryParams), pathParams)).contentType(MediaType.APPLICATION_JSON).headers((httpHeaders) -> httpHeaders.addAll(requestHeaders))).body(requestBody).retrieve().body(this.genericType);
+
 --------------------------------------------------------------------------------------------------------
 
 SOA vs Microservices
