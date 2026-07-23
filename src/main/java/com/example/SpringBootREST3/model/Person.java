@@ -30,7 +30,5 @@ public class Person {
     @Valid
     private String lastName;
 
-    @NotNull
-    @Valid
-    private PersonAddress personAddress;
+   private PersonAddress personAddress;
 }
