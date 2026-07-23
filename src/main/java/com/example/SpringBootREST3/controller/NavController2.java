@@ -104,6 +104,43 @@ public class NavController2 {
                 .body(orderResponse);
     }
 
+    // http://localhost:9100/v3/rest/getOrder5/Feb/red
+    @PostMapping(value = "/getOrder5/{month}/{colour}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<OrderResponse> getOrder5(
+            @PathVariable(value = "month") String month,
+            @PathVariable(value = "colour") String colour,
+            @RequestBody @Valid OrderRequestForm orderRequestForm) {
+        System.out.println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+        OrderResponse orderResponse = new OrderResponse();
+        String item = orderRequestForm.getItem();
+        Person person = new Person();
+        person.setFirstName("aaaaa");
+        person.setLastName("bbbbb");
+        PersonAddress personAddress = new PersonAddress();
+        Map<String, String> addressMap = new HashMap<>();
+        addressMap.put("aa","bb");
+        personAddress.setAddressMap(addressMap);
+        person.setPersonAddress(personAddress);
+        Set<ConstraintViolation<Person>> validationErrors = validator.validate(person);
+        if (!validationErrors.isEmpty()) {
+            ConstraintViolation<Person> violation = validationErrors.iterator().next();
+            String errorMessage = violation.getPropertyPath() + ": " + violation.getMessage();
+            System.out.println(errorMessage);
+            errorProperties.throwSPEException(ErrorProperties.ErrorCode.INVALID_ITEM, List.of(item));
+        }
+
+        if (!orderServiceUtil.allowedItems.contains(item)) {
+            errorProperties.throwSPEException(ErrorProperties.ErrorCode.INVALID_ITEM, List.of(item));
+        } else {
+            orderResponse = homeService.getOrderResponse(orderResponse, orderRequestForm, null, null, month, null);
+        }
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .header("test", "test")
+                .body(orderResponse);
+    }
+
     //http://localhost:9100/v3/rest/getOrder4/Feb/red?parmRequestSource=web&parmAudienceType=external
     /*
     {
