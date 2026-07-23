@@ -97,31 +97,33 @@ public class NavController {
     // http://localhost:9100/v3/rest/getMoviesOfDirector/Satyajit Ray
     // Authorization
     // Type     -> Bearer Token
-    // Token    -> eyJhbGciOiJIUzUxMiJ9...
+    // Token    -> eyJhbGciOiJIUzUxMiJ9...  {{SB3_BEARER_TOKEN}}
     // JWT Token is in the form of Bearer Token
     @GetMapping(value = "/getMoviesOfDirector/{director}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed(value = "abcTimer", description = "Time spent saving results")
     public ResponseEntity<List<Movie>> getMoviesOfDirector(
             @PathVariable("director") String director) {
-        Span span = jaegerTracer.buildSpan("getMoviesOfDirector").start();
+       // Span span = jaegerTracer.buildSpan("getMoviesOfDirector").start();
         log.info("Inside getMoviesOfDirector controller... ");
 
         //Counter metric
-        Counter counter = Counter.builder("getMoviesOfDirector")
+        /*Counter counter = Counter.builder("getMoviesOfDirector")
                 .description("a number of requests to /getMoviesOfDirector endpoint")
                 .register(meterRegistry);
-        counter.increment();
+        counter.increment();*/
 
         List<Movie> movies = movieService.getMoviesOfDirector(director);
 
         //Observation API
-        Observation.createNotStarted("getMoviesOfDirector_Count", observationRegistry)
+       /* Observation.createNotStarted("getMoviesOfDirector_Count", observationRegistry)
                 .lowCardinalityKeyValue("request-uid", String.valueOf(new Random().nextInt(100)))
                 .observe(() -> {
                     List<Movie> movies2 = movieService.getMoviesOfDirector(director);
                     log.debug("Counting getMoviesOfDirector");
-                });
+                });*/
 
+        List<Movie> movies2 = movieService.getMoviesOfDirector(director);
+        log.debug("Counting getMoviesOfDirector");
         return ResponseEntity.ok(movies);
     }
 
