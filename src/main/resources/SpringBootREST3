@@ -5023,64 +5023,43 @@ RestClient
 @Configuration
 public class RestClientConfig {
 
-    @Bean(name = "restClient1")
-    public RestClient restClient() {
+    @Bean
+    public RestClient restClient(){
         return RestClient
                 .builder()
-                .baseUrl("http://localhost:9100/v3/rest")
-                .defaultHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
-                .defaultHeader(HttpHeaders.CONTENT_ENCODING,"gzip")
-                .defaultHeader(HttpHeaders.ACCEPT_ENCODING,"gzip")
+                .baseUrl("http://localhost:8092/orders/v1/")
                 .build();
     }
 
 }
 
-@Autowired
-@Qualifier("restClient1")
-private RestClient restClient;
+public OrderResponse getOrder44Client(String month, String colour,
+                                          String parmRequestSource,
+                                          String parmAudienceType,
+                                          @RequestBody OrderRequestForm orderRequestForm) {
+    String endpoint = "/getOrder4/{month}/{colour}";
 
-public List<Movie> getMoviesOfDirectorClient(String director) {
+    var queryParams = CollectionUtils.toMultiValueMap(Map.of("parmRequestSource", Collections.singletonList(parmRequestSource),
+            "parmAudienceType", Collections.singletonList(parmAudienceType)));
+
+    Map<String, String> pathParams = new HashMap<>();
+    pathParams.put("month", month);
+    pathParams.put("colour", colour);
+
     HttpHeaders httpHeaders = new HttpHeaders();
-    httpHeaders.set("Authorization","Bearer " + getJWTToken());
+    var headers = CollectionUtils.toMultiValueMap(Map.of("Authorization", Collections.singletonList("Basic YWJoaWtnaDp3ZWxjb21lQDFh"), "Actor", Collections.singletonList("test")));
+    httpHeaders.putAll(headers);
+
     return
             restClient
-                .get()
-                .uri("/getMoviesOfDirector/" + director)
-                .headers(headers -> headers.addAll(httpHeaders))
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .body(new ParameterizedTypeReference<>() {});
-}
+                    .post()
+                    .uri(UriComponentsBuilder.fromUriString(endpoint).queryParams(queryParams).encode().toUriString(), pathParams)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .body(orderRequestForm)
+                    .headers(httpHeader -> httpHeader.addAll(httpHeaders))
+                    .retrieve()
+                    .body(OrderResponse.class);
 
-public Employee getEmployeeById(Integer employeeId) {
-        return restClient
-                .get()
-                .uri("/getEmployeeById/" + employeeId)
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .body(Employee.class);
-    }
-
-private String getJWTToken() {
-    Map<String, Object> claims = new HashMap<>();
-    claims.put("userId","eyabhikg");
-    claims.put("password", "12345");
-
-    String jwt =
-            Objects.requireNonNull(restClient
-                                        .post()
-                                        .uri("/authenticate")
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .accept(MediaType.APPLICATION_JSON)
-                                        .body(claims)
-                                        .retrieve()
-                                        .body(AuthenticationResponse.class))
-                                    .getJwt();
-
-    System.out.println("jwt - " + jwt);
-    return jwt;
 }
 
 ---------------------------------------------------------------------------------------------
