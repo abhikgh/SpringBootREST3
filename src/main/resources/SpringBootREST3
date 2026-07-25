@@ -1114,20 +1114,18 @@ Spring Retry
 @EnableRetry
 
     @Retryable(value = Exception.class, maxAttempts = 5, backoff = @Backoff(delay = 1000, multiplier = 2))
-    //try after 1000, 2000, 4000, 8000, 16000 ms
+    //retry count : 0 1 2 3 4
+    //retry time : 1 1000 2000 4000 8000
     public List<Movie> getMoviesOfDirectorClient(String director) {
 
-        String endpoint = "/getMoviesOfDirector/{director}";
+        System.out.println(String.format("Retry count %d for service %s", RetrySynchronizationManager.getContext().getRetryCount(), "getMoviesOfDirectorClient"));
 
+        String endpoint = "/getMoviesOfDirector/{director}";
         Map<String, String> pathParams = new HashMap<>();
         pathParams.put("director", director);
 
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.putAll(CollectionUtils.toMultiValueMap(Map.of("Authorization", Collections.singletonList("Bearer "+getJWTToken()))));
-
-        if (Objects.nonNull(RetrySynchronizationManager.getContext()) && RetrySynchronizationManager.getContext().getRetryCount() > 0) {
-            System.out.println(String.format("Retry count %d for service %s", RetrySynchronizationManager.getContext().getRetryCount(), "getMoviesOfDirectorClient"));
-        }
 
         return
                 restClient
@@ -1137,6 +1135,11 @@ Spring Retry
                         .accept(MediaType.APPLICATION_JSON)
                         .retrieve()
                         .body(new ParameterizedTypeReference<>(){});
+    }
+
+    @Recover
+    public List<Movie> defaultGetMoviesOfDirectorClient(Exception exception){
+        return new ArrayList<>();
     }
 
 --------------------------------------------------------------------------------------------------------
