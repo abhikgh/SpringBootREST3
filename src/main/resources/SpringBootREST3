@@ -1089,6 +1089,58 @@ this.restClient.post()
 
 --------------------------------------------------------------------------------------------------------
 
+Spring Retry
+======================
+
+<!-- Actuator -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-actuator</artifactId>
+</dependency>
+<!-- AOP -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-aop</artifactId>
+</dependency>
+<!-- spring-retry -->
+<dependency>
+    <groupId>org.springframework.retry</groupId>
+    <artifactId>spring-retry</artifactId>
+    <version>1.3.2</version>
+</dependency>
+
+
+@Service
+@EnableRetry
+
+    @Retryable(value = Exception.class, maxAttempts = 5, backoff = @Backoff(delay = 1000, multiplier = 2))
+    //try after 1000, 2000, 4000, 8000, 16000 ms
+    public List<Movie> getMoviesOfDirectorClient(String director) {
+
+        String endpoint = "/getMoviesOfDirector/{director}";
+
+        Map<String, String> pathParams = new HashMap<>();
+        pathParams.put("director", director);
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.putAll(CollectionUtils.toMultiValueMap(Map.of("Authorization", Collections.singletonList("Bearer "+getJWTToken()))));
+
+        if (Objects.nonNull(RetrySynchronizationManager.getContext()) && RetrySynchronizationManager.getContext().getRetryCount() > 0) {
+            System.out.println(String.format("Retry count %d for service %s", RetrySynchronizationManager.getContext().getRetryCount(), "getMoviesOfDirectorClient"));
+        }
+
+        return
+                restClient
+                        .get()
+                        .uri(UriComponentsBuilder.fromUriString(endpoint).encode().toUriString(), pathParams)
+                        .headers(headers -> headers.addAll(httpHeaders))
+                        .accept(MediaType.APPLICATION_JSON)
+                        .retrieve()
+                        .body(new ParameterizedTypeReference<>(){});
+    }
+
+--------------------------------------------------------------------------------------------------------
+
 SOA vs Microservices
 ==========================================
 
@@ -1832,7 +1884,36 @@ Benefits
 </dependency>
 
 
+@Service
 @EnableRetry
+
+
+    @Retryable(value = Exception.class, maxAttempts = 5, backoff = @Backoff(delay = 1000, multiplier = 2))
+    //try after 1000, 2000, 4000, 8000, 16000 ms
+    public List<Movie> getMoviesOfDirectorClient(String director) {
+
+        String endpoint = "/getMoviesOfDirector/{director}";
+
+        Map<String, String> pathParams = new HashMap<>();
+        pathParams.put("director", director);
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.putAll(CollectionUtils.toMultiValueMap(Map.of("Authorization", Collections.singletonList("Bearer "+getJWTToken()))));
+
+        if (Objects.nonNull(RetrySynchronizationManager.getContext()) && RetrySynchronizationManager.getContext().getRetryCount() > 0) {
+            System.out.println(String.format("Retry count %d for service %s", RetrySynchronizationManager.getContext().getRetryCount(), "getMoviesOfDirectorClient"));
+        }
+
+        return
+                restClient
+                        .get()
+                        .uri(UriComponentsBuilder.fromUriString(endpoint).encode().toUriString(), pathParams)
+                        .headers(headers -> headers.addAll(httpHeaders))
+                        .accept(MediaType.APPLICATION_JSON)
+                        .retrieve()
+                        .body(new ParameterizedTypeReference<>(){});
+    }
+
 
 @SneakyThrows
 @Retryable(value = Exception.class, maxAttempts = 3, backoff = @Backoff(delay = 1000, multiplier = 3))
