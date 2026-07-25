@@ -1044,10 +1044,6 @@ private RestClient restClient;
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.putAll(CollectionUtils.toMultiValueMap(Map.of("Authorization", Collections.singletonList("Bearer "+getJWTToken()))));
 
-        if (Objects.nonNull(RetrySynchronizationManager.getContext()) && RetrySynchronizationManager.getContext().getRetryCount() > 0) {
-            System.out.println(String.format("Retry count %d for service %s", RetrySynchronizationManager.getContext().getRetryCount(), "getMoviesOfDirectorClient"));
-        }
-
         return
                 restClient
                         .get()
@@ -1079,13 +1075,6 @@ private String getJWTToken() {
     System.out.println("jwt - " + jwt);
     return jwt;
 }
-
-this.restClient.post()
-.uri(this.appendQueryParameters(StringUtils.hasLength(urlOverride) ? urlOverride : this.getRequestUri(), queryParams), pathParams))
-.contentType(MediaType.APPLICATION_JSON)
-.headers((httpHeaders) -> httpHeaders.addAll(requestHeaders))).body(requestBody)
-.retrieve()
-.body(this.genericType);
 
 --------------------------------------------------------------------------------------------------------
 
