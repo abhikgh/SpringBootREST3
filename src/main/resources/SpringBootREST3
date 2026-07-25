@@ -715,6 +715,61 @@ return ResponseEntity
 
  */
 
+----------------------------------------------------------------------------------------------------------------------——
+
+RestClient
+===============================================
+
+<version>3.2.5</version>
+<java.version>21</java.version>
+
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-web</artifactId>
+</dependency>
+
+@Configuration
+public class RestClientConfig {
+
+    @Bean
+    public RestClient restClient(){
+        return RestClient
+                .builder()
+                .baseUrl("http://localhost:8092/orders/v1/")
+                .build();
+    }
+
+}
+
+public OrderResponse getOrder44Client(String month, String colour,
+                                          String parmRequestSource,
+                                          String parmAudienceType,
+                                          @RequestBody OrderRequestForm orderRequestForm) {
+    String endpoint = "/getOrder4/{month}/{colour}";
+
+    var queryParams = CollectionUtils.toMultiValueMap(Map.of("parmRequestSource", Collections.singletonList(parmRequestSource),
+            "parmAudienceType", Collections.singletonList(parmAudienceType)));
+
+    Map<String, String> pathParams = new HashMap<>();
+    pathParams.put("month", month);
+    pathParams.put("colour", colour);
+
+    HttpHeaders httpHeaders = new HttpHeaders();
+    var headers = CollectionUtils.toMultiValueMap(Map.of("Authorization", Collections.singletonList("Basic YWJoaWtnaDp3ZWxjb21lQDFh"), "Actor", Collections.singletonList("test")));
+    httpHeaders.putAll(headers);
+
+    return
+            restClient
+                    .post()
+                    .uri(UriComponentsBuilder.fromUriString(endpoint).queryParams(queryParams).encode().toUriString(), pathParams)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .body(orderRequestForm)
+                    .headers(httpHeader -> httpHeader.addAll(httpHeaders))
+                    .retrieve()
+                    .body(OrderResponse.class);
+
+}
+
 ----------------------------------------------------------------------------------------------------------------------
 
 Spring Boot 3 Secured Endpoint by JWT
