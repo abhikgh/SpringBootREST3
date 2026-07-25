@@ -1,11 +1,13 @@
 package com.example.SpringBootREST3.service;
 
+import com.example.SpringBootREST3.config.CaffeineConfig;
 import com.example.SpringBootREST3.entity.Movie;
 import com.example.SpringBootREST3.entity.MovieNew;
 import com.example.SpringBootREST3.repository.MovieNewRepository;
 import com.example.SpringBootREST3.repository.MovieRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,8 +22,9 @@ public class MovieService {
     @Autowired
     private MovieNewRepository movieNewRepository;
 
+    @Cacheable(key = "#director", cacheNames = CaffeineConfig.MOVIE_CACHE, unless = "#result==null or #result.isEmpty()")
     public List<Movie> getMoviesOfDirector(String director) {
-        log.info("Inside getMoviesOfDirector service... ");
+        log.info("Inside getMoviesOfDirector service going to repo... ");
         List<Movie> movies = movieRepository.findByDirector(director);
         return movies;
     }
