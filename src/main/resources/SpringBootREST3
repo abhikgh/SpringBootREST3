@@ -221,12 +221,16 @@ public class CouponJWTService {
     // coupon.jwt.keys.active=spe-sign-2026-feb.    —key id
 
     private void setupAlgorithmsCache() {
-     configuredAlgorithms.put(keyId, Algorithm.HMAC256(secretKey));
-	/*
-		public static Algorithm HMAC256(String secret) throws IllegalArgumentException {
-        return new HMACAlgorithm("HS256", "HmacSHA256", secret);
-    }
-	*/
+
+		for (String keyPair : jwtKeysConfig) {
+            String[] parts = keyPair.split(":", 2); // Limit to 2 parts in case secret contains ':'
+            String keyId = parts[0].trim();
+            String secretKey = parts[1].trim();
+
+            configuredAlgorithms.put(keyId, Algorithm.HMAC256(secretKey));
+
+        }
+     
     }
 
     private Algorithm getAlgorithm(String activeKeyId) {
