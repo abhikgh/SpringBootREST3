@@ -180,27 +180,20 @@ The response is not rendered in browsers, so the risk of Cross-Site Scripting (X
                                                                          |
                                                                     INGRESS (Load Balancer)
 
-Secure Connection : via JWT ->  httpHeaders.set("Authorization", "Bearer <JWTToken>");
-	Map<String, List<String>> headerMap = Maps.newHashMap();
-    headerMap.put("Authorization", Collections.singletonList("Bearer " + jwtToken));
-    return createHeaders(CollectionUtils.toMultiValueMap(headerMap));
+Secure Connection : via JWT token
+
+	HttpHeaders httpHeaders = new HttpHeaders();
+	httpHeaders.putAll(CollectionUtils.toMultiValueMap(Map.of("Authorization", Collections.singletonList("Bearer YWJoaWtnaDp3ZWxjb21lQDFh"))));
 
 Direct Connection : via x-client-id, x-client-secret
-	Map<String, List<String>> headerMap = Maps.newHashMap();
-    headerMap.put("x-client-id", Collections.singletonList(xClientId));
-    headerMap.put("x-client-secret", Collections.singletonList(xClientSecret));
-    return createHeaders(CollectionUtils.toMultiValueMap(headerMap));
 
-protected HttpHeaders createHeaders(MultiValueMap<String, String> headers) {
-        HttpHeaders requestHeaders = new HttpHeaders();
-        requestHeaders.addAll(headers);
-        return requestHeaders;
-}
+	HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.putAll(CollectionUtils.toMultiValueMap(Map.of("x-client-id", Collections.singletonList(xClientId), "x-client-secret", Collections.singletonList(xClientSecret))));
+
+
 
 JWT Token 
 -----------------------
-
-
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
