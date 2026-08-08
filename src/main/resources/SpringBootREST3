@@ -84,15 +84,12 @@ which the client then uses to make requests to the resource server on the user's
 
 JWT ( Json Web Token ) - based Authentication
 ------------------------------------------------
-JWT tokens contain all the information of a user that the server needs to validate the request
+JWT token is a token that contains all the information of a requestor that the server needs to validate the request
 JWT token is passed with every API request.
+Centralizes authentication & authorization
 
 JWT = header.payload.signature
     = Base64urlEncoded(header).Base64urlEncoded(payload).alg(Base64urlEncoded(header).Base64urlEncoded(payload), secret)
-
-stateless :: JWT centralizes authentication & authorization by generating a single shared token that contains user and app-level information
-secure :: CLIENT does not know user credentials - has only the JWTToken
-scalable
 
 
 Header:
@@ -107,14 +104,14 @@ Payload: claims (details of the user)
 		 3 types of claims: Private, Public, Registered
         -> Private Claims : Base64urlEncoded(payload)
         -> Public Claims : any claim
-        -> Registered Claims : subject, issuer, scope, audience, expirationTime
+        -> Registered Claims : issuer, subject, audience,scope, issuanceTime, expirationTime
 {
   "jti": "uuid",
-  "iat": 1234567890,
-  "exp": 1234568090,
   "iss": "SPE",
-  "aud": "SDM",
   "sub": "coupon_code",
+  "aud": "SDM",	
+  "iat": 1234567890,
+  "exp": 1234568090,	
   "val": "9.50",          // amount consumed with any healing deviation
   "bal": "0.50",          // balance left without any healing 
   "did": "DISCOUNT-123",  // discount ID
@@ -124,8 +121,6 @@ Payload: claims (details of the user)
 
 signature:
     HMACSHA256(Base64urlEncoded(header).Base64urlEncoded(payload), secret)
-
-
 
     validates JWTToken : The signature is used to verify the sender and that the message wasn’t tampered
     If the payload is tampered then the signatures won't match
