@@ -3984,7 +3984,7 @@ Cookie :: The main purpose of Session and Cookie is to make up for the stateless
                                                                                     Less space - no need to save session information
                                                                                     3rd party integration to send only Tokens
 
-Referer : referring pages / where resources are kept
+Referrer : referring pages / where resources are kept
 Authorization :
     // Bearer
     Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
