@@ -1605,12 +1605,6 @@ Security Testing
 4. Network Security Testing
 
 
-Man-in-the-middle (MitM) attacks
-====================================
-
-The primary HTTP header for preventing man-in-the-middle (MitM) attacks is the Strict-Transport-Security (HSTS) header,
-which enforces the use of encrypted HTTPS connections. 
-
 ----------------------------------------------------------------------------------------------------------------------
 Spring Boot Design Patterns
 =======================================
@@ -3974,7 +3968,10 @@ Accept-Language : language settings for a user
 Accept-Encoding : encoding algorithm
 Cookie :: The main purpose of Session and Cookie is to make up for the stateless nature of HTTP.
           The server can use Session to store some operation records of the client during the same session.
-          Session is stored on the server side, and sessionId will be stored in the Cookie of the client.
+          
+Session and Cookie
+-------------------------
+ 1.       Session is stored on the server side, and sessionId will be stored in the Cookie of the client.
           How to determine whether it is the same session? Server sends Set-Cookie: JSESSIONID=XXX
                                                            Client further calls the Server with the same Cookie and session-id
           Disadvantage of Session : Server Load balancing will invalidate the session
@@ -3983,6 +3980,23 @@ Cookie :: The main purpose of Session and Cookie is to make up for the stateless
           Connected to the machine(browser)                                         Connected to the user
                                                                                     Less space - no need to save session information
                                                                                     3rd party integration to send only Tokens
+
+ 2. https - sessionId + TLS Certificate with public key of server is sent from Server to Client
+            Client checks the public key in TrustStore
+            public key is encrypted and sent from Client to server
+			Server decrypts the message with its private key and gets the session id 
+			If session id matches handshake is created
+
+3. Man-in-the-middle (MitM) attacks
+
+	HTTPS (HTTP + TLS) defends against MitM attacks through three mechanisms:
+
+		Authentication – The server presents a TLS certificate signed by a trusted Certificate Authority (CA). The client verifies this chain of trust, ensuring it's talking to the real server.
+		Encryption – Traffic between the client and server is encrypted, so an interceptor can't read the payload.
+		Integrity – TLS uses MACs (message authentication codes) to detect any tampering in transit.
+
+	Best Practices - Always use HTTPS – Use HSTS (Strict-Transport-Security) headers to prevent SSL stripping
+					 Never disable cert validation - requests.get("https://example.com")  # verify=True by default
 
 Referrer : referring pages / where resources are kept
 Authorization :
