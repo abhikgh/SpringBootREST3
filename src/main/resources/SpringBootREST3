@@ -217,8 +217,8 @@ public class CouponJWTService {
             setupAlgorithmsCache();
     }
 
-    // coupon.jwt.keys=${jwt-signing-keys}         — key value , coming from 1 Password secrets
-    // coupon.jwt.keys.active=spe-sign-2026-feb.    —key id
+    // coupon.jwt.keys=${jwt-signing-keys}         — Config map , config value coming from 1 Password (jwt-signing-keys: somevaluehere) 
+	// spring.datasource.username=ENC(nP5a3B1......) - Jasypt
 
     private void setupAlgorithmsCache() {
 
