@@ -149,6 +149,7 @@ JWT Authentication Flow
     AUTHENTICATION SERVER (private key, signature) ----------------> RESOURCE SERVER (public key, verify signature)
 5. Authorizing the request
 
+Entra ID is used for JWT Token replacing Auth0
 
 1. OAuth2.0 Protocol
 
