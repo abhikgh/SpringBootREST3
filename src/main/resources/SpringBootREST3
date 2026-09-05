@@ -16,6 +16,57 @@ SpringBoot
     @Transactional - Spring intercepts the method and starts a Transaction before the method - after the method is executed - Commit/Rollback .
         The database transaction happens inside the scope of  Persistence Context.
 
+Spring @Service, @Component, @Repository, and @Controller beans are singletons by default.
+So 1 instance serves all concurrent requests, so mutable instance fields are dangerous.
+
+1. No mutable fields
+
+@Service
+public class CounterService {
+    private int count = 0;          // shared across all threads!
+
+    public void increment() {
+        count++;                    // race condition
+    }
+}
+
+2. Beans are stateless
+
+@Service
+public class OrderService {
+    private final OrderRepository repo;   // final dependency = safe
+
+    public OrderService(OrderRepository repo) {
+        this.repo = repo;
+    }
+}
+
+3. Use Atomic when state is required
+
+@Service
+public class CounterService {
+    private final AtomicLong count = new AtomicLong();
+
+    public long increment() {
+        return count.incrementAndGet();   // thread-safe
+    }
+}
+
+4. Lock critical section
+
+private final Object lock = new Object();
+public void transfer() {
+    synchronized (lock) {
+        // critical section
+    }
+}
+
+5. Immutable objects
+public record Money(BigDecimal amount, String currency) {}
+
+
+
+
 3. Embedded Tomcat server
 4. Spring datasource
     spring:
