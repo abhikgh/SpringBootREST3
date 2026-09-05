@@ -2072,7 +2072,8 @@ Resolves issues of data duplication and inconsistency by separating the command 
 
 14. Bulkhead (prevents Overloading) (No of requests that can be received)
 ---------------------------------------------------------------------------
-Latency in one service should not migrate to the whole system - by isolating components into independent pools - so it isolate failures
+Fault-tolerance pattern that limits the number of requests that can be received
+Excessive no requests will make the system slow
 
 resilience4j:
    bulkhead:
@@ -2086,7 +2087,7 @@ resilience4j:
 @Logging
 @CircuitBreaker(name = "getMoviesOfDirector_CB",fallbackMethod = "getDummyValue")
 @RateLimiter(name = "basic")
-@Bulkhead(name = "serviceA", fallbackMethod = "getDummyValue")
+@Bulkhead(name = "serviceA", fallbackMethod = "getDummyValue") // uses a SemaphoreBulkhead
 public List<Movie> getMoviesOfDirector(
         @RequestParam(value = "director") String director) {
     director = director.replaceAll(" ", "%20");
@@ -2107,15 +2108,16 @@ public List<Movie> getDummyValue(Exception exception){
     return list;
 }
 
-15. Rate-limiter (Fault Tolerance) (Rate at which requests can be received)
+15. Rate-limiter (Rate at which requests can be received)
 ---------------------------------------------------------------------------
+Fault-tolerance pattern that limits the rate at which requests can be received
 
 resilience4j:
   ratelimiter:
       instances:
         basic:
-          limitForPeriod: 2
-          limitRefreshPeriod: 1s # 2RPS
+          limitForPeriod: 100
+          limitRefreshPeriod: 1s # 100 RPS
           timeoutDuration: 10s     #time to acquire permission from RateLimiter before erroring out.
 
 @GetMapping(value = "/getMoviesOfDirector", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -2138,7 +2140,7 @@ public List<Movie> getMoviesOfDirector(
 
 16. Circuit Breaker (Fault Tolerance) (How many requests can fail)
 ---------------------------------------------------------------------------
-
+Fault-tolerance pattern that limits how many requests can fail before circuit trips
 
                                     Count-based / Time-based          Count-based / Time-based
                     CLOSED     ------------------>     HALF-OPEN      ------------------>       OPEN
