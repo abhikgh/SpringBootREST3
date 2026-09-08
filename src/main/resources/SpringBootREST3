@@ -3812,7 +3812,13 @@ Observation API for LTM and transform them into a single language
 
 OpenAPI Specification (OAS) { previously Swagger specification)
 ===========================================================================
+OpenAPI : 
+
 REST API documentation specification for SpringBoot projects
+
+Machine-readable contract
+SDK Generation
+Swagger UI
 
 <!--spring-boot-starter-validation -->
 <dependency>
@@ -3826,6 +3832,13 @@ REST API documentation specification for SpringBoot projects
     <version>2.2.0</version>
 </dependency>
 (Remove springfox-swagger2 and springfox-swagger-ui dependencies)
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
 
 @AllArgsConstructor
 @Getter
