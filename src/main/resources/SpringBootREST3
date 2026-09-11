@@ -813,6 +813,20 @@ public OrderResponse getOrder44Client(String month, String colour,
 
 }
 
+public List<Movie> getMoviesOfDirectorClient(String director) {
+    String endpoint = "/getMoviesOfDirector/{director}";
+    Map<String, String> pathParams = new HashMap<>();
+    pathParams.put("director", director);
+
+    return
+            restClient
+                    .get()
+                    .uri(endpoint, pathParams)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .retrieve()
+                    .body(List.class);
+
+}
 ----------------------------------------------------------------------------------------------------------------------
 
 Spring Boot 3 Secured Endpoint by JWT
