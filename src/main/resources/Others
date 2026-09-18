@@ -38,6 +38,26 @@ mvn verify (runs integration test)
 mvn spring-boot:run
 mvn deploy
 
+Maven downloads the dependency, usually as a JAR (binary), from a Maven repository.
+
+java -> .class -> .jar (binary)
+
+Maven lifecycle :
+
+validate
+   ↓
+compile
+   ↓
+test
+   ↓
+package  (mvn package = JAR = binary)
+   ↓
+verify
+   ↓
+install
+   ↓
+deploy
+
 
 JavaDoc
 -----------------
