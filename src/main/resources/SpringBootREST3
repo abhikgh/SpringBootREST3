@@ -1221,6 +1221,8 @@ public class CaffeineConfig {
                 .expireAfterWrite(1, TimeUnit.HOURS);
     }
 
+//For 1 Cache Manager
+
     @Bean
     public CaffeineCacheManager caffeineCacheManager(@Qualifier("caffeine") Caffeine caffeine) {
         CaffeineCacheManager caffeineCacheManager = new CaffeineCacheManager();
@@ -1234,12 +1236,12 @@ public class CaffeineConfig {
             application.cache.configuration=maximumSize=5000,expireAfterAccess=6000s
             application.secondary.cache.configuration=maximumSize=500,expireAfterAccess=86400s
 
+//For primary and secondary Cache Managers
             @Bean
             @Primary
             public CacheManager primaryCacheManager(){
-
                 CaffeineCacheManager caffeineCacheManager = new CaffeineCacheManager();
-                            caffeineCacheManager.setCacheNames(this.cacheNames);
+                caffeineCacheManager.setCacheNames(this.cacheNames);
                 caffeineCacheManager.setSpecification(cacheSpecs);
                 caffeineCacheManager.setAllowNullValues(false);
                 return caffeineCacheManager;
@@ -1250,10 +1252,10 @@ public class CaffeineConfig {
             public CacheManager secondaryCacheManager(){
 
                 CaffeineCacheManager caffeineCacheManager = new CaffeineCacheManager();
-                            caffeineCacheManager.setCacheNames(this.cacheNames);
-                    caffeineCacheManager.setSpecification(secondaryCacheSpecs);
+                caffeineCacheManager.setCacheNames(this.cacheNames);
+                caffeineCacheManager.setSpecification(secondaryCacheSpecs);
                 caffeineCacheManager.setAllowNullValues(false);
-                    return caffeineCacheManager;
+                return caffeineCacheManager;
             }
 
 }
