@@ -842,6 +842,16 @@ public class AsyncConfig {
     }
 }
 
+OR
+
+spring:
+  task:
+    execution:
+      pool:
+        core-size: 200
+        max-size: 400
+        queue-capacity: 400
+      thread-name-prefix: async-
 
 @Async(value = "threadPoolTaskExecutor")
 private CompletableFuture<List<Employee>> updateAndReturnList(List<Employee> partitionedList){
