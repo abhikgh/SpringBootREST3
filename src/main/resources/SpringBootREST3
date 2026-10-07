@@ -1258,7 +1258,20 @@ public class CaffeineConfig {
                 return caffeineCacheManager;
             }
 
+} //end of CaffeineConfig
+
+@Configuration
+public class SPEInMemoryCache extends CaffeineConfig {
+
+
+public SPEInMemoryCache(@Value("${application.cache.configuration}") String cacheConfiguration,
+                            @Value("${application.secondary.cache.configuration}") String secondaryCacheConfiguration) {
+        super(list of primary caches,
+                cacheConfiguration, secondaryCacheConfiguration,
+                list of secondary caches);
+    }
 }
+
 
 Service
 ------------------
