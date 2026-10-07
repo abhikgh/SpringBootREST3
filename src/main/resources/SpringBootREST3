@@ -1339,6 +1339,8 @@ monitor Cache Metrics
 /actuator/metrics/cache.evictions
 /actuator/metrics/cache.removals
 
+           **********************************************************************************************
+
 spring.redis.host=localhost
 spring.redis.port=6379
 spring.redis.password=
@@ -1347,6 +1349,8 @@ spring.redis.lettuce.pool.max-active=8
 spring.redis.lettuce.pool.max-idle=8
 spring.redis.lettuce.pool.max-wait=-1
 spring.redis.lettuce.pool.min-idle=0
+
+import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
 
 @Configuration
 @EnableCaching
@@ -1362,58 +1366,52 @@ public class RedisConfig {
         redisTemplate.afterPropertiesSet();
         return redisTemplate;
     }
-
 }
 
-** Redis work configuration **
+--Service--
+@Autowired
+@Qualifier("moviesCachedRedisTemplate")
+private RedisTemplate redisTemplate;
 
-redis.cache.event.lettuce.pool.maxtotal=5000
-redis.cache.event.lettuce.pool.maxidle=1000
-redis.cache.event.lettuce.pool.minidle=100
+movies = (List<Movie>) redisTemplate.opsForValue().get(redisKey);
+redisTemplate.opsForValue().set(redisKey, movies, Duration.ofMinutes(cacheItemExpireInMinutes));
+Set<String> keys = redisTemplate.keys(pattern);
+redisTemplate.delete(keysToDelete);
 
+
+          **********************************************************************************************
+
+
+redis.host=localhost
+redis.port=6379
+redis.socketTimeOutInMillis=2000
+redis.commandTimeOutInMillis=2000
+redis.cache.common.data.lettuce.pool.maxtotal=5000
+redis.cache.common.data.lettuce.pool.maxidle=1000
+redis.cache.common.data.lettuce.pool.minidle=100
+redis.cache.common.data.clientName=redis-common-data-
+redis.common.data.cache.expiry=86400
+
+redis.cache.itemprices.lettuce.pool.maxtotal=5000
+redis.cache.itemprices.lettuce.pool.maxidle=1000
+redis.cache.itemprices.lettuce.pool.minidle=100
+redis.cache.itemprices.clientName=redis-price-data-
 
 
 @Configuration
-public class RedisBeanConfiguration {
-
-    @Value("${retry.template.custom.enabled:true}")
-    private boolean retryEnabled;
-
-    @Value("${retry.template.custom.properties.count:2}")
-    private int retryCount;
-
-    @Value("${retry.template.custom.properties.sleepBackOffDuration:100}")
-    private int retryBackOffDuration;
+@Validated
+@EnableCaching
+public class PriceDataRedisConfiguration {
 
     @Bean
     @Primary
-    @ConfigurationProperties(prefix = "redis.cache.event")
+    @ConfigurationProperties(prefix = "redis.cache.itemprices")
     @Validated
-    public RedisConfiguration.RedisProps redisEventOfferTemplate() {
+    public RedisConfiguration.RedisProps redisPdsCacheProperties() {
         return new RedisConfiguration.RedisProps();
     }
 
-    /**
-     * Creates the RedisCacheHelper bean
-     *
-     * @param redisTemplatesMap A map of RedisTemplates
-     * @return Create a Map of multiple RedisTemplates
-     */
-    @Bean
-    public RedisCacheHelper redisTemplates(@Qualifier("CrossRegionRedisTemplatesMap") Map<String, RedisTemplate<String, String>> redisTemplatesMap) {
-        return new RedisCacheHelper(redisTemplatesMap, retryEnabled, retryCount, retryBackOffDuration);
-    }
 
-    /**
-     * A map of RedisTemplates, one template for each Redis host
-     * specified in the property redis.hosts
-     *
-     * @param hosts                  A comma separated list of hostname:port combinations
-     * @param socketTimeOutInMillis  Socket timeout in milliseconds
-     * @param commandTimeOutInMillis Command timeout in milliseconds
-     * @param poolConfig        A Jedis pool configuration
-     * @return A map of RedisTemplates, one template for each Redis host
-     */
     @Bean("CrossRegionRedisTemplatesMap")
     public Map<String, RedisTemplate<String, String>> redisTemplatesMap(@Value("${redis.additional.hosts:#{null}}") String hosts,
                                                                         @Value("${redis.host}") String primaryRedisHost,
@@ -1431,8 +1429,31 @@ public class RedisBeanConfiguration {
 
         return redisTemplatesMap;
     }
+
+    @Bean
+    public RedisCacheHelper redisTemplates(@Qualifier("CrossRegionRedisTemplatesMap") Map<String, RedisTemplate<String, String>> redisTemplatesMap) {
+        return new RedisCacheHelper(redisTemplatesMap, retryEnabled, retryCount, retryBackOffDuration);
+    }
+
 }
-	**Service**
+
+@Configuration
+@EnableCaching
+@ConfigurationProperties(
+    prefix = "redis"
+)
+@Validated
+public class RedisConfiguration implements CachingConfigurer {
+
+    @NotNull
+    public static class RedisProps {
+            // lettuce props
+    }
+
+}
+
+class RedisCacheHelper {
+
     public String createCacheKey(String value, String... args) {
         for (String arg : args) {
             value = value.concat(":").concat(arg);
@@ -1531,13 +1552,10 @@ public class RedisBeanConfiguration {
             throw exception;
         }
     }
+}
 
-Service
-----------
 
-@Autowired
-@Qualifier("moviesCachedRedisTemplate")
-private RedisTemplate redisTemplate;
+		  ********************************************************************************************** 
 
 
 // check in 1st Level cache (Caffeine), else check in 2nd Level cache (Redis)
