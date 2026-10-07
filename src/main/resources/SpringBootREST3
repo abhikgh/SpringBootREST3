@@ -761,6 +761,97 @@ return ResponseEntity
 
 ----------------------------------------------------------------------------------------------------------------------——
 
+ExecutorService
+==========================================
+
+1. ExecutorService in Java :: is a framework for running tasks asynchronously using a ThreadPool.
+
+Instead of creating a new thread yourself every time : 
+
+new Thread(() -> doSomething()).start();
+
+you can give the task to an ExecutorService, which manages the threads for you.
+
+ExecutorService executor = Executors.newFixedThreadPool(3);
+
+executor.submit(() -> {
+    System.out.println("Task is running");
+});
+
+executor.shutdown();
+
+Your application
+      |
+      | submit(task)
+      ↓
+ExecutorService
+      |
+      ├── Thread 1 → Task A
+      ├── Thread 2 → Task B
+      └── Thread 3 → Task C
+
+Why use it?
+Suppose you have 100 tasks.
+Creating 100 threads is usually a bad idea:     
+
+for (int i = 0; i < 100; i++) {
+    new Thread(() -> doTask()).start();
+}
+
+Instead:
+ExecutorService executor =Executors.newFixedThreadPool(10);
+for (int i = 0; i < 100; i++) {
+    executor.submit(() -> doTask());
+}
+executor.shutdown();
+
+Now you have 10 worker threads processing the 100 tasks.
+
+The remaining tasks wait in a queue until a thread becomes available.
+
+Important methods 
+
+1.  execute() :: void return
+    executor.execute(() -> doSomething());
+
+2.  submit() :: Future return
+    Future<String> future = executor.submit(() -> "Hello");
+    String result = future.get();  //future.get() waits until the task finishes.
+
+
+Common ExecutorService types ::
+    Executors.newFixedThreadPool(5);     //5 threads can run 5 tasks at a time
+    Executors.newSingleThreadExecutor(); //1 thread can run 1 task at a time 
+    Executors.newCachedThreadPool();     //Creates Threads dynamically
+
+
+2. ExecutorService in SpringBoot :: No need to create ExecutorService -> Spring manages the thread pool -> @Async → Spring proxy → ThreadPoolTaskExecutor → worker thread
+
+@Configuration
+@EnableAsync
+public class AsyncConfig {
+
+    @Bean(name = "threadPoolTaskExecutor")
+    public ThreadPoolTaskExecutor threadPoolTaskExecutor(){
+        ThreadPoolTaskExecutor threadPoolTaskExecutor = new ThreadPoolTaskExecutor();
+        threadPoolTaskExecutor.setCorePoolSize(200);
+        threadPoolTaskExecutor.setMaxPoolSize(400);
+        threadPoolTaskExecutor.setQueueCapacity(400);
+        threadPoolTaskExecutor.initialize();
+        return threadPoolTaskExecutor;
+    }
+}
+
+
+@Async(value = "threadPoolTaskExecutor")
+private CompletableFuture<List<Employee>> updateAndReturnList(List<Employee> partitionedList){
+    partitionedList.forEach(employee -> employeeRepository.updateEmployeeAccount(randomString(10), employee.getId()));
+    return CompletableFuture.completedFuture(partitionedList.stream().map(employee -> employeeRepository.findById(employee.getId()).get()).toList());
+}
+//@Async can return CompletableFuture
+
+----------------------------------------------------------------------------------------------------------------------——
+
 RestClient (We are using this)
 ===============================================
 
