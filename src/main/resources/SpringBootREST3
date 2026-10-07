@@ -1272,6 +1272,7 @@ public List<Movie> getMoviesOfDirector(String director) {
 }
 
 @Cacheable(key = "#buCode.concat('-').concat(#buType).concat('-').concat(#countryCode)", cacheNames = CaffeineConfig.BU_CACHE, unless = "#result==null")
+@Cacheable(key = "#ctyCode.concat(':').concat(#currencyCode)", cacheNames = SPE_CURRENCY_CACHE, unless = "#result==null")
 @Cacheable(key = "#ctyCode", cacheNames = SPE_ESSENTIAL_ITEM_CACHE, unless = "#result==null or #result.isEmpty()")
 //unless = "#result==null" - null values will not be cached , for String return
 //unless = "#result==null or #result.isEmpty()", null or empty will not be cached - for List/Set/Map return
