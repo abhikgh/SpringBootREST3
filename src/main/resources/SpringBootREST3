@@ -5598,6 +5598,83 @@ property in application.properties will be overridden by application-dev.propert
 
 ------------------------------------------------------------------------------------------
 
+SpringBoot MCP Server
+===========================
+
+<dependency>
+	<groupId>org.springframework.ai</groupId>
+	<artifactId>spring-ai-starter-mcp-server-webmvc</artifactId>
+	<version>2.0.1</version>
+	<scope>compile</scope>
+</dependency>
+
+spring:
+ ai:
+    mcp:
+      server:
+        protocol: STREAMABLE
+        name: customer-mcp-server
+        version: 1.0.0
+        type: SYNC
+        capabilities:
+          tool: true
+          resource: false
+          prompt: false
+        streamable-http:
+          mcp-endpoint: /mcp
+
+/mcp - HTTP-based MCP endpoints are unauthenticated by default
+
+@Component
+public class CustomerTools {
+
+    private final EmployeeService employeeService;
+
+    public CustomerTools(EmployeeService employeeService) {
+        this.employeeService = employeeService;
+    }
+
+    @McpTool(
+            name = "get_employee_by_first_name",
+            description = "Get customer information by first name"
+    ) // @McpTool = Expose this Java method as an MCP tool
+    public List<Employee> getEmployeeByFirstName(
+            @McpToolParam(
+                    description = "The customer first name",
+                    required = true
+            )
+            String firstName
+    ) {
+        return employeeService.findByFirstName(firstName);
+    }
+}
+
+http://localhost:8080
+http://localhost:8080/mcp
+
+
+Controller
+   ↓
+Service
+   ↓
+Repository
+   ↓
+Database
+
+
+MCP Client
+   ↓
+MCP Tool
+   ↓
+Service
+   ↓
+Repository
+   ↓
+Database
+
+
+------------------------------------------------------------------------------------------
+
 Spring Cloud
 =======================
 Spring Cloud is a family of libraries that integrates common patterns in the Spring application.
