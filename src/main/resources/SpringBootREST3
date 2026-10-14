@@ -102,6 +102,89 @@ public record Money(BigDecimal amount, String currency) {}
 
 -------------------------------------------------------------------------------------------------
 
+Spring Proxy
+--------------------
+
+If SMB has cross-cutting concerns like @Async, @Transactional, @Cacheable @Retryable	then Spring creates a wrapper object around the bean and this wrapper is Spring proxy.
+
+This wrapper intercepts method calls and adds behavior such as transactions, security, or caching.
+
+
+Proxy example : 
+
+@Service
+
+public class OrderService {
+
+    @Transactional
+
+    public void createOrder() {
+
+        // Save order to database
+
+    }
+
+}
+
+
+Gotcha : Self invocation
+Only calls that come in through the proxy get the extra behaviour. Calls to this.method() skip it.
+
+@Service
+
+public class OrderService {
+
+	ObjectProvider<OrderService> selfProvider;
+	
+	private OrderService self() {
+	    return selfProvider.getObject();
+	}
+	public void process() {
+	
+		saveOrder(); // Direct internal call , bypasses Spring proxy , has to be called via self()
+	
+	    self().saveOrder() //via Spring proxy
+	}
+	
+	
+	@Transactional
+	public void saveOrder() {
+		// Database operation
+	}
+
+}
+
+
+How can you check whether a bean is a proxy?
+
+import org.springframework.aop.support.AopUtils;
+
+Object bean = applicationContext.getBean(OrderService.class);
+
+System.out.println(AopUtils.isAopProxy(bean));
+System.out.println(AopUtils.isJdkDynamicProxy(bean));
+System.out.println(AopUtils.isCglibProxy(bean));
+
+
+@Async only stops working on self-invocation, meaning one method calling another method on thisinside the same class. That call skips the Spring proxy.
+
+Here, ItemDataService calls a separate bean, ItemDataCacheHelper, which is injected through the constructor. That injected reference is already the Spring proxy, so @Async("virtualThreadExecutor") applies.
+
+Spring applies @Async using a proxy that wraps your bean. The real object has no async logic in it.
+
+ObjectProvider<SalesPriceCalculationHelper> selfProvider
+/**
+* Resolves this bean's own Spring proxy so that {@code @Async} methods invoked from within this
+* class are dispatched through the proxy rather than executed inline on the calling thread.
+*
+* @return the proxied instance of this bean
+*/
+private SalesPriceCalculationHelper self() {
+return selfProvider.getObject();
+}
+
+-------------------------------------------------------------------------------------------------
+
 @Component vs @Controller / @Service / @Repository 
 ------------------------------------------------------------
 
