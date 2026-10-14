@@ -2712,7 +2712,7 @@ Microservice Optimizations for improved Performance
 =====================================================
 
 1. Multi Cluster Ingress :: Global Load Balancer that automatically distributes incoming traffic across Multi Region Clusters(spe-prod-cluster,spe-prod-cluster-apac)
-Akamai - Kong - Cloud Armour - Ingress
+Akamai - Kong - Cloud Armour - Multi Cluster Ingress - Multi Region Clusters
 
 2. Multi Region Clusters ::
 (Cluster, Region, Zone, Node, Pod, Container)
@@ -2729,11 +2729,11 @@ Akamai - Kong - Cloud Armour - Ingress
 
 3. Horizontal Pod Auto-scaling: If the bottleneck is CPU or memory, increasing the number of replicas using a Horizontal Pod Autoscaler (HPA).
 
-4. Google PubSub is used for ingesting Product, SPR data from RIX. 
-5. Cloud MemStore HAProxy with failover is used for caching Country and Store prices per BU Code and BU Type
+4. Cloud PubSub is used for ingesting Item, SPR data from RIX. 
+5. Cloud MemStore is used for caching Country and Store prices per BU Code and BU Type
 6. Cloud Storage is used for ingesting Promotion data and intermediate RIX data 
 
-7. PostgresSQL HAProxy + Read Replicas 
+7. Cloud SQL  HAProxy + Read Replicas 
 
 8. Service security with JWT Tokens
 9. ASync
