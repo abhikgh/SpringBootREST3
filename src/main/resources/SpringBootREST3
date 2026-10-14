@@ -105,7 +105,7 @@ public record Money(BigDecimal amount, String currency) {}
 Spring Proxy
 --------------------
 
-If SMB has cross-cutting concerns like @Async, @Transactional, @Cacheable @Retryable	then Spring creates a wrapper object around the bean and this wrapper is Spring proxy.
+If SMB has cross-cutting-concerns like @Async, @Transactional, @Cacheable @Retryable	then Spring creates a wrapper object around the bean and this wrapper is Spring proxy.
 
 This wrapper intercepts method calls and adds behavior such as transactions, security, or caching.
 
@@ -2261,20 +2261,19 @@ public class SingletonEx {
                         .age(30)
                         .build();
 
-11. Aspect Design pattern (Proxy/Sidecar)
+11. Aspect Oriented Programming
 ------------------------------------------------
-- AOP framework to apply cross-cutting concerns to modules without changing their core logic
-sidecar ::companion service to the main service to handle specific tasks like storage or network functions
+- works by Spring proxy - @Aspect is a proxy - adds functionality within the proxy before the class
 
 <dependency>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-aop</artifactId>
 </dependency>
 
-Aspect :: module for cross-cutting-concerns
-JoinPoint :: method where Aspect gets plugged-in
-Advice :: action taken by an Aspect at a particular Joinpoint ("before", "after", "around")
-Pointcut :: expression that selects one or more JoinPoints where Advice is executed.
+Aspect :: class  -> containing @Aspect (cross-cutting-concern)
+JoinPoint :: method  -> where Aspect gets plugged-in
+Advice :: action  -> taken by an Aspect at a particular Joinpoint ("before", "after", "around")
+Pointcut :: expression -> to select JoinPoint
 
 
 
@@ -2298,6 +2297,7 @@ public class LoggingAspect {
 	3. @annotation(Logging) -> PointCut
     */
     @Around("@annotation(Logging)")
+    @Around("execution(* com.example.service..*(..))")
     public Object aroundGovernedTransaction(ProceedingJoinPoint joinPoint) throws Throwable {
         MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
 
@@ -2328,6 +2328,12 @@ public class LoggingAspect {
 public ResponseEntity<OrderResponse> getOrder(
 
 
+Types of advice
+@Before	Before the target method
+@After	After the method finishes, including exceptional completion
+@AfterReturning	After normal completion
+@AfterThrowing	When the method exits with an exception
+@Around	Wraps the method execution and can control whether it proceeds
 
 12. Backend for Frontend
 --------------------------------------------
