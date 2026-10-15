@@ -841,7 +841,6 @@ return ResponseEntity
     no-cache :
 
  */
-
 ----------------------------------------------------------------------------------------------------------------------——
 
 ExecutorService
@@ -3652,8 +3651,8 @@ Check in Grafana ::
 
 ----------------------------------------------------------------------------------------------------------------------
 
-Spring OpenTelemetry (replaces OpenTracing)
-================================================
+Spring OpenTelemetry (replaces OpenTracing) for Tracing
+============================================================
 Distributed Request Tracing by collecting Logs, Traces and Metrics 
 OpenTelemetry is an Observability framework to create and manage telemetry data such as Logs, Traces and Metrics
 
@@ -3664,6 +3663,15 @@ SpringBoot ------> Actuator  ---->   Micrometer    ----------------------->   OT
 									
 									OTLP (OpenTelemetry Protocol)
 				telemetery data -----------------------------------------------------------------------> Observability Backend
+
+management.tracing.sampling.probability=1.0
+  This is a Spring Boot Actuator property (Spring Boot 3.x, Micrometer Tracing).
+  It sets the probability that a trace is sampled and exported to your tracing backend, such as Zipkin, OpenTelemetry/OTLP or Cloud Trace.
+  Active when Micrometer Tracing + OpenTelemetry are on the classpath 
+  Only sets the sampling rate
+
+google.cloud.tracing.enabled=true
+  sends sampled spans to Google Cloud Tracing
 
 Micrometer (replaces Spring Cloud Sleuth)
 ---------------------------------------------
