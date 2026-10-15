@@ -3656,13 +3656,18 @@ Spring OpenTelemetry (replaces OpenTracing) for Tracing
 Distributed Request Tracing by collecting Logs, Traces and Metrics 
 OpenTelemetry is an Observability framework to create and manage telemetry data such as Logs, Traces and Metrics
 
-        	(exposes Metrics)  (collects + makes + ships Metrics)  (LTM  :: collection and shipment)
-SpringBoot ------> Actuator  ---->   Micrometer    ----------------------->   OTel Collector       ------->           Jaeger (Observability Backend)
+        	(exposes Metrics)  (collects + ships Metrics)  (LTM  :: collection and shipment)
+SpringBoot ------> Actuator  ---->   Micrometer Tracing   ----------------------->   OTel Collector       ------->           Jaeger (Observability Backend)
                                     (Monitoring tool)                (micrometer-tracing-bridge-otel)                  (opentelemetry-exporter-otlp)
-									   (Opentelemetry)
-									
-									OTLP (OpenTelemetry Protocol)
-				telemetery data -----------------------------------------------------------------------> Observability Backend
+				
+
+(used in project)
+
+        	(exposes Metrics)  (collects + ships Metrics)  (LTM  :: collection and shipment)
+SpringBoot ------> Actuator  ---->   Micrometer Tracing   ----------------------->  OpenTelemetry SDK    ------->     Google Cloud Tracing (Observability Backend)
+                                    (Monitoring tool)                (micrometer-tracing-bridge-otel)              (opentelemetry-exporter-otlp)
+
+<spring-boot-micrometer-tracing-opentelemetry>
 
 management.tracing.sampling.probability=1.0
   This is a Spring Boot Actuator property (Spring Boot 3.x, Micrometer Tracing).
