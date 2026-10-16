@@ -3663,9 +3663,37 @@ SpringBoot ------> Actuator  ---->   Micrometer Tracing   ----------------------
 
 (used in project)
 
-        	(exposes Metrics)  (collects + ships Metrics)  (LTM  :: collection and shipment)
-SpringBoot ------> Actuator  ---->   Micrometer Tracing   ----------------------->  OpenTelemetry SDK    ------->     Google Cloud Tracing (Observability Backend)
+        	(exposes Metrics)  
+SpringBoot ------> Actuator  ---->   Micrometer Tracing   ----------------------->  OpenTelemetry SDK    ------->     Google Cloud Tracing
                                     (Monitoring tool)                (micrometer-tracing-bridge-otel)              (opentelemetry-exporter-otlp)
+								(collects + ships metrics) 				(manages + exports telemetry)				 (Observability Backend)
+								 
+								Micrometer Tracing API :: common API so the application is less dependent on a particular tracing vendor
+
+import io.micrometer.tracing.Span;
+import io.micrometer.tracing.Tracer;
+import org.springframework.stereotype.Service;
+
+@Service
+public class OrderService {
+
+    private final Tracer tracer;
+
+    public OrderService(Tracer tracer) {
+        this.tracer = tracer;
+    }
+
+    public void processOrder() {
+        Span span = tracer.nextSpan().name("process-order").start();
+
+        try (Tracer.SpanInScope scope = tracer.withSpan(span)) {
+            // Your business logic
+        } finally {
+            span.end();
+        }
+    }
+}
+//Tracer, Span, and SpanInScope are Micrometer Tracing API types
 
 <spring-boot-micrometer-tracing-opentelemetry>
 
