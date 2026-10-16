@@ -3671,6 +3671,15 @@ SpringBoot ------> Actuator  ---->   Micrometer Tracing   ----------------------
 								Micrometer Tracing API :: common API so the application is less dependent on a particular tracing vendor
 								Tracer, Span, and SpanInScope are Micrometer Tracing APIs
 
+			Trace 4bf9…  (one request)
+				└─ POST /calculate-cart-price        320 ms   ← root span (incoming HTTP)
+				   ├─ Redis GET                        3 ms
+				   ├─ HTTP GET item-data-service      85 ms   ← child span (outgoing call)
+				   │   └─ (spans in item-data-service, same trace ID)
+				   └─ HTTP POST tax-service          140 ms
+
+					Spring and Micrometer create these spans automatically and OpenTelemetry exports the sampled ones (about 10% by default) to Google Cloud Tracing
+
 import io.micrometer.tracing.Span;
 import io.micrometer.tracing.Tracer;
 import org.springframework.stereotype.Service;
