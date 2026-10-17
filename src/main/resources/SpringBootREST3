@@ -3656,10 +3656,6 @@ Spring OpenTelemetry (replaces OpenTracing) for Tracing
 Distributed Request Tracing by collecting Logs, Traces and Metrics 
 OpenTelemetry is an Observability framework to create and manage telemetry data such as Logs, Traces and Metrics
 
-        	(exposes Metrics)  (collects + ships Metrics)  (LTM  :: collection and shipment)
-SpringBoot ------> Actuator  ---->   Micrometer Tracing   ----------------------->   OTel Collector       ------->           Jaeger (Observability Backend)
-                                    (Monitoring tool)                (micrometer-tracing-bridge-otel)                  (opentelemetry-exporter-otlp)
-				
 
 (used in project)
 
@@ -3670,6 +3666,7 @@ SpringBoot ------> Actuator  ---->   Micrometer Tracing   ----------------------
 								 
 								Micrometer Tracing API :: common API so the application is less dependent on a particular tracing vendor
 								Tracer, Span, and SpanInScope are Micrometer Tracing APIs
+								Check Micrometer.png
 
 			Trace 4bf9…  (one request)
 				└─ POST /calculate-cart-price        320 ms   ← root span (incoming HTTP)
