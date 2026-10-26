@@ -28,13 +28,13 @@ public class CounterService {
     public void increment() {
         count++;                    // race condition
     }
-}
+} // check step 3
 
 2. Beans are stateless
 
 @Service
 public class OrderService {
-    private final OrderRepository repo;   // final dependency = safe
+    private final OrderRepository repo;   // final = safe
 
     public OrderService(OrderRepository repo) {
         this.repo = repo;
@@ -45,10 +45,14 @@ public class OrderService {
 
 @Service
 public class CounterService {
-    private final AtomicLong count = new AtomicLong();
+    private final AtomicInteger count = new AtomicInteger();
 
-    public long increment() {
-        return count.incrementAndGet();   // thread-safe
+    public int increment() {
+        return count.incrementAndGet();
+    }
+
+    public int get() {
+        return count.get();
     }
 }
 
