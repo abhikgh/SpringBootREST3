@@ -1015,6 +1015,8 @@ public List<Movie> getMoviesOfDirectorClient(String director) {
 
 jackson-databind 3 : FAIL_ON_UNKNOWN_PROPERTIES = off
 
+dependencyManagement : pins the version , overrides the version from parent pom
+
 ----------------------------------------------------------------------------------------------------------------------
 
 Spring Boot 3 Secured Endpoint by JWT
