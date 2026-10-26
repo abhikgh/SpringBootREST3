@@ -1010,6 +1010,11 @@ public List<Movie> getMoviesOfDirectorClient(String director) {
                     .body(List.class);
 
 }
+
+----------------------------------------------------------------------------------------------------------------------
+
+jackson-databind 3 : FAIL_ON_UNKNOWN_PROPERTIES = off
+
 ----------------------------------------------------------------------------------------------------------------------
 
 Spring Boot 3 Secured Endpoint by JWT
