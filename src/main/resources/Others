@@ -60,6 +60,13 @@ install
    ↓
 deploy
 
+Plugins
+================
+
+IntelliJIdea (leftmost) -> **Settings → Plugins → Marketplace**, search for **"Maven Helper"** -> Install
+
+pom -> Dependency Analyzer -> All dependencies as Tree
+
 
 JavaDoc
 -----------------
