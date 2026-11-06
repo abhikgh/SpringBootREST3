@@ -308,11 +308,11 @@ The response is not rendered in browsers, so the risk of Cross-Site Scripting (X
                                                                          |
                                                                        AKAMAI (CDN) (IP whitelisting)            -> validates JWT
                                                                          |                                       -> validates Role from the JWT
-                                                                      KONG (Api Gateway)                         -> returns the secure resource to the client
-                                                                         | [ Authentication,Authorization,Transformation,Routing,Throttling, Rate limiting, Monitoring, Logging]
+                                                                      KONG (Api Gateway : Reverse Proxy)         -> returns the secure resource to the client
+                                                                         | [ Authentication,Authorization, : validating JWT tokens, Rate limits, Logging, Transformation, API key management, Monitoring]
                                                                     CLOUD ARMOUR (firewall)     <---------- CLOUD FUNCTION (policies to support that CA only accepts IPs passed through Akamai)
                                                                          |
-                                                                   MULTI CLUSTER INGRESS (Global Load Balancer)
+                                                                   MULTI CLUSTER INGRESS (Global Load Balancer :  Reverse Proxy)
 															(has SSL certificate , Ingress load balances decrypted traffic to backend instances over HTTPS)
 
 Secure Connection : via JWT token
@@ -4787,13 +4787,13 @@ Client -> Proxy -> Internet -> Server
         - Load Balancing
 
                                                                         Client -> Internet  -> Reverse Proxy -> Server
-										- Logging
-										- Caching
-										- Routing
-										- Load Balancing
-										- Rate-limiting (DDoS Protection) (Distributed Denial-of-Service)
+																									- Logging
+																									- Caching
+																									- Routing
+																									- Load Balancing
+																									- Rate-limiting (DDoS Protection:Distributed Denial-of-Service)
 
-									API Gws are reverse proxy
+																								API Gws are reverse proxy
 
 
  Request timeout            vs          Read timeout            vs              Connection timeout
