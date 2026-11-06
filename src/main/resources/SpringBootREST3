@@ -312,7 +312,7 @@ The response is not rendered in browsers, so the risk of Cross-Site Scripting (X
                                                                          | [ Authentication,Authorization,Transformation,Routing,Throttling, Rate limiting, Monitoring, Logging]
                                                                     CLOUD ARMOUR (firewall)     <---------- CLOUD FUNCTION (policies to support that CA only accepts IPs passed through Akamai)
                                                                          |
-                                                                    INGRESS (Load Balancer)
+                                                                   MULTI CLUSTER INGRESS (Global Load Balancer)
 
 Secure Connection : via JWT token
 
