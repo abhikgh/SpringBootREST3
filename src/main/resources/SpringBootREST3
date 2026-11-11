@@ -258,12 +258,24 @@ Payload: claims (details of the user)
 }
 
 signature:
-    HMACSHA256(Base64urlEncoded(header).Base64urlEncoded(payload), secret)
+    HMACSHA256(Base64urlEncoded(header).Base64urlEncoded(payload), private key)
 
     validates JWTToken : The signature is used to verify the sender and that the message wasn’t tampered
     If the payload is tampered then the signatures won't match
 
-secret(=key)
+How JWT Verification Works over HTTPS ?
+
+When a client makes a request to your Spring Boot REST service, the process flows as follows:
+1. The Request Journey: The client attaches the JWT to the HTTP request header over the secure HTTPS connection:
+HTTP
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+2. Interception: Spring Security custom filter intercepts the request, strips off the "Bearer " prefix, and isolates the raw token string.
+3. Cryptographic Validation: Spring Boot uses its secret key (or private key) to re-calculate the signature of the header and payload. If the calculated signature matches the token's signature, and the expiration (exp) claim is still valid, the token is trusted.
+4. Stateless Authorization: Because the token carries its own cryptographic proof of validity, your Spring Boot service does not need to query a database to check user sessions on every single request. It instantly knows who the user is and what roles they hold.
+
+                           
+
+secret(=private key)
 ------------------
 AUTHENTICATION SERVER (private key, signature) ----------------> RESOURCE SERVER (public key, verify signature)
 
